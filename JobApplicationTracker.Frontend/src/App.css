@@ -1,0 +1,46 @@
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  text-align: left;
+}
+
+.status {
+  margin-top: 24px;
+  font-size: 18px;
+}
+
+.status.error {
+  color: #dc2626;
+}
+
+.user-list {
+  list-style: none;
+  padding: 0;
+  margin: 32px 0 0;
+  display: grid;
+  gap: 16px;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--social-bg);
+}
+
+.user-id {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--text);
+  min-width: 48px;
+}
+
+.username {
+  font-size: 18px;
+  color: var(--text-h);
+  font-weight: 500;
+}

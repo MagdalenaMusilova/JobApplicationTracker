@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobApplicationTracker.Api", "JobApplicationTracker.Api\JobApplicationTracker.Api.csproj", "{6329F1CA-6B8C-4159-8E31-9E63F1A1A720}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobApplicationTracker.Test", "JobApplicationTracker.Test\JobApplicationTracker.Test.csproj", "{8FA61A63-DB0B-4659-B98E-E6C853EAACB1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6329F1CA-6B8C-4159-8E31-9E63F1A1A720} = {6329F1CA-6B8C-4159-8E31-9E63F1A1A720}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6329F1CA-6B8C-4159-8E31-9E63F1A1A720}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6329F1CA-6B8C-4159-8E31-9E63F1A1A720}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6329F1CA-6B8C-4159-8E31-9E63F1A1A720}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6329F1CA-6B8C-4159-8E31-9E63F1A1A720}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8FA61A63-DB0B-4659-B98E-E6C853EAACB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FA61A63-DB0B-4659-B98E-E6C853EAACB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FA61A63-DB0B-4659-B98E-E6C853EAACB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FA61A63-DB0B-4659-B98E-E6C853EAACB1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+	EndGlobalSection
+EndGlobal
