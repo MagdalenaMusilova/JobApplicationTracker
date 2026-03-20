@@ -5,9 +5,12 @@ namespace JobApplicationTracker.DTOs;
 public class UserDto
 {
     [Required]
-    [MaxLength(100)]
     public int Id { get; set; }
     [Required]
-    [MaxLength(100)]
+    [MaxLength(200)]
     public string Username { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? DeletedAt { get; set; } = null;
+    
 }

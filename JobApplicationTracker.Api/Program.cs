@@ -1,7 +1,10 @@
+using System.Text;
 using JobApplicationTracker.Database;
 using JobApplicationTracker.Repository;
 using JobApplicationTracker.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +16,26 @@ builder.Services.AddDbContext<UserDbContext>(options =>
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwt = builder.Configuration.GetSection("Jwt");
+        var key = jwt["Key"] ?? throw new InvalidOperationException("Jwt:Key is missing.");
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
+            ValidIssuer = jwt["Issuer"],
+            ValidAudience = jwt["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
 {
@@ -36,6 +59,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("ReactApp");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

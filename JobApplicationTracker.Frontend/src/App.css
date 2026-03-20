@@ -1,17 +1,101 @@
 .app {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 48px 24px;
-  text-align: left;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f8fafc;
+  color: var(--text-h);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.tab.active {
+  background: #6366f1;
+  color: white;
+  border-color: #6366f1;
+}
+
+.subtitle {
+  margin: 8px 0 24px;
+  color: var(--text);
+}
+
+.auth-form {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--text-h);
+  font-weight: 500;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font: inherit;
+  outline: none;
+}
+
+.auth-form input:focus {
+  border-color: #6366f1;
+}
+
+.auth-form button {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #6366f1;
+  color: white;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-form button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .status {
-  margin-top: 24px;
-  font-size: 18px;
+  margin-top: 16px;
 }
 
 .status.error {
   color: #dc2626;
+}
+
+.status.success {
+  color: #16a34a;
 }
 
 .user-list {

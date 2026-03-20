@@ -23,8 +23,8 @@ public class UserServiceTest
     {
         var users = new List<UserDo>
         {
-            new() { Id = 1, Username = "alice" },
-            new() { Id = 2, Username = "bob" }
+            new() { Id = 1, Username = "alice", PasswordHash = "hash1" },
+            new() { Id = 2, Username = "bob", PasswordHash = "hash2" }
         };
 
         _userRepositoryMock
@@ -63,7 +63,9 @@ public class UserServiceTest
             .ReturnsAsync((UserDo user) => new UserDo
             {
                 Id = 1,
-                Username = user.Username
+                Username = user.Username,
+                PasswordHash = "hash",
+                CreatedAt = DateTime.UtcNow
             });
 
         var result = await _userService.AddAsync(createDto);

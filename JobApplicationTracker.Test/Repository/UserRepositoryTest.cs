@@ -23,8 +23,8 @@ public class UserRepositoryTest
     {
         await using var context = CreateContext();
         context.Users.AddRange(
-            new User { Id = 1, Username = "alice" },
-            new User { Id = 2, Username = "bob" });
+            new User { Id = 1, Username = "alice", PasswordHash = "hash1" },
+            new User { Id = 2, Username = "bob", PasswordHash = "hash2" });
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context);
@@ -38,7 +38,7 @@ public class UserRepositoryTest
     public async Task GetByIdAsync_ShouldReturnUser_WhenUserExists()
     {
         await using var context = CreateContext();
-        context.Users.Add(new User { Id = 1, Username = "alice" });
+        context.Users.Add(new User { Id = 1, Username = "alice", PasswordHash = "hash1" });
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context);
@@ -57,7 +57,8 @@ public class UserRepositoryTest
 
         var result = await repository.AddAsync(new UserDo
         {
-            Username = "alice"
+            Username = "alice",
+            PasswordHash = "hash"
         });
 
         result.Id.Should().BeGreaterThan(0);
@@ -75,7 +76,8 @@ public class UserRepositoryTest
         var result = await repository.UpdateAsync(new UserDo
         {
             Id = 999,
-            Username = "updated"
+            Username = "updated",
+            PasswordHash = "hash"
         });
 
         result.Should().BeNull();
@@ -85,7 +87,7 @@ public class UserRepositoryTest
     public async Task DeleteAsync_ShouldRemoveUser_WhenUserExists()
     {
         await using var context = CreateContext();
-        context.Users.Add(new User { Id = 1, Username = "alice" });
+        context.Users.Add(new User { Id = 1, Username = "alice", PasswordHash = "hash1" });
         await context.SaveChangesAsync();
 
         var repository = new UserRepository(context);

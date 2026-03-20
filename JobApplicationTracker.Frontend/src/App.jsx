@@ -1,56 +1,180 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import './App.css'
 
-const API_URL = 'http://localhost:5131/api/User'
+const SIGN_IN_URL = 'http://localhost:5131/api/auth/signin'
+const CREATE_USER_URL = 'http://localhost:5131/api/users'
 
 function App() {
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [mode, setMode] = useState('signin')
+
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
-  useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const response = await fetch(API_URL)
+  const resetMessages = () => {
+    setError('')
+    setSuccess('')
+  }
 
-        if (!response.ok) {
-          throw new Error('Failed to load users')
-        }
+  const handleSignIn = async (event) => {
+    event.preventDefault()
+    setLoading(true)
+    resetMessages()
 
-        const data = await response.json()
-        setUsers(data)
-      } catch (err) {
-        setError(err.message || 'Something went wrong')
-      } finally {
-        setLoading(false)
+    try {
+      const response = await fetch(SIGN_IN_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(typeof data === 'string' ? data : 'Sign in failed')
       }
+
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('username', data.username)
+
+      setSuccess('Signed in successfully.')
+      setPassword('')
+      setConfirmPassword('')
+    } catch (err) {
+      setError(err.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateUser = async (event) => {
+    event.preventDefault()
+    setLoading(true)
+    resetMessages()
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
+      setLoading(false)
+      return
     }
 
-    loadUsers()
-  }, [])
+    try {
+      const response = await fetch(CREATE_USER_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(typeof data === 'string' ? data : 'Create user failed')
+      }
+
+      setSuccess(`User "${data.username}" created successfully.`)
+      setMode('signin')
+      setPassword('')
+      setConfirmPassword('')
+    } catch (err) {
+      setError(err.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSubmit = mode === 'signin' ? handleSignIn : handleCreateUser
 
   return (
     <main className="app">
-      <h1>Users</h1>
+      <div className="auth-card">
+        <div className="auth-tabs">
+          <button
+            type="button"
+            className={mode === 'signin' ? 'tab active' : 'tab'}
+            onClick={() => {
+              setMode('signin')
+              resetMessages()
+            }}
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            className={mode === 'register' ? 'tab active' : 'tab'}
+            onClick={() => {
+              setMode('register')
+              resetMessages()
+            }}
+          >
+            Create User
+          </button>
+        </div>
 
-      {loading && <p className="status">Loading users...</p>}
+        <h1>{mode === 'signin' ? 'Sign In' : 'Create User'}</h1>
+        <p className="subtitle">
+          {mode === 'signin'
+            ? 'Use your account to continue.'
+            : 'Create a new account.'}
+        </p>
 
-      {error && !loading && <p className="status error">{error}</p>}
+        <form onSubmit={handleSubmit} className="auth-form">
+          <label>
+            Username
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
+              required
+            />
+          </label>
 
-      {!loading && !error && users.length === 0 && (
-        <p className="status">No users found.</p>
-      )}
+          <label>
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              required
+            />
+          </label>
 
-      {!loading && !error && users.length > 0 && (
-        <ul className="user-list">
-          {users.map((user) => (
-            <li key={user.id} className="user-card">
-              <span className="user-id">#{user.id}</span>
-              <span className="username">{user.username}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+          {mode === 'register' && (
+            <label>
+              Confirm Password
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                required
+              />
+            </label>
+          )}
+
+          <button type="submit" disabled={loading}>
+            {loading
+              ? mode === 'signin'
+                ? 'Signing in...'
+                : 'Creating...'
+              : mode === 'signin'
+                ? 'Sign In'
+                : 'Create User'}
+          </button>
+        </form>
+
+        {error && <p className="status error">{error}</p>}
+        {success && <p className="status success">{success}</p>}
+      </div>
     </main>
   )
 }

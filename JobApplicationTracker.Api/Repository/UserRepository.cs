@@ -21,7 +21,10 @@ public class UserRepository : IUserRepository
             .Select(u => new UserDo
             {
                 Id = u.Id,
-                Username = u.Username
+                Username = u.Username,
+                PasswordHash = u.PasswordHash,
+                CreatedAt = u.CreatedAt,
+                DeletedAt = u.DeletedAt
             })
             .ToListAsync();
     }
@@ -34,7 +37,26 @@ public class UserRepository : IUserRepository
             .Select(u => new UserDo
             {
                 Id = u.Id,
-                Username = u.Username
+                Username = u.Username,
+                PasswordHash = u.PasswordHash,
+                CreatedAt = u.CreatedAt,
+                DeletedAt = u.DeletedAt
+            })
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<UserDo?> GetByUsernameAsync(string username)
+    {
+        return await _context.Users
+            .AsNoTracking()
+            .Where(u => u.Username == username)
+            .Select(u => new UserDo
+            {
+                Id = u.Id,
+                Username = u.Username,
+                PasswordHash = u.PasswordHash,
+                CreatedAt = u.CreatedAt,
+                DeletedAt = u.DeletedAt
             })
             .FirstOrDefaultAsync();
     }
@@ -43,7 +65,10 @@ public class UserRepository : IUserRepository
     {
         var entity = new User
         {
-            Username = user.Username
+            Username = user.Username,
+            PasswordHash = user.PasswordHash,
+            CreatedAt = user.CreatedAt,
+            DeletedAt = user.DeletedAt
         };
 
         _context.Users.Add(entity);
@@ -52,7 +77,10 @@ public class UserRepository : IUserRepository
         return new UserDo
         {
             Id = entity.Id,
-            Username = entity.Username
+            Username = entity.Username,
+            PasswordHash = entity.PasswordHash,
+            CreatedAt = entity.CreatedAt,
+            DeletedAt = entity.DeletedAt
         };
     }
 
@@ -66,13 +94,19 @@ public class UserRepository : IUserRepository
         }
 
         existingUser.Username = user.Username;
+        existingUser.PasswordHash = user.PasswordHash;
+        existingUser.CreatedAt = user.CreatedAt;
+        existingUser.DeletedAt = user.DeletedAt;
 
         await _context.SaveChangesAsync();
 
         return new UserDo
         {
             Id = existingUser.Id,
-            Username = existingUser.Username
+            Username = existingUser.Username,
+            PasswordHash = existingUser.PasswordHash,
+            CreatedAt = existingUser.CreatedAt,
+            DeletedAt = existingUser.DeletedAt
         };
     }
 
