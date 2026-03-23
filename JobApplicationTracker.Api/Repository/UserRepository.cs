@@ -1,4 +1,5 @@
-﻿using JobApplicationTracker.Database;
+﻿using AutoMapper;
+using JobApplicationTracker.Database;
 using JobApplicationTracker.Dos;
 using JobApplicationTracker.Models;
 using Microsoft.EntityFrameworkCore;
@@ -8,24 +9,19 @@ namespace JobApplicationTracker.Repository;
 public class UserRepository : IUserRepository
 {
     private readonly UserDbContext _context;
+    private readonly IMapper _mapper;
 
-    public UserRepository(UserDbContext context)
+    public UserRepository(UserDbContext context, IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
     }
 
     public async Task<IEnumerable<UserDo>> GetAllAsync()
     {
         return await _context.Users
             .AsNoTracking()
-            .Select(u => new UserDo
-            {
-                Id = u.Id,
-                Username = u.Username,
-                PasswordHash = u.PasswordHash,
-                CreatedAt = u.CreatedAt,
-                DeletedAt = u.DeletedAt
-            })
+            .Select(u => _mapper.Map<UserDo>(u))
             .ToListAsync();
     }
 
@@ -34,14 +30,7 @@ public class UserRepository : IUserRepository
         return await _context.Users
             .AsNoTracking()
             .Where(u => u.Id == id)
-            .Select(u => new UserDo
-            {
-                Id = u.Id,
-                Username = u.Username,
-                PasswordHash = u.PasswordHash,
-                CreatedAt = u.CreatedAt,
-                DeletedAt = u.DeletedAt
-            })
+            .Select(u => _mapper.Map<UserDo>(u))
             .FirstOrDefaultAsync();
     }
 
@@ -50,38 +39,18 @@ public class UserRepository : IUserRepository
         return await _context.Users
             .AsNoTracking()
             .Where(u => u.Username == username)
-            .Select(u => new UserDo
-            {
-                Id = u.Id,
-                Username = u.Username,
-                PasswordHash = u.PasswordHash,
-                CreatedAt = u.CreatedAt,
-                DeletedAt = u.DeletedAt
-            })
+            .Select(u => _mapper.Map<UserDo>(u))
             .FirstOrDefaultAsync();
     }
 
     public async Task<UserDo> AddAsync(UserDo user)
     {
-        var entity = new User
-        {
-            Username = user.Username,
-            PasswordHash = user.PasswordHash,
-            CreatedAt = user.CreatedAt,
-            DeletedAt = user.DeletedAt
-        };
+        var entity = _mapper.Map<User>(user);
 
         _context.Users.Add(entity);
         await _context.SaveChangesAsync();
 
-        return new UserDo
-        {
-            Id = entity.Id,
-            Username = entity.Username,
-            PasswordHash = entity.PasswordHash,
-            CreatedAt = entity.CreatedAt,
-            DeletedAt = entity.DeletedAt
-        };
+        return _mapper.Map<UserDo>(entity);
     }
 
     public async Task<UserDo?> UpdateAsync(UserDo user)
@@ -100,14 +69,7 @@ public class UserRepository : IUserRepository
 
         await _context.SaveChangesAsync();
 
-        return new UserDo
-        {
-            Id = existingUser.Id,
-            Username = existingUser.Username,
-            PasswordHash = existingUser.PasswordHash,
-            CreatedAt = existingUser.CreatedAt,
-            DeletedAt = existingUser.DeletedAt
-        };
+        return _mapper.Map<UserDo>(existingUser);
     }
 
     public async Task<bool> DeleteAsync(int id)

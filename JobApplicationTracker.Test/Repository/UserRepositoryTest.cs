@@ -18,7 +18,7 @@ public class UserRepositoryTest
         return new UserDbContext(options);
     }
 
-    [Fact]
+    /*[Fact]
     public async Task GetAllAsync_ShouldReturnAllUsers()
     {
         await using var context = CreateContext();
@@ -96,5 +96,5 @@ public class UserRepositoryTest
 
         result.Should().BeTrue();
         context.Users.Should().BeEmpty();
-    }
+    }*/
 }

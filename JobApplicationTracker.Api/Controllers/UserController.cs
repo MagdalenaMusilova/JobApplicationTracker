@@ -40,7 +40,7 @@ public class UserController : ControllerBase
     {
         var createdUser = await _userService.AddAsync(user);
 
-        return CreatedAtAction(nameof(GetById), new { id = createdUser.Id }, createdUser);
+        return Ok(createdUser);
     }
 
     [HttpPut("{id:int}")]

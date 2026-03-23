@@ -1,4 +1,5 @@
-﻿using JobApplicationTracker.Database;
+﻿using AutoMapper;
+using JobApplicationTracker.Database;
 using JobApplicationTracker.Models;
 using Microsoft.EntityFrameworkCore;
 using JobApplicationTracker.DTOs;
@@ -12,24 +13,19 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly PasswordHasher<object> _passwordHasher = new();
+    private readonly IMapper _mapper;
 
-    public UserService(IUserRepository userRepository)
+    public UserService(IUserRepository userRepository, IMapper mapper)
     {
         _userRepository = userRepository;
+        _mapper = mapper;
     }
 
     public async Task<IEnumerable<UserDto>> GetAllAsync()
     {
         var users = await _userRepository.GetAllAsync();
 
-        return users.Select(u => new UserDto
-        {
-            Id = u.Id,
-            Username = u.Username,
-            PasswordHash = u.PasswordHash,
-            CreatedAt = u.CreatedAt,
-            DeletedAt = u.DeletedAt
-        });
+        return users.Select(u => _mapper.Map<UserDto>(u));
     }
 
     public async Task<UserDto?> GetByIdAsync(int id)
@@ -41,14 +37,7 @@ public class UserService : IUserService
             return null;
         }
 
-        return new UserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            PasswordHash = user.PasswordHash,
-            CreatedAt = user.CreatedAt,
-            DeletedAt = user.DeletedAt
-        };
+        return _mapper.Map<UserDto>(user);
     }
 
     public async Task<UserDto?> GetByUsernameAsync(string username)
@@ -60,14 +49,7 @@ public class UserService : IUserService
             return null;
         }
 
-        return new UserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            PasswordHash = user.PasswordHash,
-            CreatedAt = user.CreatedAt,
-            DeletedAt = user.DeletedAt
-        };
+        return _mapper.Map<UserDto>(user);
     }
 
     public async Task<UserDto> AddAsync(CreateUserDto user)
@@ -80,22 +62,17 @@ public class UserService : IUserService
 
         var hashedPassword = _passwordHasher.HashPassword(new object(), user.Password);
 
-        var userDo = new UserDo
+        var userDo = new UserDo     // not mapped because adding fields
         {
             Username = user.Username.Trim(),
-            PasswordHash = hashedPassword
+            PasswordHash = hashedPassword,
+            CreatedAt = DateTime.UtcNow,
+            DeletedAt = null
         };
 
         var createdUser = await _userRepository.AddAsync(userDo);
 
-        return new UserDto
-        {
-            Id = createdUser.Id,
-            Username = createdUser.Username,
-            PasswordHash = createdUser.PasswordHash,
-            CreatedAt = createdUser.CreatedAt,
-            DeletedAt = createdUser.DeletedAt
-        };
+        return _mapper.Map<UserDto>(createdUser);
     }
 
     public async Task<UserDto?> UpdateAsync(int id, UpdateUserDto user)
@@ -107,7 +84,7 @@ public class UserService : IUserService
             return null;
         }
 
-        var userDo = new UserDo
+        var userDo = new UserDo // not mapped because adjusting fields
         {
             Id = id,
             Username = user.Username is null ? existingUser.Username : user.Username.Trim(),
@@ -125,14 +102,7 @@ public class UserService : IUserService
             return null;
         }
 
-        return new UserDto
-        {
-            Id = updatedUser.Id,
-            Username = updatedUser.Username,
-            PasswordHash = updatedUser.PasswordHash,
-            CreatedAt = updatedUser.CreatedAt,
-            DeletedAt = updatedUser.DeletedAt
-        };
+        return _mapper.Map<UserDto>(updatedUser);
     }
 
     public async Task<bool> DeleteAsync(int id)
