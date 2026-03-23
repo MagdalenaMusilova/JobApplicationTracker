@@ -1,5 +1,6 @@
 using System.Text;
 using JobApplicationTracker.Database;
+using JobApplicationTracker.Mapper;
 using JobApplicationTracker.Repository;
 using JobApplicationTracker.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,6 +17,12 @@ builder.Services.AddDbContext<UserDbContext>(options =>
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+
+builder.Services.AddAutoMapper(
+    cfg => { },
+    typeof(MappingProfile).Assembly);
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
