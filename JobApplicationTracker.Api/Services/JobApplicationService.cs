@@ -109,21 +109,19 @@ public class JobApplicationService : IJobApplicationService
         return _mapper.Map<JobApplicationDto>(updatedApplication);
     }
 
-    public async Task<JobApplicationDto> PopApplicationStatusAsync(int applicationId, int lastEntryId)
+    public async Task<JobApplicationDto> DeleteJAStatusEntryAsync(int entryId)
     {
-        var application = await _applicationRepository.GetByIdAsync(applicationId);
+        var statusEntry = await _jaStatusEntryService.GetByIdAsync(entryId);
+        if (statusEntry == null)
+        {
+            throw new InvalidOperationException("Entry not found.");
+        }
+        var application = await _applicationRepository.GetByIdAsync(statusEntry.JobApplicationId); 
         if (application == null)
         {
             throw new InvalidOperationException("Application not found.");
         }
-        
-        var lastStatusEntry = application.StatusHistory.LastOrDefault(e => e.Id == lastEntryId);
-        if (lastStatusEntry == null)
-        {
-            throw new InvalidOperationException("Entry not found.");
-        }
-        
-        var entriesToDel = application.StatusHistory.Where(e => e.OrderIndex > lastStatusEntry.OrderIndex);
+        var entriesToDel = application.StatusHistory.Where(e => e.OrderIndex > entryId);
         var entryIdsToDel = entriesToDel.Select(e => e.Id);
         
         var success = await _jaStatusEntryService.DeleteBulkAsync(entryIdsToDel);
@@ -132,7 +130,7 @@ public class JobApplicationService : IJobApplicationService
             throw new InvalidOperationException("Failed to delete status entries.");
         }
         
-        var updatedApplication = await _applicationRepository.GetByIdAsync(applicationId);
+        var updatedApplication = await _applicationRepository.GetByIdAsync(application.Id);
         return _mapper.Map<JobApplicationDto>(updatedApplication);   
     }
 }

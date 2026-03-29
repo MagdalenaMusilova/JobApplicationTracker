@@ -12,5 +12,5 @@ public interface IJobApplicationService
     Task<JobApplicationDto?> UpdateAsync(int id, UpdateJobApplicationDto application);
     Task<bool> DeleteAsync(int id);
     Task<JobApplicationDto> PushApplicationStatusAsync(CreateJAStatusEntryDto statusEntry);
-    Task<JobApplicationDto> PopApplicationStatusAsync(int applicationId, int lastEntryId);
+    Task<JobApplicationDto> DeleteJAStatusEntryAsync(int entryId);
 }

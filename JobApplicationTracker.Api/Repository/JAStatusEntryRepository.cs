@@ -16,7 +16,16 @@ public class JAStatusEntryRepository : IJAStatusEntryRepository
         _context = context;
         _mapper = mapper;
     }
-    
+
+    public async Task<JAStatusEntryDo?> GetByIdAsync(int id)
+    {
+        return await _context.JAStatusEntries
+            .AsNoTracking()
+            .Where(e => e.Id == id)
+            .Select(e => _mapper.Map<JAStatusEntryDo>(e))
+            .FirstOrDefaultAsync();   
+    }
+
     public async Task<JAStatusEntryDo> AddAsync(JAStatusEntryDo jaStatusEntry)
     {
         var entity = _mapper.Map<JAStatusEntry>(jaStatusEntry);

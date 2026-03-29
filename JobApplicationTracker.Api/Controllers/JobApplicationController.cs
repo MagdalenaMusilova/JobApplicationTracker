@@ -77,15 +77,17 @@ public class JobApplicationController : ControllerBase
         return NoContent();
     }
 
-    public async Task<ActionResult<JobApplicationDto>> PushApplicationStatus(CreateJAStatusEntryDto statusEntry)
+    [HttpPost("entry")]
+    public async Task<ActionResult<JobApplicationDto>> PushApplicationStatus([FromBody] CreateJAStatusEntryDto statusEntry)
     {
         var application = await _jobApplicationService.PushApplicationStatusAsync(statusEntry);
         return Ok(application);
     }
     
-    public async Task<ActionResult<JobApplicationDto>> PopApplicationStatus([FromBody]int applicationId,[FromBody] int lastEntryId)
+    [HttpDelete("entry/{entryId:int}")]
+    public async Task<ActionResult<JobApplicationDto>> DeleteJAStatusEntry(int entryId)
     {
-        var application = await _jobApplicationService.PopApplicationStatusAsync(applicationId, lastEntryId);
+        var application = await _jobApplicationService.DeleteJAStatusEntryAsync(entryId);
         return Ok(application);
     }
 }

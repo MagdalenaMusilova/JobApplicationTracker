@@ -14,7 +14,17 @@ public class JAStatusEntryService : IJAStatusEntryService
     {
         _jaStatusEntryRepository = jaStatusEntryRepository;
     }
-    
+
+    public async Task<JAStatusEntryDto?> GetByIdAsync(int id)
+    {
+        var entry = await _jaStatusEntryRepository.GetByIdAsync(id);
+        if (entry is null)
+        {
+            return null;
+        }
+        return _mapper.Map<JAStatusEntryDto>(entry);   
+    }
+
     public async Task<JAStatusEntryDto> AddAsync(JobApplicationDto jobApplication, CreateJAStatusEntryDto jaStatusEntry)
     {
         int statusEntriesCount = jobApplication.StatusHistory.Count();
