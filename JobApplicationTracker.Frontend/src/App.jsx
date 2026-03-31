@@ -11,6 +11,92 @@ import ApplicationDetailPage from './pages/ApplicationDetailPage'
 import { profile } from './data/appData'
 import { computeAutomaticMatchScore, statusSteps } from './utils/matchScore'
 
+function getApiBaseUrl() {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL
+
+  if (!baseUrl) {
+    throw new Error('VITE_API_BASE_URL is missing')
+  }
+
+  return baseUrl
+}
+
+function normalizeStatus(status) {
+  const value = String(status ?? '').toLowerCase()
+
+  if (value.includes('interview')) return 'Interview'
+  if (value.includes('offer')) return 'Offer'
+  if (value.includes('close')) return 'Closed'
+  if (value.includes('progress')) return 'In progress'
+
+  return 'Applied'
+}
+
+function formatUpdatedAt(statusHistory) {
+  const history = Array.isArray(statusHistory) ? statusHistory : []
+
+  if (history.length === 0) {
+    return 'Just now'
+  }
+
+  const lastItem = history[history.length - 1]
+  const rawDate = lastItem?.createdAt ?? lastItem?.date ?? lastItem?.timestamp
+
+  if (!rawDate) {
+    return 'Updated recently'
+  }
+
+  const date = new Date(rawDate)
+  if (Number.isNaN(date.getTime())) {
+    return 'Updated recently'
+  }
+
+  return date.toLocaleDateString()
+}
+
+function mapBackendApplication(dto) {
+  const lastStatusEntry = Array.isArray(dto.statusHistory) && dto.statusHistory.length > 0
+      ? dto.statusHistory[dto.statusHistory.length - 1]
+      : null
+
+  return {
+    id: dto.id,
+    company: dto.company ?? '',
+    title: dto.position ?? '',
+    location: dto.location ?? 'Remote',
+    status: normalizeStatus(lastStatusEntry?.jaStatus),
+    updatedAt: formatUpdatedAt(dto.statusHistory),
+    description: dto.note ?? 'No description provided.',
+    notes: dto.note ?? '',
+    requirements: [],
+    nextStep: 'Continue tracking',
+    dueDate: 'Soon',
+    priority: 'Medium',
+    backend: dto,
+  }
+}
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers ?? {}),
+    },
+    ...options,
+  })
+
+  if (!response.ok) {
+    const message = await response.text().catch(() => '')
+    throw new Error(message || `Request failed with status ${response.status}`)
+  }
+
+  if (response.status === 204) {
+    return null
+  }
+
+  return response.json()
+}
+
 function App() {
   const [screen, setScreen] = useState('dashboard')
   const [selectedApplicationId, setSelectedApplicationId] = useState(null)
@@ -26,29 +112,19 @@ function App() {
     description: '',
   })
 
-  console.log(import.meta.env)
-
-  useEffect(() => {
-    console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL)
-  }, [])
-  
   useEffect(() => {
     const loadApplications = async () => {
       try {
         setLoadingApplications(true)
         setApplicationsError(null)
 
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/applications`)
+        const data = await apiRequest('/api/applications')
+        const mappedApplications = Array.isArray(data) ? data.map(mapBackendApplication) : []
 
-        if (!response.ok) {
-          throw new Error(`Failed to load applications: ${response.status}`)
-        }
+        setApplications(mappedApplications)
 
-        const data = await response.json()
-        setApplications(data)
-
-        if (data.length > 0) {
-          setSelectedApplicationId((currentId) => currentId ?? data[0].id)
+        if (mappedApplications.length > 0) {
+          setSelectedApplicationId((currentId) => currentId ?? mappedApplications[0].id)
         }
       } catch (error) {
         setApplicationsError(error.message)
@@ -138,29 +214,34 @@ function App() {
     setScreen('application')
   }
 
-  const handleCreateApplication = (event) => {
+  const handleCreateApplication = async (event) => {
     event.preventDefault()
 
-    const nextApp = {
-      id: `APP-${String(applications.length + 1001)}`,
-      company: newApplication.company,
-      title: newApplication.title,
-      location: newApplication.location || 'Remote',
-      status: 'Applied',
-      updatedAt: 'Just now',
-      description: newApplication.description || 'New application created.',
-      notes: 'Application added successfully.',
-      requirements: [],
-      nextStep: 'Initial tracking',
-      dueDate: 'Soon',
-      priority: 'Medium',
-    }
+    try {
+      const payload = {
+        userId: 1,
+        company: newApplication.company,
+        position: newApplication.title,
+        note: newApplication.description || '',
+        jaStatus: 'Applied',
+        jaStatusNote: newApplication.location || 'Remote',
+      }
 
-    setApplications([nextApp, ...applications])
-    setSelectedApplicationId(nextApp.id)
-    setNewApplication({ company: '', title: '', location: '', description: '' })
-    setCreateOpen(false)
-    setScreen('application')
+      const created = await apiRequest('/api/applications', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+
+      const mappedCreated = mapBackendApplication(created)
+
+      setApplications((current) => [mappedCreated, ...current])
+      setSelectedApplicationId(mappedCreated.id)
+      setNewApplication({ company: '', title: '', location: '', description: '' })
+      setCreateOpen(false)
+      setScreen('application')
+    } catch (error) {
+      setApplicationsError(error.message)
+    }
   }
 
   if (loadingApplications) {
