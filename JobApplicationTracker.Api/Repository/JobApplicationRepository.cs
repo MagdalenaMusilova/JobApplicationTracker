@@ -19,28 +19,31 @@ public class JobApplicationRepository : IJobApplicationRepository
     
     public async Task<IEnumerable<JobApplicationDo>> GetAllAsync()
     {
-        return await _context.JobApplications
+        var res = await _context.JobApplications
             .AsNoTracking()
-            .Select(ja => _mapper.Map<JobApplicationDo>(ja))
+            .Include(ja => ja.StatusHistory)
             .ToListAsync();
+        return res.Select(ja => _mapper.Map<JobApplicationDo>(ja));
     }
 
     public async Task<IEnumerable<JobApplicationDo>> GetAllByUserAsync(int userId)
     {
-        return await _context.JobApplications
+        var res = await _context.JobApplications
             .AsNoTracking()
             .Where(ja => ja.UserId == userId)
-            .Select(ja => _mapper.Map<JobApplicationDo>(ja))
+            .Include(ja => ja.StatusHistory)
             .ToListAsync();
+        return res.Select(ja => _mapper.Map<JobApplicationDo>(ja));
     }
 
     public async Task<JobApplicationDo?> GetByIdAsync(int id)
     {
-        return await _context.JobApplications
+        var res = await _context.JobApplications
             .AsNoTracking()
             .Where(ja => ja.Id == id)
-            .Select(ja => _mapper.Map<JobApplicationDo>(ja))
+            .Include(ja => ja.StatusHistory)
             .FirstOrDefaultAsync();    
+        return res is null ? null : _mapper.Map<JobApplicationDo>(res);
     }
 
     public async Task<JobApplicationDo> AddAsync(JobApplicationDo application)
@@ -65,7 +68,7 @@ public class JobApplicationRepository : IJobApplicationRepository
         existingApplication.UserId = application.UserId;
         existingApplication.Company = application.Company;
         existingApplication.Position = application.Position;
-        existingApplication.StatusHistory = application.StatusHistory.Select(e => _mapper.Map<JAStatusEntry>(e));
+        existingApplication.StatusHistory = application.StatusHistory.Select(e => _mapper.Map<JAStatusEntry>(e)).ToList();
         existingApplication.Note = application.Note;
 
         await _context.SaveChangesAsync();

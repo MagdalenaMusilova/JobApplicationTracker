@@ -13,6 +13,7 @@ public class JAStatusEntryService : IJAStatusEntryService
     public JAStatusEntryService(IJAStatusEntryRepository jaStatusEntryRepository, IMapper mapper)
     {
         _jaStatusEntryRepository = jaStatusEntryRepository;
+        _mapper = mapper;   
     }
 
     public async Task<JAStatusEntryDto?> GetByIdAsync(int id)

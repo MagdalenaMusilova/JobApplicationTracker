@@ -6,6 +6,6 @@ public class JobApplication
     public int UserId { get; set; }
     public string Company { get; set; }
     public string Position { get; set; }
-    public IEnumerable<JAStatusEntry> StatusHistory { get; set; }
+    public ICollection<JAStatusEntry> StatusHistory { get; set; } = new List<JAStatusEntry>();
     public string? Note { get; set; }
 }
