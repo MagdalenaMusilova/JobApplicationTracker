@@ -11,6 +11,8 @@ import ApplicationDetailPage from './pages/ApplicationDetailPage'
 import { profile } from './data/appData'
 import { computeAutomaticMatchScore, statusSteps } from './utils/matchScore'
 
+const TOKEN_STORAGE_KEY = 'job-tracker-token'
+
 function getApiBaseUrl() {
   const baseUrl = import.meta.env.VITE_API_BASE_URL
 
@@ -55,9 +57,10 @@ function formatUpdatedAt(statusHistory) {
 }
 
 function mapBackendApplication(dto) {
-  const lastStatusEntry = Array.isArray(dto.statusHistory) && dto.statusHistory.length > 0
-      ? dto.statusHistory[dto.statusHistory.length - 1]
-      : null
+  const lastStatusEntry =
+      Array.isArray(dto.statusHistory) && dto.statusHistory.length > 0
+          ? dto.statusHistory[dto.statusHistory.length - 1]
+          : null
 
   return {
     id: dto.id,
@@ -76,10 +79,23 @@ function mapBackendApplication(dto) {
   }
 }
 
-async function apiRequest(path, options = {}) {
+function getStoredToken() {
+  return localStorage.getItem(TOKEN_STORAGE_KEY) ?? ''
+}
+
+function setStoredToken(token) {
+  if (token) {
+    localStorage.setItem(TOKEN_STORAGE_KEY, token)
+  } else {
+    localStorage.removeItem(TOKEN_STORAGE_KEY)
+  }
+}
+
+async function apiRequest(path, options = {}, token = '') {
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers ?? {}),
     },
     ...options,
@@ -98,6 +114,15 @@ async function apiRequest(path, options = {}) {
 }
 
 function App() {
+  const [token, setToken] = useState(() => getStoredToken())
+  const [authMode, setAuthMode] = useState('signin')
+  const [authForm, setAuthForm] = useState({
+    username: '',
+    password: '',
+  })
+  const [authError, setAuthError] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
+
   const [screen, setScreen] = useState('dashboard')
   const [selectedApplicationId, setSelectedApplicationId] = useState(null)
   const [applications, setApplications] = useState([])
@@ -113,12 +138,17 @@ function App() {
   })
 
   useEffect(() => {
+    if (!token) {
+      setLoadingApplications(false)
+      return
+    }
+
     const loadApplications = async () => {
       try {
         setLoadingApplications(true)
         setApplicationsError(null)
 
-        const data = await apiRequest('/api/applications')
+        const data = await apiRequest('/api/applications', {}, token)
         const mappedApplications = Array.isArray(data) ? data.map(mapBackendApplication) : []
 
         setApplications(mappedApplications)
@@ -134,7 +164,56 @@ function App() {
     }
 
     loadApplications()
-  }, [])
+  }, [token])
+
+  const handleAuthSubmit = async (event) => {
+    event.preventDefault()
+
+    try {
+      setAuthLoading(true)
+      setAuthError('')
+
+      if (authMode === 'signup') {
+        await apiRequest('/api/users', {
+          method: 'POST',
+          body: JSON.stringify({
+            username: authForm.username,
+            password: authForm.password,
+          }),
+        })
+      }
+
+      const response = await apiRequest('/api/auth/signin', {
+        method: 'POST',
+        body: JSON.stringify({
+          username: authForm.username,
+          password: authForm.password,
+        }),
+      })
+
+      const nextToken = response?.token ?? response?.Token
+
+      if (!nextToken) {
+        throw new Error('Authentication succeeded, but no token was returned.')
+      }
+
+      setStoredToken(nextToken)
+      setToken(nextToken)
+      setAuthForm({ username: '', password: '' })
+    } catch (error) {
+      setAuthError(error.message)
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleLogout = () => {
+    setStoredToken('')
+    setToken('')
+    setApplications([])
+    setSelectedApplicationId(null)
+    setScreen('dashboard')
+  }
 
   const selectedApplication = useMemo(() => {
     if (!applications.length || selectedApplicationId == null) return null
@@ -227,10 +306,14 @@ function App() {
         jaStatusNote: newApplication.location || 'Remote',
       }
 
-      const created = await apiRequest('/api/applications', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      })
+      const created = await apiRequest(
+          '/api/applications',
+          {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          },
+          token,
+      )
 
       const mappedCreated = mapBackendApplication(created)
 
@@ -244,10 +327,70 @@ function App() {
     }
   }
 
+  if (!token) {
+    return (
+        <div className="auth-shell">
+          <section className="auth-panel card">
+            <p className="eyebrow">Job Application Tracker</p>
+            <h1>{authMode === 'signup' ? 'Create your account' : 'Welcome back'}</h1>
+            <p className="muted">
+              {authMode === 'signup'
+                  ? 'Create an account to start tracking applications.'
+                  : 'Log in to access your job applications.'}
+            </p>
+
+            <form className="auth-form" onSubmit={handleAuthSubmit}>
+              <label>
+                Username
+                <input
+                    type="text"
+                    value={authForm.username}
+                    onChange={(e) => setAuthForm({ ...authForm, username: e.target.value })}
+                    required
+                    autoComplete="username"
+                />
+              </label>
+
+              <label>
+                Password
+                <input
+                    type="password"
+                    value={authForm.password}
+                    onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
+                    required
+                    autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
+                />
+              </label>
+
+              {authError && <p className="auth-error">{authError}</p>}
+
+              <div className="button-row">
+                <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={() => setAuthMode(authMode === 'signup' ? 'signin' : 'signup')}
+                >
+                  {authMode === 'signup' ? 'I already have an account' : 'Create an account'}
+                </button>
+                <button type="submit" className="primary-btn" disabled={authLoading}>
+                  {authLoading ? 'Please wait...' : authMode === 'signup' ? 'Sign up' : 'Log in'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+    )
+  }
+
   if (loadingApplications) {
     return (
         <div className="shell">
-          <Sidebar screen={screen} setScreen={setScreen} setCreateOpen={setCreateOpen} />
+          <Sidebar
+              screen={screen}
+              setScreen={setScreen}
+              setCreateOpen={setCreateOpen}
+              onLogout={handleLogout}
+          />
           <main className="content">
             <section className="page">
               <h1>Loading applications...</h1>
@@ -260,7 +403,12 @@ function App() {
   if (applicationsError) {
     return (
         <div className="shell">
-          <Sidebar screen={screen} setScreen={setScreen} setCreateOpen={setCreateOpen} />
+          <Sidebar
+              screen={screen}
+              setScreen={setScreen}
+              setCreateOpen={setCreateOpen}
+              onLogout={handleLogout}
+          />
           <main className="content">
             <section className="page">
               <h1>Couldn’t load applications</h1>
@@ -273,7 +421,12 @@ function App() {
 
   return (
       <div className="shell">
-        <Sidebar screen={screen} setScreen={setScreen} setCreateOpen={setCreateOpen} />
+        <Sidebar
+            screen={screen}
+            setScreen={setScreen}
+            setCreateOpen={setCreateOpen}
+            onLogout={handleLogout}
+        />
 
         <main className="content">
           {screen === 'dashboard' && (
@@ -298,11 +451,7 @@ function App() {
           )}
 
           {screen === 'todos' && (
-              <TodosPage
-                  todoItems={todoItems}
-                  todoCalendar={todoCalendar}
-                  setCreateOpen={setCreateOpen}
-              />
+              <TodosPage todoItems={todoItems} todoCalendar={todoCalendar} setCreateOpen={setCreateOpen} />
           )}
 
           {screen === 'profile' && <ProfilePage profile={profile} />}

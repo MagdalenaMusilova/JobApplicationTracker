@@ -1,4 +1,4 @@
-﻿function Sidebar({ screen, setScreen, setCreateOpen }) {
+﻿function Sidebar({ screen, setScreen, setCreateOpen, onLogout }) {
     return (
         <aside className="sidebar">
             <div>
@@ -40,6 +40,9 @@
             <div className="sidebar-actions">
                 <button type="button" className="primary-btn" onClick={() => setCreateOpen(true)}>
                     + New Application
+                </button>
+                <button className="secondary-btn" onClick={onLogout}>
+                    Log out
                 </button>
             </div>
         </aside>
