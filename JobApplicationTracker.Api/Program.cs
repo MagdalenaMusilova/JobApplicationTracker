@@ -12,11 +12,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<UserDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<JobApplicationDbContext>(options =>
+    options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<JAStatusEntryDbContext>(options =>
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IJobApplicationRepository, JobApplicationRepository>();
+builder.Services.AddScoped<IJobApplicationService, JobApplicationService>();
+builder.Services.AddScoped<IJAStatusEntryService, JAStatusEntryService>();
+builder.Services.AddScoped<IJAStatusEntryRepository, JAStatusEntryRepository>();
 
 
 builder.Services.AddAutoMapper(

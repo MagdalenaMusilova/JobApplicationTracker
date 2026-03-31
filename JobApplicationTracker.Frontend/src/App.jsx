@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 
 import Sidebar from './components/Sidebar'
@@ -8,16 +8,16 @@ import ApplicationsPage from './pages/ApplicationsPage'
 import TodosPage from './pages/TodosPage'
 import ProfilePage from './pages/ProfilePage'
 import ApplicationDetailPage from './pages/ApplicationDetailPage'
-import { initialApplications, profile } from './data/appData'
+import { profile } from './data/appData'
 import { computeAutomaticMatchScore, statusSteps } from './utils/matchScore'
 
 function App() {
   const [screen, setScreen] = useState('dashboard')
-  const [selectedApplicationId, setSelectedApplicationId] = useState(initialApplications[0].id)
-  const [applications, setApplications] = useState(initialApplications)
+  const [selectedApplicationId, setSelectedApplicationId] = useState(null)
+  const [applications, setApplications] = useState([])
+  const [loadingApplications, setLoadingApplications] = useState(true)
+  const [applicationsError, setApplicationsError] = useState(null)
   const [createOpen, setCreateOpen] = useState(false)
-  const [filters, setFilters] = useState('all')
-  const [searchText, setSearchText] = useState('')
 
   const [newApplication, setNewApplication] = useState({
     company: '',
@@ -26,30 +26,49 @@ function App() {
     description: '',
   })
 
-  const selectedApplication = useMemo(
-      () => applications.find((item) => item.id === selectedApplicationId) ?? applications[0],
-      [applications, selectedApplicationId],
-  )
+  console.log(import.meta.env)
+
+  useEffect(() => {
+    console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL)
+  }, [])
+  
+  useEffect(() => {
+    const loadApplications = async () => {
+      try {
+        setLoadingApplications(true)
+        setApplicationsError(null)
+
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/applications`)
+
+        if (!response.ok) {
+          throw new Error(`Failed to load applications: ${response.status}`)
+        }
+
+        const data = await response.json()
+        setApplications(data)
+
+        if (data.length > 0) {
+          setSelectedApplicationId((currentId) => currentId ?? data[0].id)
+        }
+      } catch (error) {
+        setApplicationsError(error.message)
+      } finally {
+        setLoadingApplications(false)
+      }
+    }
+
+    loadApplications()
+  }, [])
+
+  const selectedApplication = useMemo(() => {
+    if (!applications.length || selectedApplicationId == null) return null
+    return applications.find((item) => item.id === selectedApplicationId) ?? applications[0] ?? null
+  }, [applications, selectedApplicationId])
 
   const selectedMatchScore = useMemo(() => {
     if (!selectedApplication) return 0
     return computeAutomaticMatchScore(selectedApplication, profile.skills)
   }, [selectedApplication])
-
-  const filteredApplications = useMemo(() => {
-    const normalizedSearch = searchText.trim().toLowerCase()
-
-    return applications.filter((app) => {
-      const matchesStatus = filters === 'all' || app.status === filters
-      const matchesSearch =
-          normalizedSearch.length === 0 ||
-          `${app.company} ${app.title} ${app.description} ${app.notes} ${app.status}`
-              .toLowerCase()
-              .includes(normalizedSearch)
-
-      return matchesStatus && matchesSearch
-    })
-  }, [applications, filters, searchText])
 
   const todoItems = useMemo(() => {
     return applications
@@ -144,6 +163,33 @@ function App() {
     setScreen('application')
   }
 
+  if (loadingApplications) {
+    return (
+        <div className="shell">
+          <Sidebar screen={screen} setScreen={setScreen} setCreateOpen={setCreateOpen} />
+          <main className="content">
+            <section className="page">
+              <h1>Loading applications...</h1>
+            </section>
+          </main>
+        </div>
+    )
+  }
+
+  if (applicationsError) {
+    return (
+        <div className="shell">
+          <Sidebar screen={screen} setScreen={setScreen} setCreateOpen={setCreateOpen} />
+          <main className="content">
+            <section className="page">
+              <h1>Couldn’t load applications</h1>
+              <p>{applicationsError}</p>
+            </section>
+          </main>
+        </div>
+    )
+  }
+
   return (
       <div className="shell">
         <Sidebar screen={screen} setScreen={setScreen} setCreateOpen={setCreateOpen} />
@@ -163,12 +209,8 @@ function App() {
 
           {screen === 'applications' && (
               <ApplicationsPage
-                  applications={filteredApplications}
+                  applications={applications}
                   statusSteps={statusSteps}
-                  filters={filters}
-                  setFilters={setFilters}
-                  searchText={searchText}
-                  setSearchText={setSearchText}
                   navigateToApplication={navigateToApplication}
                   setCreateOpen={setCreateOpen}
               />
@@ -196,7 +238,11 @@ function App() {
         </main>
 
         {createOpen && (
-            <Modal title="Create new application" subtitle="Quick entry form for adding a job in seconds." onClose={() => setCreateOpen(false)}>
+            <Modal
+                title="Create new application"
+                subtitle="Quick entry form for adding a job in seconds."
+                onClose={() => setCreateOpen(false)}
+            >
               <form className="auth-form" onSubmit={handleCreateApplication}>
                 <label>
                   Company

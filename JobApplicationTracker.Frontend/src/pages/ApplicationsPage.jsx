@@ -1,15 +1,30 @@
-﻿import ApplicationCard from '../components/ApplicationCard'
+﻿import { useMemo, useState } from 'react'
+import ApplicationCard from '../components/ApplicationCard'
 
 function ApplicationsPage({
                               applications,
                               statusSteps,
-                              filters,
-                              setFilters,
-                              searchText,
-                              setSearchText,
                               navigateToApplication,
                               setCreateOpen,
                           }) {
+    const [filters, setFilters] = useState('all')
+    const [searchText, setSearchText] = useState('')
+
+    const filteredApplications = useMemo(() => {
+        const normalizedSearch = searchText.trim().toLowerCase()
+
+        return applications.filter((app) => {
+            const matchesStatus = filters === 'all' || app.status === filters
+            const matchesSearch =
+                normalizedSearch.length === 0 ||
+                `${app.company} ${app.title} ${app.description} ${app.notes} ${app.status}`
+                    .toLowerCase()
+                    .includes(normalizedSearch)
+
+            return matchesStatus && matchesSearch
+        })
+    }, [applications, filters, searchText])
+
     return (
         <section className="page">
             <div className="page-header">
@@ -61,7 +76,7 @@ function ApplicationsPage({
             </div>
 
             <div className="grid">
-                {applications.map((app) => (
+                {filteredApplications.map((app) => (
                     <ApplicationCard
                         key={app.id}
                         app={app}
