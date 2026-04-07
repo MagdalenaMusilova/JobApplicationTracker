@@ -28,7 +28,9 @@ builder.Services.AddScoped<IJobApplicationRepository, JobApplicationRepository>(
 builder.Services.AddScoped<IJobApplicationService, JobApplicationService>();
 builder.Services.AddScoped<IJAStatusEntryService, JAStatusEntryService>();
 builder.Services.AddScoped<IJAStatusEntryRepository, JAStatusEntryRepository>();
+builder.Services.AddScoped<IAiAgentService, OpenAiAgentService>();
 
+builder.Services.AddHttpClient<OpenAiAgentService>();
 
 builder.Services.AddAutoMapper(
     cfg => { },
