@@ -1,4 +1,5 @@
 ﻿using JobApplicationTracker.DTOs;
+using JobApplicationTracker.Models.Users;
 using JobApplicationTracker.Services;
 using Microsoft.AspNetCore.Mvc;
 

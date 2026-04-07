@@ -9,12 +9,10 @@ namespace JobApplicationTracker.Controllers;
 public class JobApplicationController : ControllerBase
 {
     private readonly IJobApplicationService _jobApplicationService; 
-    private readonly IJAStatusEntryService _jaStatusEntryService;
     
-    public JobApplicationController(IJobApplicationService jobApplicationService, IJAStatusEntryService jaStatusEntryService)
+    public JobApplicationController(IJobApplicationService jobApplicationService)
     {
         _jobApplicationService = jobApplicationService;
-        _jaStatusEntryService = jaStatusEntryService;
     }
     
     [HttpGet]
