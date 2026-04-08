@@ -32,6 +32,9 @@ builder.Services.AddScoped<IAiAgentService, OpenAiAgentService>();
 builder.Services.AddScoped<IResumeService, ResumeService>();
 builder.Services.AddScoped<IPdfReader, PdfReader>();
 builder.Services.AddScoped<IResumeDataExtractor, AiResumeDataExtractor>();
+builder.Services.AddScoped<IJobListingExtractor, AiJobListingExtractor>();
+builder.Services.AddScoped<IJobListingService, JobListingService>();
+builder.Services.AddScoped<IJobMatchingService, JobMatchingService>();
 
 builder.Services.AddHttpClient<OpenAiAgentService>();
 

@@ -8,7 +8,7 @@ public class JobApplication
     public int UserId { get; set; }
     public string Company { get; set; }
     public string Position { get; set; }
-    public JobListing JobListing { get; set; }
+    public JobListingDto JobListingDto { get; set; }
     public ICollection<JAStatusEntry> StatusHistory { get; set; } = new List<JAStatusEntry>();
     public string? Note { get; set; }
 }

@@ -11,7 +11,85 @@ public class UserResumeDto
     public ICollection<TrainingDto> Trainings { get; set; } = new List<TrainingDto>();
     public ICollection<JobSkillDto> Skills { get; set; } = new List<JobSkillDto>();
     public ICollection<SkillUsageDto> UncategorizedSkillUsages { get; set; } = new List<SkillUsageDto>();
+    
+    public override string ToString()
+    {
+        static string Pluralize(int count, string singular, string plural) =>
+            count == 1 ? singular : plural;
+
+        static string JoinOrNone(IEnumerable<string>? items)
+        {
+            var list = items?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct()
+                .ToList();
+
+            return list is { Count: > 0 }
+                ? string.Join(", ", list)
+                : "none";
+        }
+
+        static string Shorten(string? text, int maxLength)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
+
+            text = text.Trim();
+            return text.Length <= maxLength ? text : text[..maxLength].TrimEnd() + "...";
+        }
+
+        var workExperiences = WorkExperiences?.ToList() ?? [];
+        var educationItems = Education?.ToList() ?? [];
+        var trainings = Trainings?.ToList() ?? [];
+        var skills = Skills?.ToList() ?? [];
+        var uncategorizedUsages = UncategorizedSkillUsages?.ToList() ?? [];
+
+        var workExperienceCount = workExperiences.Count;
+        var educationCount = educationItems.Count;
+        var trainingCount = trainings.Count;
+        var skillCount = skills.Count;
+        var uncategorizedSkillUsageCount = uncategorizedUsages.Count;
+
+        var latestRole = workExperiences
+            .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Position) || !string.IsNullOrWhiteSpace(x.Company));
+
+        var latestRoleText = latestRole is null
+            ? "no listed work experience"
+            : string.Join(" at ",
+                new[]
+                {
+                    Shorten(latestRole.Position, 60),
+                    Shorten(latestRole.Company, 60)
+                }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+        var topSkills = JoinOrNone(
+            skills
+                .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                .Select(x => x.Name!)
+                .Take(5));
+
+        var educationSummary = educationCount == 0
+            ? "no education listed"
+            : $"{educationCount} {Pluralize(educationCount, "education entry", "education entries")}";
+
+        var trainingSummary = trainingCount == 0
+            ? "no training listed"
+            : $"{trainingCount} {Pluralize(trainingCount, "training", "trainings")}";
+
+        return
+            $"Resume for user {UserId?.ToString() ?? "unknown"}: " +
+            $"{workExperienceCount} {Pluralize(workExperienceCount, "work experience", "work experiences")}, " +
+            $"{educationSummary}, " +
+            $"{trainingSummary}, " +
+            $"{skillCount} {Pluralize(skillCount, "skill", "skills")}. " +
+            $"Most recent role: {latestRoleText}. " +
+            $"Top skills: {topSkills}. " +
+            $"Uncategorized skill notes: {uncategorizedSkillUsageCount} {Pluralize(uncategorizedSkillUsageCount, "item", "items")}.";
+    }
 }
+
+//todo split into separate DTOs
 
 public class WorkExperienceDto
 {
