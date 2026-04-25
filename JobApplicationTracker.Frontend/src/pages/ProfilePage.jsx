@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+﻿import { useRef, useState } from 'react'
 
 const emptyEntryMessages = {
     education: 'No education entries yet.',
@@ -7,8 +7,8 @@ const emptyEntryMessages = {
     skills: 'No skills yet.',
 }
 
-function ProfilePage({ profile }) {
-    const [draft, setDraft] = useState(() => ({
+function buildInitialDraft(profile) {
+    return {
         account: {
             username: profile.account?.username ?? '',
             email: profile.account?.email ?? '',
@@ -20,27 +20,21 @@ function ProfilePage({ profile }) {
         trainings: profile.trainings ?? [],
         skills: profile.skills ?? [],
         notes: profile.notes ?? '',
-    }))
+    }
+}
 
-    const [editing, setEditing] = useState({
-        account: false,
-        aboutMe: false,
-        notes: false,
-        education: false,
-        workExperiences: false,
-        trainings: false,
-        skills: false,
-    })
+function ProfilePage({ profile }) {
+    const [draft, setDraft] = useState(() => buildInitialDraft(profile))
+    const [savedDraft, setSavedDraft] = useState(() => buildInitialDraft(profile))
+    const [isEditing, setIsEditing] = useState(false)
+    const [saved, setSaved] = useState(false)
 
-    const [saveState, setSaveState] = useState({
-        account: false,
-        aboutMe: false,
-        notes: false,
-        education: {},
-        workExperiences: {},
-        trainings: {},
-        skills: {},
-    })
+    // Resume upload state
+    const [resumeFile, setResumeFile] = useState(null)       // uploaded file
+    const [extractedData, setExtractedData] = useState(null) // parsed result
+    const [isExtracting, setIsExtracting] = useState(false)
+    const [resumeError, setResumeError] = useState('')
+    const fileInputRef = useRef(null)
 
     const formatDate = (value) => {
         if (!value) return '—'
@@ -56,103 +50,119 @@ function ProfilePage({ profile }) {
             .map((item) => item.trim())
             .filter(Boolean)
 
-    const startEditing = (section) => {
-        setEditing((current) => ({ ...current, [section]: true }))
+    // ── Batch edit controls ──────────────────────────────────────────────────
+
+    const startEditing = () => {
+        setSaved(false)
+        setIsEditing(true)
     }
 
-    const stopEditing = (section) => {
-        setEditing((current) => ({ ...current, [section]: false }))
+    const cancelEditing = () => {
+        setDraft(savedDraft)
+        setIsEditing(false)
     }
+
+    const saveAll = () => {
+        setSavedDraft(draft)
+        setSaved(true)
+        setIsEditing(false)
+    }
+
+    // ── Field updaters ───────────────────────────────────────────────────────
 
     const updateAccount = (field, value) => {
-        setDraft((current) => ({
-            ...current,
-            account: { ...current.account, [field]: value },
-        }))
-        setSaveState((current) => ({ ...current, account: false }))
+        setDraft((cur) => ({ ...cur, account: { ...cur.account, [field]: value } }))
+    }
+
+    const updateField = (field, value) => {
+        setDraft((cur) => ({ ...cur, [field]: value }))
     }
 
     const updateItem = (section, index, field, value) => {
-        setDraft((current) => ({
-            ...current,
-            [section]: current[section].map((item, itemIndex) =>
-                itemIndex === index ? { ...item, [field]: value } : item,
-            ),
+        setDraft((cur) => ({
+            ...cur,
+            [section]: cur[section].map((item, i) => (i === index ? { ...item, [field]: value } : item)),
         }))
-        setSaveState((current) => ({
-            ...current,
-            [section]: { ...current[section], [index]: false },
-        }))
-    }
-
-    const updateNotes = (value) => {
-        setDraft((current) => ({ ...current, notes: value }))
-        setSaveState((current) => ({ ...current, notes: false }))
     }
 
     const removeItem = (section, index) => {
-        setDraft((current) => ({
-            ...current,
-            [section]: current[section].filter((_, itemIndex) => itemIndex !== index),
-        }))
-        setSaveState((current) => {
-            const updatedSection = { ...current[section] }
-            delete updatedSection[index]
-            return { ...current, [section]: updatedSection }
-        })
+        setDraft((cur) => ({ ...cur, [section]: cur[section].filter((_, i) => i !== index) }))
     }
 
     const addItem = (section, item) => {
-        setDraft((current) => ({
-            ...current,
-            [section]: [...current[section], { id: crypto.randomUUID(), ...item }],
-        }))
-        setEditing((current) => ({ ...current, [section]: true }))
+        setDraft((cur) => ({ ...cur, [section]: [...cur[section], { id: crypto.randomUUID(), ...item }] }))
     }
 
-    const saveAccount = () => {
-        setSaveState((current) => ({ ...current, account: true }))
-        setEditing((current) => ({ ...current, account: false }))
+    // ── Resume upload ────────────────────────────────────────────────────────
+
+    const handleFileChange = (e) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setResumeFile(file)
+        setExtractedData(null) // new file invalidates old extraction
+        setResumeError('')
     }
 
-    const saveSection = (section) => {
-        setSaveState((current) => ({ ...current, [section]: true }))
-        setEditing((current) => ({ ...current, [section]: false }))
+    const handleExtract = async () => {
+        if (!resumeFile) return
+        setIsExtracting(true)
+        setResumeError('')
+        try {
+            const formData = new FormData()
+            formData.append('File', resumeFile)
+            const res = await fetch('/api/resume/extract', { method: 'POST', body: formData })
+            if (!res.ok) throw new Error(await res.text())
+            const data = await res.json()
+            setExtractedData(data)
+        } catch (err) {
+            setResumeError(err.message || 'Failed to extract resume.')
+        } finally {
+            setIsExtracting(false)
+        }
     }
 
-    const saveItem = (section, index) => {
-        setSaveState((current) => ({
-            ...current,
-            [section]: { ...current[section], [index]: true },
-        }))
-        setEditing((current) => ({ ...current, [section]: false }))
+    const resetResume = () => {
+        setResumeFile(null)
+        setExtractedData(null)
+        setResumeError('')
+        if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
-    const stats = useMemo(
-        () => [
-            {
-                label: 'Education',
-                value: draft.education.length,
-                hint: draft.education.length === 1 ? 'entry' : 'entries',
-            },
-            {
-                label: 'Work',
-                value: draft.workExperiences.length,
-                hint: draft.workExperiences.length === 1 ? 'entry' : 'entries',
-            },
-            {
-                label: 'Trainings',
-                value: draft.trainings.length,
-                hint: draft.trainings.length === 1 ? 'entry' : 'entries',
-            },
-            {
-                label: 'Skills',
-                value: draft.skills.length,
-                hint: draft.skills.length === 1 ? 'entry' : 'entries',
-            },
-        ],
-        [draft.education.length, draft.workExperiences.length, draft.trainings.length, draft.skills.length],
-    )
+    const applyResume = (merge) => {
+        const extracted = extractedData
+        setDraft((cur) => {
+            if (!merge) {
+                return { ...buildInitialDraft(extracted), account: cur.account }
+            }
+            return {
+                ...cur,
+                aboutMe: cur.aboutMe || extracted.aboutMe || '',
+                education: [
+                    ...cur.education,
+                    ...(extracted.education ?? []).map((e) => ({ id: crypto.randomUUID(), ...e })),
+                ],
+                workExperiences: [
+                    ...cur.workExperiences,
+                    ...(extracted.workExperiences ?? []).map((e) => ({ id: crypto.randomUUID(), ...e })),
+                ],
+                trainings: [
+                    ...cur.trainings,
+                    ...(extracted.trainings ?? []).map((e) => ({ id: crypto.randomUUID(), ...e })),
+                ],
+                skills: [
+                    ...cur.skills,
+                    ...(extracted.skills ?? []).map((e) => ({ id: crypto.randomUUID(), ...e })),
+                ],
+                notes: cur.notes
+                    ? `${cur.notes}\n\n--- From resume ---\n${extracted.notes ?? ''}`
+                    : extracted.notes ?? '',
+            }
+        })
+        resetResume()
+        setIsEditing(true)
+    }
+
+    // ── Render helpers ───────────────────────────────────────────────────────
 
     const renderTextValue = (value) => <span className="read-only-value">{value || '—'}</span>
 
@@ -168,26 +178,15 @@ function ProfilePage({ profile }) {
                     </p>
                 </div>
 
-                <div className="section-actions">
-                    {editing[sectionKey] ? (
-                        <>
-                            <button type="button" className="secondary-btn" onClick={() => saveSection(sectionKey)}>
-                                {saveState[sectionKey] === true ? 'Saved' : 'Save'}
-                            </button>
-                            <button type="button" className="secondary-btn" onClick={() => stopEditing(sectionKey)}>
-                                Done
-                            </button>
-                        </>
-                    ) : (
-                        <button type="button" className="secondary-btn" onClick={() => startEditing(sectionKey)}>
-                            Edit
-                        </button>
-                    )}
-
-                    <button type="button" className="secondary-btn" onClick={() => addItem(sectionKey, createItem())}>
+                {isEditing && (
+                    <button
+                        type="button"
+                        className="secondary-btn"
+                        onClick={() => addItem(sectionKey, createItem())}
+                    >
                         + {addButtonLabel}
                     </button>
-                </div>
+                )}
             </div>
 
             <div className="stack-list">
@@ -204,26 +203,16 @@ function ProfilePage({ profile }) {
                                     <h3>{item.degree || item.name || item.position || 'Untitled entry'}</h3>
                                     <p className="muted">{summarizeItem(item)}</p>
                                 </div>
-                                <div className="item-status-row">
-                                    {saveState[sectionKey]?.[index] ? <span className="save-pill">Saved</span> : null}
-                                </div>
                             </div>
 
-                            {editing[sectionKey] ? (
+                            {isEditing ? (
                                 <div className="editable-item-stack">{renderFields(item, index, false)}</div>
                             ) : (
                                 <div className="read-only-stack">{renderFields(item, index, true)}</div>
                             )}
 
-                            {editing[sectionKey] ? (
+                            {isEditing && (
                                 <div className="item-actions">
-                                    <button
-                                        type="button"
-                                        className="secondary-btn"
-                                        onClick={() => saveItem(sectionKey, index)}
-                                    >
-                                        {saveState[sectionKey]?.[index] ? 'Saved' : 'Save'}
-                                    </button>
                                     <button
                                         type="button"
                                         className="secondary-btn danger"
@@ -232,7 +221,7 @@ function ProfilePage({ profile }) {
                                         Delete
                                     </button>
                                 </div>
-                            ) : null}
+                            )}
                         </div>
                     ))
                 )}
@@ -242,6 +231,7 @@ function ProfilePage({ profile }) {
 
     return (
         <section className="page profile-page">
+            {/* ── Hero ── */}
             <div className="page-header profile-hero card">
                 <div className="profile-hero-copy">
                     <span className="eyebrow">Profile</span>
@@ -258,46 +248,102 @@ function ProfilePage({ profile }) {
                         <p className="muted">{draft.account.email || 'your.email@example.com'}</p>
                     </div>
                 </div>
+
+                <div className="profile-batch-toolbar">
+                    {isEditing ? (
+                        <>
+                            <button type="button" className="primary-btn" onClick={saveAll}>
+                                Save all
+                            </button>
+                            <button type="button" className="secondary-btn" onClick={cancelEditing}>
+                                Cancel
+                            </button>
+                        </>
+                    ) : (
+                        <button type="button" className="primary-btn" onClick={startEditing}>
+                            {saved ? '✓ Saved — Edit again' : 'Edit profile'}
+                        </button>
+                    )}
+                </div>
             </div>
 
-{/*            <div className="profile-summary-grid">
-                {stats.map((stat) => (
-                    <article key={stat.label} className="card profile-summary-card">
-                        <span className="stat-kicker">{stat.label}</span>
-                        <strong className="stat-value">{stat.value}</strong>
-                        <span className="stat-label">{stat.hint}</span>
-                    </article>
-                ))}
-            </div>*/}
-
             <div className="profile-layout">
+                {/* ── Resume upload ── */}
+                <article className="card profile-card profile-resume-card">
+                    <div className="section-header compact">
+                        <div>
+                            <h2>Import from PDF resume</h2>
+                            <p className="muted">Upload your CV to populate or enrich your profile automatically.</p>
+                        </div>
+                    </div>
+
+                    {/* Row 1: file picker + extract */}
+                    <div className="resume-upload-area">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".pdf"
+                            id="resume-file-input"
+                            className="resume-file-input"
+                            onChange={handleFileChange}
+                        />
+                        <label htmlFor="resume-file-input" className="resume-file-label">
+                            {resumeFile ? resumeFile.name : 'Choose PDF…'}
+                        </label>
+
+                        <button
+                            type="button"
+                            className="secondary-btn"
+                            onClick={handleExtract}
+                            disabled={!resumeFile || isExtracting || !!extractedData}
+                        >
+                            {isExtracting ? 'Extracting…' : 'Extract'}
+                        </button>
+                    </div>
+
+                    {/* Row 2: add + merge */}
+                    <div className="resume-apply-area">
+                        <button
+                            type="button"
+                            className="primary-btn"
+                            onClick={() => applyResume(false)}
+                            disabled={!extractedData}
+                        >
+                            Add
+                        </button>
+
+                        <button
+                            type="button"
+                            className="secondary-btn"
+                            onClick={() => applyResume(true)}
+                            disabled={!extractedData}
+                        >
+                            Merge
+                        </button>
+
+                        {extractedData && (
+                            <span className="resume-ready-badge">✓ Extracted</span>
+                        )}
+                    </div>
+
+                    {resumeError && (
+                        <p className="resume-error">{resumeError}</p>
+                    )}
+                </article>
+
+                {/* ── Account ── */}
                 <article className="card profile-card profile-card-primary">
                     <div className="section-header compact">
                         <div>
                             <h2>Account</h2>
                             <p className="muted">Keep your login details up to date.</p>
                         </div>
-
-                        {editing.account ? (
-                            <>
-                                <button type="button" className="secondary-btn" onClick={saveAccount}>
-                                    {saveState.account ? 'Saved' : 'Save'}
-                                </button>
-                                <button type="button" className="secondary-btn" onClick={() => stopEditing('account')}>
-                                    Done
-                                </button>
-                            </>
-                        ) : (
-                            <button type="button" className="secondary-btn" onClick={() => startEditing('account')}>
-                                Edit
-                            </button>
-                        )}
                     </div>
 
                     <div className="profile-form-stack">
                         <div className="info-row">
                             <span className="info-label">Username</span>
-                            {editing.account ? (
+                            {isEditing ? (
                                 <input
                                     type="text"
                                     value={draft.account.username}
@@ -311,7 +357,7 @@ function ProfilePage({ profile }) {
 
                         <div className="info-row">
                             <span className="info-label">Email</span>
-                            {editing.account ? (
+                            {isEditing ? (
                                 <input
                                     type="email"
                                     value={draft.account.email}
@@ -323,7 +369,7 @@ function ProfilePage({ profile }) {
                             )}
                         </div>
 
-                        {editing.account ? (
+                        {isEditing && (
                             <div className="info-row">
                                 <span className="info-label">Password</span>
                                 <input
@@ -333,48 +379,24 @@ function ProfilePage({ profile }) {
                                     placeholder="Leave blank to keep current password"
                                 />
                             </div>
-                        ) : null}
+                        )}
                     </div>
                 </article>
 
+                {/* ── About me ── */}
                 <article className="card profile-card profile-card-secondary">
                     <div className="section-header compact">
                         <div>
                             <h2>About me</h2>
                             <p className="muted">A short summary helps people understand you faster.</p>
                         </div>
-
-                        {editing.aboutMe ? (
-                            <>
-                                <button
-                                    type="button"
-                                    className="secondary-btn"
-                                    onClick={() => {
-                                        setSaveState((current) => ({ ...current, aboutMe: true }))
-                                        stopEditing('aboutMe')
-                                    }}
-                                >
-                                    {saveState.aboutMe ? 'Saved' : 'Save'}
-                                </button>
-                                <button type="button" className="secondary-btn" onClick={() => stopEditing('aboutMe')}>
-                                    Done
-                                </button>
-                            </>
-                        ) : (
-                            <button type="button" className="secondary-btn" onClick={() => startEditing('aboutMe')}>
-                                Edit
-                            </button>
-                        )}
                     </div>
 
-                    {editing.aboutMe ? (
+                    {isEditing ? (
                         <textarea
                             rows="4"
                             value={draft.aboutMe}
-                            onChange={(e) => {
-                                setDraft((current) => ({ ...current, aboutMe: e.target.value }))
-                                setSaveState((current) => ({ ...current, aboutMe: false }))
-                            }}
+                            onChange={(e) => updateField('aboutMe', e.target.value)}
                             placeholder="Add a short personal summary..."
                         />
                     ) : (
@@ -382,19 +404,13 @@ function ProfilePage({ profile }) {
                     )}
                 </article>
 
+                {/* ── Education ── */}
                 {renderEditableList(
                     'education',
                     'Education',
                     'Add education',
-                    () => ({
-                        degree: '',
-                        isFinished: false,
-                        school: '',
-                        majors: [],
-                        skills: [],
-                        notes: '',
-                    }),
-                    (item, index, readOnly = false) =>
+                    () => ({ degree: '', isFinished: false, school: '', majors: [], skills: [], notes: '' }),
+                    (item, index, readOnly) =>
                         readOnly ? (
                             <div className="read-only-grid">
                                 <div><span className="info-label">Degree</span>{renderTextValue(item.degree)}</div>
@@ -408,78 +424,40 @@ function ProfilePage({ profile }) {
                             <>
                                 <label className="field">
                                     <span>Degree</span>
-                                    <input
-                                        type="text"
-                                        value={item.degree ?? ''}
-                                        onChange={(e) => updateItem('education', index, 'degree', e.target.value)}
-                                    />
+                                    <input type="text" value={item.degree ?? ''} onChange={(e) => updateItem('education', index, 'degree', e.target.value)} />
                                 </label>
                                 <label className="field field-inline">
                                     <span>Finished</span>
-                                    <input
-                                        type="checkbox"
-                                        checked={!!item.isFinished}
-                                        onChange={(e) => updateItem('education', index, 'isFinished', e.target.checked)}
-                                    />
+                                    <input type="checkbox" checked={!!item.isFinished} onChange={(e) => updateItem('education', index, 'isFinished', e.target.checked)} />
                                 </label>
                                 <label className="field">
                                     <span>School</span>
-                                    <input
-                                        type="text"
-                                        value={item.school ?? ''}
-                                        onChange={(e) => updateItem('education', index, 'school', e.target.value)}
-                                    />
+                                    <input type="text" value={item.school ?? ''} onChange={(e) => updateItem('education', index, 'school', e.target.value)} />
                                 </label>
                                 <label className="field">
                                     <span>Majors</span>
-                                    <input
-                                        type="text"
-                                        value={formatList(item.majors)}
-                                        onChange={(e) =>
-                                            updateItem('education', index, 'majors', normalizeTextList(e.target.value))
-                                        }
-                                        placeholder="Comma separated"
-                                    />
+                                    <input type="text" value={formatList(item.majors)} onChange={(e) => updateItem('education', index, 'majors', normalizeTextList(e.target.value))} placeholder="Comma separated" />
                                 </label>
                                 <label className="field">
                                     <span>Skills</span>
-                                    <input
-                                        type="text"
-                                        value={formatList(item.skills)}
-                                        onChange={(e) =>
-                                            updateItem('education', index, 'skills', normalizeTextList(e.target.value))
-                                        }
-                                        placeholder="Comma separated"
-                                    />
+                                    <input type="text" value={formatList(item.skills)} onChange={(e) => updateItem('education', index, 'skills', normalizeTextList(e.target.value))} placeholder="Comma separated" />
                                 </label>
                                 <label className="field">
                                     <span>Notes</span>
-                                    <textarea
-                                        rows="3"
-                                        value={item.notes ?? ''}
-                                        onChange={(e) => updateItem('education', index, 'notes', e.target.value)}
-                                        placeholder="Anything worth remembering..."
-                                    />
+                                    <textarea rows="3" value={item.notes ?? ''} onChange={(e) => updateItem('education', index, 'notes', e.target.value)} placeholder="Anything worth remembering..." />
                                 </label>
                             </>
                         ),
                     (item) => `${item.school || 'School not set'} · ${item.isFinished ? 'Finished' : 'In progress'}`,
                 )}
 
+                {/* ── Work experience ── */}
                 {renderEditableList(
                     'workExperiences',
                     'Work experience',
                     'Add work experience',
-                    () => ({
-                        startDate: '',
-                        endDate: '',
-                        company: '',
-                        position: '',
-                        jobDescription: [],
-                        skills: [],
-                        notes: '',
-                    }),
-                    (item, index, readOnly = false) =>
+                    () => ({ startDate: '', endDate: '', company: '', position: '', jobDescription: [], skills: [], notes: '' }),
+                    (item, index, readOnly) =>
                         readOnly ? (
                             <div className="read-only-grid">
                                 <div><span className="info-label">Company</span>{renderTextValue(item.company)}</div>
@@ -492,80 +470,40 @@ function ProfilePage({ profile }) {
                             <>
                                 <label className="field">
                                     <span>Company</span>
-                                    <input
-                                        type="text"
-                                        value={item.company ?? ''}
-                                        onChange={(e) => updateItem('workExperiences', index, 'company', e.target.value)}
-                                    />
+                                    <input type="text" value={item.company ?? ''} onChange={(e) => updateItem('workExperiences', index, 'company', e.target.value)} />
                                 </label>
                                 <label className="field">
                                     <span>Position</span>
-                                    <input
-                                        type="text"
-                                        value={item.position ?? ''}
-                                        onChange={(e) => updateItem('workExperiences', index, 'position', e.target.value)}
-                                    />
+                                    <input type="text" value={item.position ?? ''} onChange={(e) => updateItem('workExperiences', index, 'position', e.target.value)} />
                                 </label>
                                 <label className="field">
                                     <span>Start date</span>
-                                    <input
-                                        type="date"
-                                        value={item.startDate ?? ''}
-                                        onChange={(e) => updateItem('workExperiences', index, 'startDate', e.target.value)}
-                                    />
+                                    <input type="date" value={item.startDate ?? ''} onChange={(e) => updateItem('workExperiences', index, 'startDate', e.target.value)} />
                                 </label>
                                 <label className="field">
                                     <span>End date</span>
-                                    <input
-                                        type="date"
-                                        value={item.endDate ?? ''}
-                                        onChange={(e) => updateItem('workExperiences', index, 'endDate', e.target.value)}
-                                    />
+                                    <input type="date" value={item.endDate ?? ''} onChange={(e) => updateItem('workExperiences', index, 'endDate', e.target.value)} />
                                 </label>
                                 <label className="field">
                                     <span>Job description</span>
-                                    <textarea
-                                        rows="3"
-                                        value={formatList(item.jobDescription)}
-                                        onChange={(e) =>
-                                            updateItem(
-                                                'workExperiences',
-                                                index,
-                                                'jobDescription',
-                                                normalizeTextList(e.target.value),
-                                            )
-                                        }
-                                        placeholder="Comma separated"
-                                    />
+                                    <textarea rows="3" value={formatList(item.jobDescription)} onChange={(e) => updateItem('workExperiences', index, 'jobDescription', normalizeTextList(e.target.value))} placeholder="Comma separated" />
                                 </label>
                                 <label className="field">
                                     <span>Notes</span>
-                                    <textarea
-                                        rows="3"
-                                        value={item.notes ?? ''}
-                                        onChange={(e) => updateItem('workExperiences', index, 'notes', e.target.value)}
-                                        placeholder="Anything worth remembering..."
-                                    />
+                                    <textarea rows="3" value={item.notes ?? ''} onChange={(e) => updateItem('workExperiences', index, 'notes', e.target.value)} placeholder="Anything worth remembering..." />
                                 </label>
                             </>
                         ),
                     (item) => `${item.company || 'Company not set'} · ${formatDate(item.startDate)} — ${formatDate(item.endDate)}`,
                 )}
 
+                {/* ── Trainings ── */}
                 {renderEditableList(
                     'trainings',
                     'Trainings',
                     'Add training',
-                    () => ({
-                        startDate: '',
-                        endDate: '',
-                        name: '',
-                        type: '',
-                        certification: [],
-                        skills: [],
-                        notes: '',
-                    }),
-                    (item, index, readOnly = false) =>
+                    () => ({ startDate: '', endDate: '', name: '', type: '', certification: [], skills: [], notes: '' }),
+                    (item, index, readOnly) =>
                         readOnly ? (
                             <div className="read-only-grid">
                                 <div><span className="info-label">Name</span>{renderTextValue(item.name)}</div>
@@ -578,78 +516,40 @@ function ProfilePage({ profile }) {
                             <>
                                 <label className="field">
                                     <span>Name</span>
-                                    <input
-                                        type="text"
-                                        value={item.name ?? ''}
-                                        onChange={(e) => updateItem('trainings', index, 'name', e.target.value)}
-                                    />
+                                    <input type="text" value={item.name ?? ''} onChange={(e) => updateItem('trainings', index, 'name', e.target.value)} />
                                 </label>
                                 <label className="field">
                                     <span>Type</span>
-                                    <input
-                                        type="text"
-                                        value={item.type ?? ''}
-                                        onChange={(e) => updateItem('trainings', index, 'type', e.target.value)}
-                                    />
+                                    <input type="text" value={item.type ?? ''} onChange={(e) => updateItem('trainings', index, 'type', e.target.value)} />
                                 </label>
                                 <label className="field">
                                     <span>Start date</span>
-                                    <input
-                                        type="date"
-                                        value={item.startDate ?? ''}
-                                        onChange={(e) => updateItem('trainings', index, 'startDate', e.target.value)}
-                                    />
+                                    <input type="date" value={item.startDate ?? ''} onChange={(e) => updateItem('trainings', index, 'startDate', e.target.value)} />
                                 </label>
                                 <label className="field">
                                     <span>End date</span>
-                                    <input
-                                        type="date"
-                                        value={item.endDate ?? ''}
-                                        onChange={(e) => updateItem('trainings', index, 'endDate', e.target.value)}
-                                    />
+                                    <input type="date" value={item.endDate ?? ''} onChange={(e) => updateItem('trainings', index, 'endDate', e.target.value)} />
                                 </label>
                                 <label className="field">
                                     <span>Certification</span>
-                                    <textarea
-                                        rows="3"
-                                        value={formatList(item.certification)}
-                                        onChange={(e) =>
-                                            updateItem(
-                                                'trainings',
-                                                index,
-                                                'certification',
-                                                normalizeTextList(e.target.value),
-                                            )
-                                        }
-                                        placeholder="Comma separated"
-                                    />
+                                    <textarea rows="3" value={formatList(item.certification)} onChange={(e) => updateItem('trainings', index, 'certification', normalizeTextList(e.target.value))} placeholder="Comma separated" />
                                 </label>
                                 <label className="field">
                                     <span>Notes</span>
-                                    <textarea
-                                        rows="3"
-                                        value={item.notes ?? ''}
-                                        onChange={(e) => updateItem('trainings', index, 'notes', e.target.value)}
-                                        placeholder="Anything worth remembering..."
-                                    />
+                                    <textarea rows="3" value={item.notes ?? ''} onChange={(e) => updateItem('trainings', index, 'notes', e.target.value)} placeholder="Anything worth remembering..." />
                                 </label>
                             </>
                         ),
                     (item) => `${item.type || 'Type not set'} · ${formatDate(item.startDate)} — ${formatDate(item.endDate)}`,
                 )}
 
+                {/* ── Skills ── */}
                 {renderEditableList(
                     'skills',
                     'Skills',
                     'Add skill',
-                    () => ({
-                        name: '',
-                        aliases: [],
-                        level: '',
-                        weight: '',
-                        notes: '',
-                    }),
-                    (item, index, readOnly = false) =>
+                    () => ({ name: '', aliases: [], level: '', weight: '', notes: '' }),
+                    (item, index, readOnly) =>
                         readOnly ? (
                             <div className="read-only-grid">
                                 <div><span className="info-label">Name</span>{renderTextValue(item.name)}</div>
@@ -662,88 +562,43 @@ function ProfilePage({ profile }) {
                             <>
                                 <label className="field">
                                     <span>Name</span>
-                                    <input
-                                        type="text"
-                                        value={item.name ?? ''}
-                                        onChange={(e) => updateItem('skills', index, 'name', e.target.value)}
-                                    />
+                                    <input type="text" value={item.name ?? ''} onChange={(e) => updateItem('skills', index, 'name', e.target.value)} />
                                 </label>
                                 <label className="field">
                                     <span>Aliases</span>
-                                    <input
-                                        type="text"
-                                        value={formatList(item.aliases)}
-                                        onChange={(e) =>
-                                            updateItem('skills', index, 'aliases', normalizeTextList(e.target.value))
-                                        }
-                                        placeholder="Comma separated"
-                                    />
+                                    <input type="text" value={formatList(item.aliases)} onChange={(e) => updateItem('skills', index, 'aliases', normalizeTextList(e.target.value))} placeholder="Comma separated" />
                                 </label>
                                 <label className="field">
                                     <span>Level</span>
-                                    <input
-                                        type="text"
-                                        value={item.level ?? ''}
-                                        onChange={(e) => updateItem('skills', index, 'level', e.target.value)}
-                                    />
+                                    <input type="text" value={item.level ?? ''} onChange={(e) => updateItem('skills', index, 'level', e.target.value)} />
                                 </label>
                                 <label className="field">
                                     <span>Weight</span>
-                                    <input
-                                        type="text"
-                                        value={item.weight ?? ''}
-                                        onChange={(e) => updateItem('skills', index, 'weight', e.target.value)}
-                                    />
+                                    <input type="text" value={item.weight ?? ''} onChange={(e) => updateItem('skills', index, 'weight', e.target.value)} />
                                 </label>
                                 <label className="field">
                                     <span>Notes</span>
-                                    <textarea
-                                        rows="3"
-                                        value={item.notes ?? ''}
-                                        onChange={(e) => updateItem('skills', index, 'notes', e.target.value)}
-                                        placeholder="Anything worth remembering..."
-                                    />
+                                    <textarea rows="3" value={item.notes ?? ''} onChange={(e) => updateItem('skills', index, 'notes', e.target.value)} placeholder="Anything worth remembering..." />
                                 </label>
                             </>
                         ),
                     (item) => `${item.level || 'No level set'} · Weight: ${item.weight || '—'}`,
                 )}
 
+                {/* ── Notes ── */}
                 <article className="card profile-card profile-notes-card">
                     <div className="section-header compact">
                         <div>
                             <h2>Notes</h2>
                             <p className="muted">General notes about the profile.</p>
                         </div>
-
-                        {editing.notes ? (
-                            <>
-                                <button
-                                    type="button"
-                                    className="secondary-btn"
-                                    onClick={() => {
-                                        setSaveState((current) => ({ ...current, notes: true }))
-                                        stopEditing('notes')
-                                    }}
-                                >
-                                    {saveState.notes ? 'Saved' : 'Save'}
-                                </button>
-                                <button type="button" className="secondary-btn" onClick={() => stopEditing('notes')}>
-                                    Done
-                                </button>
-                            </>
-                        ) : (
-                            <button type="button" className="secondary-btn" onClick={() => startEditing('notes')}>
-                                Edit
-                            </button>
-                        )}
                     </div>
 
-                    {editing.notes ? (
+                    {isEditing ? (
                         <textarea
                             rows="4"
                             value={draft.notes}
-                            onChange={(e) => updateNotes(e.target.value)}
+                            onChange={(e) => updateField('notes', e.target.value)}
                             placeholder="General notes about the profile..."
                         />
                     ) : (
