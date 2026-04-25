@@ -1,6 +1,7 @@
-﻿using JobApplicationTracker.DTOs;
-using JobApplicationTracker.Models.Users;
+﻿using System.Security.Claims;
+using JobApplicationTracker.DTOs;
 using JobApplicationTracker.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobApplicationTracker.Controllers;
@@ -16,57 +17,31 @@ public class UserController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<UserDto>>> GetAll()
-    {
-        var users = await _userService.GetAllAsync();
-        return Ok(users);
-    }
-
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<UserDto>> GetById(int id)
-    {
-        var user = await _userService.GetByIdAsync(id);
-
-        if (user is null)
-        {
-            return NotFound();
-        }
-
-        return Ok(user);
-    }
-
+    // Public — used during sign-up
     [HttpPost]
     public async Task<ActionResult<UserDto>> Create([FromBody] CreateUserDto user)
     {
         var createdUser = await _userService.AddAsync(user);
-
         return Ok(createdUser);
     }
 
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult<UserDto>> Update(int id, [FromBody] UpdateUserDto user)
+    // Authenticated — get your own profile
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<ActionResult<UserDto>> GetMe()
     {
-        var updatedUser = await _userService.UpdateAsync(id, user);
-
-        if (updatedUser is null)
-        {
-            return NotFound();
-        }
-
-        return Ok(updatedUser);
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = await _userService.GetByIdAsync(userId);
+        return user is null ? NotFound() : Ok(user);
     }
 
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
+    // Authenticated — update your own profile
+    [HttpPut("me")]
+    [Authorize]
+    public async Task<ActionResult<UserDto>> UpdateMe([FromBody] UpdateUserDto user)
     {
-        var deleted = await _userService.DeleteAsync(id);
-
-        if (!deleted)
-        {
-            return NotFound();
-        }
-
-        return NoContent();
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var updated = await _userService.UpdateAsync(userId, user);
+        return updated is null ? NotFound() : Ok(updated);
     }
 }

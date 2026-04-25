@@ -1,11 +1,13 @@
 ﻿using JobApplicationTracker.DTOs;
 using JobApplicationTracker.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobApplicationTracker.Controllers;
 
 [ApiController]
 [Route("api/resume")]
+[Authorize]
 public class ResumeController : ControllerBase
 {
     private readonly IResumeService _resumeService;
@@ -13,6 +15,13 @@ public class ResumeController : ControllerBase
     public ResumeController(IResumeService resumeService)
     {
         _resumeService = resumeService;
+    }
+    
+    [HttpPost]
+    public async Task<ActionResult<UserResumeDto>> Create([FromBody] UserResumeDto resume)
+    {
+        var created = await _resumeService.CreateAsync(resume);
+        return Ok(created);
     }
     
     [HttpPost("extract")]
@@ -27,21 +36,45 @@ public class ResumeController : ControllerBase
         if (Path.GetExtension(file.FileName).ToLowerInvariant() != ".pdf")
             return BadRequest("Only PDF files are allowed.");
 
-        var result = await _resumeService.ExtractFromPdf(file);
+        var result = await _resumeService.ExtractFromPdfAsync(file);
         return Ok(result);
     }
 
-    [HttpGet("{id:int}")]
-    public Task<ActionResult<UserResumeDto>> GetById(int id)
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<UserResumeDto>> GetById(Guid id)
     {
-        //todo
-        throw new NotImplementedException();
+        var resume = await _resumeService.GetByIdAsync(id);
+        if (resume is null) return NotFound();
+        return Ok(resume);   
     }
 
-    [HttpGet("user={userId:int}")]
-    public Task<ActionResult<UserResumeDto>> GetByUserId(int userId)
+    [HttpGet("user={userId:guid}")]
+    public async Task<ActionResult<UserResumeDto>> GetByUserId(Guid userId)
     {
-        //todo
-        throw new NotImplementedException();
+        var resume = await _resumeService.GetByUserAsync(userId);
+        if (resume is null) return NotFound();
+        return Ok(resume);   
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<UserResumeDto>> Update(Guid id, [FromBody] UserResumeDto resume)
+    {
+        var updated = await _resumeService.UpdateAsync(id, resume);
+        return updated is null ? NotFound() : Ok(updated);  
+    }
+    
+    [HttpPut("{id:guid}/merge")]
+    public async Task<ActionResult<UserResumeDto>> Merge(Guid id, [FromForm] PdfUploadRequestDto request)
+    {
+        var extracted = await _resumeService.ExtractFromPdfAsync(request.File);
+        var merged = await _resumeService.MergeAsync(id, extracted);
+        return merged is null ? NotFound() : Ok(merged);  
+    }
+    
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        await _resumeService.DeleteAsync(id);
+        return NoContent();
     }
 }

@@ -3,7 +3,7 @@
 public class UserResume
 {
     public Guid Id { get; set; }
-    public int UserId { get; set; }
+    public Guid UserId { get; set; }
     public ICollection<WorkExperience> WorkExperiences { get; set; } = new List<WorkExperience>();
     public ICollection<Education> Education { get; set; } = new List<Education>();
     public ICollection<Training> Trainings { get; set; } = new List<Training>();

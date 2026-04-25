@@ -5,12 +5,11 @@ namespace JobApplicationTracker.Services;
 
 public interface IJobApplicationService
 {
-    Task<IEnumerable<JobApplicationDto>> GetAllAsync();
-    Task<IEnumerable<JobApplicationDto>> GetAllByUserAsync(int userId);
-    Task<JobApplicationDto?> GetByIdAsync(int id);
-    Task<JobApplicationDto> AddAsync(CreateJobApplicationDto application);
-    Task<JobApplicationDto?> UpdateAsync(int id, UpdateJobApplicationDto application);
-    Task<bool> DeleteAsync(int id);
+    Task<IEnumerable<JobApplicationDto>> GetAllByUserAsync(Guid userId);
+    Task<JobApplicationDto?> GetByIdAsync(Guid id);
+    Task<JobApplicationDto> AddAsync(Guid userId, CreateJobApplicationDto application);
+    Task<JobApplicationDto?> UpdateAsync(Guid id, UpdateJobApplicationDto application);
+    Task<bool> DeleteAsync(Guid id);
     Task<JobApplicationDto> PushApplicationStatusAsync(CreateJAStatusEntryDto statusEntry);
-    Task<JobApplicationDto> DeleteJAStatusEntryAsync(int entryId);
+    Task<JobApplicationDto> DeleteJAStatusEntryAsync(Guid entryId);
 }

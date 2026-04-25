@@ -5,9 +5,9 @@ namespace JobApplicationTracker.Repository;
 public interface IUserRepository
 {
     Task<IEnumerable<UserDo>> GetAllAsync();
-    Task<UserDo?> GetByIdAsync(int id);
+    Task<UserDo?> GetByIdAsync(Guid id);
     Task<UserDo?> GetByUsernameAsync(string username);
     Task<UserDo> AddAsync(UserDo user);
     Task<UserDo?> UpdateAsync(UserDo user);
-    Task<bool> DeleteAsync(int id);
+    Task<bool> DeleteAsync(Guid id);
 }

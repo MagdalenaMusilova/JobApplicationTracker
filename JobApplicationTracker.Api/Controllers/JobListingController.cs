@@ -1,11 +1,13 @@
 ﻿using JobApplicationTracker.DTOs;
 using JobApplicationTracker.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobApplicationTracker.Controllers;
 
 [ApiController]
 [Route("api/jobListings")]
+[Authorize]
 public class JobListingController : ControllerBase
 {
     private readonly IResumeService _resumeService;
@@ -21,7 +23,7 @@ public class JobListingController : ControllerBase
     [HttpPost("match")]
     public async Task<ActionResult<string>> Create([FromForm] MatchRequestDto data)
     {
-        var resumeDto = await _resumeService.ExtractFromPdf(data.ResumeFile);
+        var resumeDto = await _resumeService.ExtractFromPdfAsync(data.ResumeFile);
         var res = await _jobMatchingService.EvaluateMatch(resumeDto, data.JobListing);
         
         return Ok(res);

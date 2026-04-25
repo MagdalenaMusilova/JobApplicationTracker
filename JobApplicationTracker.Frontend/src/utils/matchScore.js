@@ -30,7 +30,7 @@ export function computeAutomaticMatchScore(application, candidateSkills) {
     let score = 35
 
     for (const skill of candidateSkills) {
-        const key = skill.toLowerCase()
+        const key = skill.name.toLowerCase()
         if (haystack.includes(key)) {
             score += keywordWeights[key] ?? 6
         }

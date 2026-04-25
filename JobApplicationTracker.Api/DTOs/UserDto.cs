@@ -5,7 +5,7 @@ namespace JobApplicationTracker.DTOs;
 public class UserDto
 {
     [Required]
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     [Required]
     [MaxLength(200)]
     public string Username { get; set; } = string.Empty;

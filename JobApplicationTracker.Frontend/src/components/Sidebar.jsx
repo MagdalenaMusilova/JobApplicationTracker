@@ -16,13 +16,6 @@
                 </button>
                 <button
                     type="button"
-                    className={screen === 'applications' ? 'nav-item active' : 'nav-item'}
-                    onClick={() => setScreen('applications')}
-                >
-                    Applications
-                </button>
-                <button
-                    type="button"
                     className={screen === 'profile' ? 'nav-item active' : 'nav-item'}
                     onClick={() => setScreen('profile')}
                 >
@@ -30,10 +23,24 @@
                 </button>
                 <button
                     type="button"
+                    className={screen === 'applications' ? 'nav-item active' : 'nav-item'}
+                    onClick={() => setScreen('applications')}
+                >
+                    Applications
+                </button>
+                <button
+                    type="button"
                     className={screen === 'todos' ? 'nav-item active' : 'nav-item'}
                     onClick={() => setScreen('todos')}
                 >
                     ToDo’s
+                </button>
+                <button
+                    type="button"
+                    className={screen === 'match' ? 'nav-item active' : 'nav-item'}
+                    onClick={() => setScreen('match')}
+                >
+                    Match & Create
                 </button>
             </nav>
 

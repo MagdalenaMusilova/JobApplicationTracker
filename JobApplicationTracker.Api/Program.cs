@@ -19,7 +19,9 @@ builder.Services.AddDbContext<UserDbContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddDbContext<JobApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
-builder.Services.AddDbContext<JAStatusEntryDbContext>(options =>
+builder.Services.AddDbContext<JAEventDbContext>(options =>
+    options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<UserResumeDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -35,6 +37,14 @@ builder.Services.AddScoped<IResumeDataExtractor, AiResumeDataExtractor>();
 builder.Services.AddScoped<IJobListingExtractor, AiJobListingExtractor>();
 builder.Services.AddScoped<IJobListingService, JobListingService>();
 builder.Services.AddScoped<IJobMatchingService, JobMatchingService>();
+builder.Services.AddScoped<IJAEventService, JAEventService>();
+builder.Services.AddScoped<IJAEventRepository, JAEventRepository>();
+builder.Services.AddScoped<IUserResumeRepository, UserResumeRepository>();
+builder.Services.AddScoped<IResumeMergeService, ResumeMergeService>();
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 builder.Services.AddHttpClient<OpenAiAgentService>();
 

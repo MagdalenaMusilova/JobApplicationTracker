@@ -59,11 +59,60 @@
 ]
 
 export const profile = {
-    name: 'Alex Morgan',
-    role: 'Software Developer',
-    email: 'alex.morgan@example.com',
-    location: 'Remote',
-    cv: 'CV.pdf',
-    skills: ['C#', '.NET', 'ASP.NET Core', 'SQL', 'React', 'REST APIs', 'Docker', 'Azure'],
+    account: {
+        username: 'alex.morgan',
+        email: 'alex.morgan@example.com',
+        createdAt: '2024-01-15T10:30:00Z',
+    },
+    education: [
+        {
+            id: 'edu-1',
+            degree: 'BSc Computer Science',
+            isFinished: true,
+            school: 'University of Somewhere',
+            majors: ['Software Engineering', 'Databases'],
+            skills: ['C#', 'SQL', 'Algorithms'],
+            notes: 'Focused on backend development.',
+        },
+    ],
+    workExperiences: [
+        {
+            id: 'work-1',
+            startDate: '2022-03-01',
+            endDate: null,
+            company: 'Contoso Ltd',
+            position: 'Software Developer',
+            jobDescription: ['Build APIs', 'Maintain internal tools', 'Support deployments'],
+            skills: [
+                { id: 'ws-1', skill: { name: 'C#' }, description: 'C# backend development' },
+            ],
+            notes: 'Current role.',
+        },
+    ],
+    trainings: [
+        {
+            id: 'tr-1',
+            startDate: '2023-05-01',
+            endDate: '2023-06-01',
+            name: 'ASP.NET Core Advanced',
+            type: 'Online',
+            certification: ['Certificate of completion'],
+            skills: [
+                { id: 'ts-1', skill: { name: 'ASP.NET Core' }, description: 'Web API training' },
+            ],
+            notes: 'Completed successfully.',
+        },
+    ],
+    skills: [
+        {
+            id: 'skill-1',
+            name: 'C#',
+            aliases: ['CSharp'],
+            level: 'Advanced',
+            weight: 'High',
+            skills: [],
+            notes: 'Primary language.',
+        },
+    ],
+    notes: 'Open to backend-focused roles.',
 }
-

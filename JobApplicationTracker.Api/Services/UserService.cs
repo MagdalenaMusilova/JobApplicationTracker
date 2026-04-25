@@ -28,7 +28,7 @@ public class UserService : IUserService
         return users.Select(u => _mapper.Map<UserDto>(u));
     }
 
-    public async Task<UserDto?> GetByIdAsync(int id)
+    public async Task<UserDto?> GetByIdAsync(Guid id)
     {
         var user = await _userRepository.GetByIdAsync(id);
 
@@ -75,7 +75,7 @@ public class UserService : IUserService
         return _mapper.Map<UserDto>(createdUser);
     }
 
-    public async Task<UserDto?> UpdateAsync(int id, UpdateUserDto user)
+    public async Task<UserDto?> UpdateAsync(Guid id, UpdateUserDto user)
     {
         var existingUser = await _userRepository.GetByIdAsync(id);
 
@@ -105,7 +105,7 @@ public class UserService : IUserService
         return _mapper.Map<UserDto>(updatedUser);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         return await _userRepository.DeleteAsync(id);
     }

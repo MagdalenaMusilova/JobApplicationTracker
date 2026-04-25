@@ -15,7 +15,7 @@ function DashboardPage({
             <div className="dashboard-hero card">
                 <div className="dashboard-hero-copy">
                     <span className="eyebrow">Dashboard overview</span>
-                    <h1>Hi, {profile.name.split(' ')[0]} — here’s the fast view.</h1>
+                    <h1>Hi, {profile.account.username.split(' ')[0]} — here’s the fast view.</h1>
                     <p>
                         Everything important is grouped so you can spot progress, priorities, and recent changes fast.
                     </p>

@@ -26,7 +26,7 @@ public class JobApplicationRepository : IJobApplicationRepository
         return res.Select(ja => _mapper.Map<JobApplicationDo>(ja));
     }
 
-    public async Task<IEnumerable<JobApplicationDo>> GetAllByUserAsync(int userId)
+    public async Task<IEnumerable<JobApplicationDo>> GetAllByUserAsync(Guid userId)
     {
         var res = await _context.JobApplications
             .AsNoTracking()
@@ -36,7 +36,7 @@ public class JobApplicationRepository : IJobApplicationRepository
         return res.Select(ja => _mapper.Map<JobApplicationDo>(ja));
     }
 
-    public async Task<JobApplicationDo?> GetByIdAsync(int id)
+    public async Task<JobApplicationDo?> GetByIdAsync(Guid id)
     {
         var res = await _context.JobApplications
             .AsNoTracking()
@@ -76,7 +76,7 @@ public class JobApplicationRepository : IJobApplicationRepository
         return _mapper.Map<JobApplicationDo>(existingApplication);    
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var application = await _context.JobApplications.FindAsync(id);
 

@@ -16,14 +16,17 @@ public class JAStatusEntryService : IJAStatusEntryService
         _mapper = mapper;   
     }
 
-    public async Task<JAStatusEntryDto?> GetByIdAsync(int id)
+    public async Task<JAStatusEntryDto?> GetByIdAsync(Guid id)
     {
         var entry = await _jaStatusEntryRepository.GetByIdAsync(id);
-        if (entry is null)
-        {
-            return null;
-        }
+        if (entry is null) return null;
         return _mapper.Map<JAStatusEntryDto>(entry);   
+    }
+
+    public async Task<List<JAStatusEntryDto>> GetByJobApplicationIdsAsync(IEnumerable<Guid> jobApplicationId)
+    {
+        var res = await _jaStatusEntryRepository.GetByJobApplicationIdsAsync(jobApplicationId);
+        return res.Select(e => _mapper.Map<JAStatusEntryDto>(e)).ToList();  
     }
 
     public async Task<JAStatusEntryDto> AddAsync(JobApplicationDto jobApplication, CreateJAStatusEntryDto jaStatusEntry)
@@ -42,11 +45,25 @@ public class JAStatusEntryService : IJAStatusEntryService
         };
         
         var createdEntry = await _jaStatusEntryRepository.AddAsync(jaStatusDo);
-        
         return _mapper.Map<JAStatusEntryDto>(createdEntry);   
     }
 
-    public async Task<bool> DeleteBulkAsync(IEnumerable<int> ids)
+    public async Task<JAStatusEntryDto?> UpdateAsync(Guid id, CreateJAStatusEntryDto updated)
+    {
+        var existing = await _jaStatusEntryRepository.GetByIdAsync(id);
+        if (existing is null) return null;
+
+        var updatedDo = new JAStatusEntryDo
+        {
+            JaStatus = updated.JaStatus,
+            Note = updated.Note,
+        };
+
+        var result = await _jaStatusEntryRepository.UpdateAsync(id, updatedDo);
+        return result is null ? null : _mapper.Map<JAStatusEntryDto>(result);
+    }
+
+    public async Task<bool> DeleteBulkAsync(IEnumerable<Guid> ids)
     {
         return await _jaStatusEntryRepository.DeleteBulkAsync(ids);
     }

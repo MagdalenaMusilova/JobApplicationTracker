@@ -23,5 +23,8 @@ public class MappingProfile: Profile
             .ForMember(dest => dest.StatusHistory, opt => opt.MapFrom(src => src.StatusHistory))
             .ReverseMap()
             .ForMember(dest => dest.StatusHistory, opt => opt.MapFrom(src => src.StatusHistory));
+        
+        CreateMap<JAEventDto, JAEventDo>().ReverseMap();
+        CreateMap<JAEventDo, JAEvent>().ReverseMap();
     }
 }

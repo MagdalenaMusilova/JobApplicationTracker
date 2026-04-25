@@ -4,7 +4,9 @@ namespace JobApplicationTracker.Repository;
 
 public interface IJAStatusEntryRepository
 {
-    public Task<JAStatusEntryDo?> GetByIdAsync(int id);
+    public Task<JAStatusEntryDo?> GetByIdAsync(Guid id);
+    public Task<IEnumerable<JAStatusEntryDo>> GetByJobApplicationIdsAsync(IEnumerable<Guid> jobApplicationIds);
     Task<JAStatusEntryDo> AddAsync(JAStatusEntryDo jaStatusEntry);
-    Task<bool> DeleteBulkAsync(IEnumerable<int> ids);
+    Task<JAStatusEntryDo?> UpdateAsync(Guid id, JAStatusEntryDo updated);
+    Task<bool> DeleteBulkAsync(IEnumerable<Guid> ids);
 }

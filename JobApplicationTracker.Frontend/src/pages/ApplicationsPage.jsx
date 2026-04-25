@@ -6,6 +6,7 @@ function ApplicationsPage({
                               statusSteps,
                               navigateToApplication,
                               setCreateOpen,
+                              onDeleteApplication,
                           }) {
     const [filters, setFilters] = useState('all')
     const [searchText, setSearchText] = useState('')
@@ -25,36 +26,59 @@ function ApplicationsPage({
         })
     }, [applications, filters, searchText])
 
+    const applicationCount = applications.length
+    const visibleCount = filteredApplications.length
+    const activeFilterLabel = filters === 'all' ? 'All statuses' : filters
+
     return (
-        <section className="page">
-            <div className="page-header">
-                <div>
+        <section className="page applications-page">
+            <div className="page-header applications-hero">
+                <div className="applications-hero-copy">
+                    <span className="eyebrow">Application tracker</span>
                     <h1>Applications</h1>
-                    <p>Browse, search, and filter all tracked applications.</p>
+                    <p>Browse, search, and filter all tracked applications in one clean view.</p>
                 </div>
-                <button type="button" className="primary-btn" onClick={() => setCreateOpen(true)}>
-                    + New Application
-                </button>
+
+                <div className="applications-hero-actions">
+                    <div className="applications-hero-stats">
+                        <div className="applications-hero-stat card">
+                            <span>Total</span>
+                            <strong>{applicationCount}</strong>
+                        </div>
+                        <div className="applications-hero-stat card">
+                            <span>Showing</span>
+                            <strong>{visibleCount}</strong>
+                        </div>
+                        <div className="applications-hero-stat card">
+                            <span>Filter</span>
+                            <strong>{activeFilterLabel}</strong>
+                        </div>
+                    </div>
+
+                    <button type="button" className="primary-btn" onClick={() => setCreateOpen(true)}>
+                        + New Application
+                    </button>
+                </div>
             </div>
 
-            <div className="card">
+            <div className="card applications-toolbar">
                 <div className="card-top">
                     <div>
                         <h2>Search & filters</h2>
-                        <p>Find applications quickly.</p>
+                        <p>Quickly narrow the list to the applications you care about.</p>
                     </div>
                 </div>
 
-                <div className="search-row">
+                <div className="search-row applications-search-row">
                     <input
                         type="text"
-                        placeholder="Search company, role, notes..."
+                        placeholder="Search company, position, status..."
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
                     />
                 </div>
 
-                <div className="filter-row">
+                <div className="filter-row applications-filter-row">
                     <button
                         type="button"
                         className={filters === 'all' ? 'filter-btn active' : 'filter-btn'}
@@ -75,16 +99,24 @@ function ApplicationsPage({
                 </div>
             </div>
 
-            <div className="grid">
-                {filteredApplications.map((app) => (
-                    <ApplicationCard
-                        key={app.id}
-                        app={app}
-                        statusSteps={statusSteps}
-                        onClick={() => navigateToApplication(app.id)}
-                    />
-                ))}
-            </div>
+            {visibleCount === 0 ? (
+                <div className="empty-state applications-empty-state">
+                    <h2>No applications found</h2>
+                    <p>Try a different search term or change the selected filter.</p>
+                </div>
+            ) : (
+                <div className="grid applications-grid">
+                    {filteredApplications.map((app) => (
+                        <ApplicationCard
+                            key={app.id}
+                            app={app}
+                            statusSteps={statusSteps}
+                            onClick={() => navigateToApplication(app.id)}
+                            onDelete={() => onDeleteApplication(app.id)}
+                        />
+                    ))}
+                </div>
+            )}
         </section>
     )
 }

@@ -8,6 +8,7 @@ import ApplicationsPage from './pages/ApplicationsPage'
 import TodosPage from './pages/TodosPage'
 import ProfilePage from './pages/ProfilePage'
 import ApplicationDetailPage from './pages/ApplicationDetailPage'
+import JobMatchPage from './pages/JobMatchPage'
 import { profile } from './data/appData'
 import { computeAutomaticMatchScore, statusSteps } from './utils/matchScore'
 
@@ -24,14 +25,38 @@ function getApiBaseUrl() {
 }
 
 function normalizeStatus(status) {
-  const value = String(status ?? '').toLowerCase()
+  const value = String(status ?? '').trim()
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+}
 
-  if (value.includes('interview')) return 'Interview'
-  if (value.includes('offer')) return 'Offer'
-  if (value.includes('close')) return 'Closed'
-  if (value.includes('progress')) return 'In progress'
+function formatDateTime(value) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return date.toLocaleString()
+}
 
-  return 'Applied'
+function getClosestEvent(statusHistory, scheduledEvents) {
+  const events = Array.isArray(scheduledEvents) ? scheduledEvents : []
+  if (events.length === 0) return null
+
+  const now = Date.now()
+  const parsedEvents = events
+      .map((event) => ({
+        ...event,
+        parsedDate: event?.eventDate ? new Date(event.eventDate).getTime() : Number.NaN,
+      }))
+      .filter((event) => !Number.isNaN(event.parsedDate))
+
+  if (parsedEvents.length === 0) return null
+
+  const futureEvents = parsedEvents
+      .filter((event) => event.parsedDate >= now)
+      .sort((a, b) => a.parsedDate - b.parsedDate)
+
+  if (futureEvents.length > 0) return futureEvents[0]
+
+  return parsedEvents.sort((a, b) => b.parsedDate - a.parsedDate)[0]
 }
 
 function formatUpdatedAt(statusHistory) {
@@ -42,7 +67,7 @@ function formatUpdatedAt(statusHistory) {
   }
 
   const lastItem = history[history.length - 1]
-  const rawDate = lastItem?.createdAt ?? lastItem?.date ?? lastItem?.timestamp
+  const rawDate = lastItem?.updatedAt ?? lastItem?.createdAt
 
   if (!rawDate) {
     return 'Updated recently'
@@ -57,10 +82,16 @@ function formatUpdatedAt(statusHistory) {
 }
 
 function mapBackendApplication(dto) {
-  const lastStatusEntry =
-      Array.isArray(dto.statusHistory) && dto.statusHistory.length > 0
-          ? dto.statusHistory[dto.statusHistory.length - 1]
-          : null
+  const statusHistory = Array.isArray(dto.statusHistory) ? dto.statusHistory : []
+  const lastStatusEntry = statusHistory.length > 0 ? statusHistory[statusHistory.length - 1] : null
+  const jobDescription =
+      dto.jobListingDto?.jobDescription ??
+      dto.jobDescription ??
+      dto.description ??
+      ''
+
+  const scheduledEvents = Array.isArray(dto.scheduledEvents) ? dto.scheduledEvents : []
+  const closestEvent = getClosestEvent(statusHistory, scheduledEvents)
 
   return {
     id: dto.id,
@@ -68,9 +99,12 @@ function mapBackendApplication(dto) {
     title: dto.position ?? '',
     location: dto.location ?? 'Remote',
     status: normalizeStatus(lastStatusEntry?.jaStatus),
-    updatedAt: formatUpdatedAt(dto.statusHistory),
-    description: dto.note ?? 'No description provided.',
+    updatedAt: formatUpdatedAt(statusHistory),
+    description: jobDescription,
     notes: dto.note ?? '',
+    statusHistory,
+    scheduledEvents,
+    closestEvent,
     requirements: [],
     nextStep: 'Continue tracking',
     dueDate: 'Soon',
@@ -129,12 +163,26 @@ function App() {
   const [loadingApplications, setLoadingApplications] = useState(true)
   const [applicationsError, setApplicationsError] = useState(null)
   const [createOpen, setCreateOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editForm, setEditForm] = useState({ company: '', position: '', notes: '' })
+  const [statusEditOpen, setStatusEditOpen] = useState(false)
+  const [statusEditMode, setStatusEditMode] = useState('add') // 'add' | 'edit'
+  const [statusEditForm, setStatusEditForm] = useState({ jaStatus: 'Applied', note: '' })
+  const [statusHistoryOpen, setStatusHistoryOpen] = useState(false)
+  const [statusHistoryApplication, setStatusHistoryApplication] = useState(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [confirmAction, setConfirmAction] = useState(null)
+  const [confirmMessage, setConfirmMessage] = useState('')
+  const [availableStatuses, setAvailableStatuses] = useState([])
+
 
   const [newApplication, setNewApplication] = useState({
     company: '',
-    title: '',
-    location: '',
-    description: '',
+    position: '',
+    jobDescription: '',
+    notes: '',
+    status: 'Applied',
+    statusNote: '',
   })
 
   useEffect(() => {
@@ -165,6 +213,20 @@ function App() {
 
     loadApplications()
   }, [token])
+
+  useEffect(() => {
+    const loadStatuses = async () => {
+      try {
+        const data = await apiRequest('/api/statuses', {}, token)
+        setAvailableStatuses(data.sort((a, b) => a.order - b.order))
+      } catch (error) {
+        setApplicationsError(`Failed to load statuses: ${error.message}`)
+      }
+    }
+
+    if (token) loadStatuses()
+  }, [token])
+  
 
   const handleAuthSubmit = async (event) => {
     event.preventDefault()
@@ -293,17 +355,52 @@ function App() {
     setScreen('application')
   }
 
+  const openStatusHistory = (app) => {
+    setStatusHistoryApplication(app)
+    setStatusHistoryOpen(true)
+  }
+
+  const closeStatusHistory = () => {
+    setStatusHistoryOpen(false)
+    setStatusHistoryApplication(null)
+  }
+
+  const requestConfirm = (message, action) => {
+    setConfirmMessage(message)
+    setConfirmAction(() => action)
+    setConfirmOpen(true)
+  }
+
+  const handleConfirm = async () => {
+    setConfirmOpen(false)
+    if (confirmAction) await confirmAction()
+  }
+
+  const handleDeleteApplication = async (applicationId) => {
+    requestConfirm('Are you sure you want to delete this application? This cannot be undone.', async () => {
+      try {
+        await apiRequest(`/api/applications/${applicationId}`, { method: 'DELETE' }, token)
+        setApplications((current) => current.filter((app) => app.id !== applicationId))
+        if (selectedApplicationId === applicationId) {
+          setSelectedApplicationId(null)
+          setScreen('applications')
+        }
+      } catch (error) {
+        setApplicationsError(error.message)
+      }
+    })
+  }
+
   const handleCreateApplication = async (event) => {
     event.preventDefault()
 
     try {
       const payload = {
-        userId: 1,
         company: newApplication.company,
-        position: newApplication.title,
-        note: newApplication.description || '',
-        jaStatus: 'Applied',
-        jaStatusNote: newApplication.location || 'Remote',
+        position: newApplication.position,
+        note: newApplication.notes || '',
+        jaStatus: newApplication.status || 'Applied',
+        jaStatusNote: newApplication.statusNote || '',
       }
 
       const created = await apiRequest(
@@ -319,9 +416,212 @@ function App() {
 
       setApplications((current) => [mappedCreated, ...current])
       setSelectedApplicationId(mappedCreated.id)
-      setNewApplication({ company: '', title: '', location: '', description: '' })
+      setNewApplication({
+        company: '',
+        position: '',
+        jobDescription: '',
+        notes: '',
+        status: 'Applied',
+        statusNote: '',
+      })
       setCreateOpen(false)
       setScreen('application')
+    } catch (error) {
+      setApplicationsError(error.message)
+    }
+  }
+
+  const handleCreateApplicationFromMatch = async (matchedApplication) => {
+    try {
+      const payload = {
+        company: matchedApplication.company,
+        position: matchedApplication.title,
+        note: matchedApplication.notes || matchedApplication.description || '',
+        jaStatus: 'Applied',
+        jaStatusNote: matchedApplication.notes || '',
+      }
+
+      const created = await apiRequest(
+          '/api/applications',
+          {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          },
+          token,
+      )
+
+      const mappedCreated = mapBackendApplication(created)
+
+      setApplications((current) => [mappedCreated, ...current])
+      setSelectedApplicationId(mappedCreated.id)
+      setScreen('application')
+    } catch (error) {
+      setApplicationsError(error.message)
+    }
+  }
+
+  const openEditApplication = (app) => {
+    setEditForm({
+      company: app.company,
+      position: app.title,
+      notes: app.notes,
+    })
+    setEditOpen(true)
+  }
+
+
+  const getAllowedTransitions = (currentStatusName) => {
+    const current = availableStatuses.find((s) => s.name === currentStatusName)
+    if (!current) return availableStatuses
+
+    const terminal = ['Rejected']
+    const rejectedOnly = ['Accepted']
+    const forwardPlusTaskAndInterview = ['Offer']
+    const forwardPlusTask = ['Interview']
+    // Whishlist, Applied, Task → forward only (Task can also repeat itself, handled below)
+
+    if (terminal.includes(current.name)) return []
+
+    if (rejectedOnly.includes(current.name)) {
+      return availableStatuses.filter((s) => s.name === 'Rejected')
+    }
+
+    const forward = availableStatuses.filter((s) => s.order > current.order)
+
+    if (forwardPlusTaskAndInterview.includes(current.name)) {
+      const extras = availableStatuses.filter((s) => s.name === 'Task' || s.name === 'Interview')
+      return [...new Map([...forward, ...extras].map((s) => [s.name, s])).values()]
+          .sort((a, b) => a.order - b.order)
+    }
+
+    if (forwardPlusTask.includes(current.name)) {
+      const extras = availableStatuses.filter((s) => s.name === 'Task' || s.name === 'Interview')
+      return [...new Map([...forward, ...extras].map((s) => [s.name, s])).values()]
+          .sort((a, b) => a.order - b.order)
+    }
+
+    // Task → forward + Task itself
+    if (current.name === 'Task') {
+      const extras = availableStatuses.filter((s) => s.name === 'Task')
+      return [...new Map([...forward, ...extras].map((s) => [s.name, s])).values()]
+          .sort((a, b) => a.order - b.order)
+    }
+
+    return forward
+  }
+
+  const openAddStatus = (app) => {
+    const history = Array.isArray(app.statusHistory) ? app.statusHistory : []
+    const last = history[history.length - 1]
+    const currentName = last?.jaStatus ?? null
+
+    const allowed = getAllowedTransitions(currentName)
+    const firstAllowed = allowed[0]?.name ?? ''
+
+    setStatusEditMode('add')
+    setStatusEditForm({ jaStatus: firstAllowed, note: '', allowedStatuses: allowed })
+    setStatusEditOpen(true)
+  }
+
+  const openEditLastStatus = (app) => {
+    const history = Array.isArray(app.statusHistory) ? app.statusHistory : []
+    const last = history[history.length - 1]
+    if (!last) return
+
+    // For editing, compute transitions from the entry *before* the last one
+    const prevName = history.length >= 2 ? history[history.length - 2].jaStatus ?? null : null
+    const allowed = getAllowedTransitions(prevName)
+
+    setStatusEditMode('edit')
+    setStatusEditForm({ jaStatus: last.jaStatus ?? '', note: last.note ?? '', id: last.id, allowedStatuses: allowed })
+    setStatusEditOpen(true)
+  }
+
+  const handleDeleteLastStatus = async (app) => {
+    const history = Array.isArray(app.statusHistory) ? app.statusHistory : []
+    const last = history[history.length - 1]
+    if (!last) return
+
+    requestConfirm(`Remove status "${last.jaStatus ?? 'Applied'}"? This cannot be undone.`, async () => {
+      try {
+        const updated = await apiRequest(`/api/applications/entry/${last.id}`, { method: 'DELETE' }, token)
+        const mappedUpdated = mapBackendApplication(updated)
+        setApplications((current) => current.map((a) => (a.id === mappedUpdated.id ? mappedUpdated : a)))
+      } catch (error) {
+        setApplicationsError(error.message)
+      }
+    })
+  }
+
+  const handleStatusEditSubmit = async (event) => {
+    event.preventDefault()
+
+    try {
+      if (statusEditMode === 'add') {
+        const updated = await apiRequest(
+            '/api/applications/entry',
+            {
+              method: 'POST',
+              body: JSON.stringify({
+                jobApplicationId: selectedApplicationId,
+                jaStatus: statusEditForm.jaStatus,
+                note: statusEditForm.note || '',
+              }),
+            },
+            token,
+        )
+        const mappedUpdated = mapBackendApplication(updated)
+        setApplications((current) => current.map((a) => (a.id === mappedUpdated.id ? mappedUpdated : a)))
+      } else {
+        await apiRequest(
+            `/api/applications/entry/${statusEditForm.id}`,
+            {
+              method: 'PUT',
+              body: JSON.stringify({
+                jobApplicationId: selectedApplicationId,
+                jaStatus: statusEditForm.jaStatus,
+                note: statusEditForm.note || '',
+              }),
+            },
+            token,
+        )
+        // Refresh the application to reflect updated status
+        const refreshed = await apiRequest(`/api/applications/${selectedApplicationId}`, {}, token)
+        const mappedRefreshed = mapBackendApplication(refreshed)
+        setApplications((current) => current.map((a) => (a.id === mappedRefreshed.id ? mappedRefreshed : a)))
+      }
+
+      setStatusEditOpen(false)
+    } catch (error) {
+      setApplicationsError(error.message)
+    }
+  }
+
+  const handleEditApplication = async (event) => {
+    event.preventDefault()
+
+    try {
+      const payload = {
+        company: editForm.company,
+        position: editForm.position,
+        note: editForm.notes || '',
+      }
+
+      const updated = await apiRequest(
+          `/api/applications/${selectedApplicationId}`,
+          {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+          },
+          token,
+      )
+
+      const mappedUpdated = mapBackendApplication(updated)
+
+      setApplications((current) =>
+          current.map((app) => (app.id === mappedUpdated.id ? mappedUpdated : app)),
+      )
+      setEditOpen(false)
     } catch (error) {
       setApplicationsError(error.message)
     }
@@ -411,7 +711,7 @@ function App() {
           />
           <main className="content">
             <section className="page">
-              <h1>Couldn’t load applications</h1>
+              <h1>Couldn't load applications</h1>
               <p>{applicationsError}</p>
             </section>
           </main>
@@ -447,6 +747,14 @@ function App() {
                   statusSteps={statusSteps}
                   navigateToApplication={navigateToApplication}
                   setCreateOpen={setCreateOpen}
+                  onDeleteApplication={handleDeleteApplication}
+              />
+          )}
+
+          {screen === 'match' && (
+              <JobMatchPage
+                  profile={profile}
+                  onCreateApplicationFromMatch={handleCreateApplicationFromMatch}
               />
           )}
 
@@ -463,6 +771,12 @@ function App() {
                   selectedMatchScore={selectedMatchScore}
                   navigateBack={() => setScreen('applications')}
                   openCreate={() => setCreateOpen(true)}
+                  openEdit={() => openEditApplication(selectedApplication)}
+                  onDeleteApplication={handleDeleteApplication}
+                  onOpenStatusHistory={() => openStatusHistory(selectedApplication)}
+                  onAddStatus={() => openAddStatus(selectedApplication)}
+                  onEditLastStatus={() => openEditLastStatus(selectedApplication)}
+                  onDeleteLastStatus={() => handleDeleteLastStatus(selectedApplication)}
               />
           )}
         </main>
@@ -470,52 +784,75 @@ function App() {
         {createOpen && (
             <Modal
                 title="Create new application"
-                subtitle="Quick entry form for adding a job in seconds."
+                subtitle="Add company, role, description, notes, and first status."
                 onClose={() => setCreateOpen(false)}
             >
-              <form className="auth-form" onSubmit={handleCreateApplication}>
-                <label>
-                  Company
-                  <input
-                      type="text"
-                      value={newApplication.company}
-                      onChange={(e) => setNewApplication({ ...newApplication, company: e.target.value })}
-                      required
-                  />
-                </label>
+              <form className="modal-form" onSubmit={handleCreateApplication}>
+                <div className="modal-grid">
+                  <label>
+                    Company
+                    <input
+                        type="text"
+                        value={newApplication.company}
+                        onChange={(e) => setNewApplication({ ...newApplication, company: e.target.value })}
+                        required
+                    />
+                  </label>
 
-                <label>
-                  Role
-                  <input
-                      type="text"
-                      value={newApplication.title}
-                      onChange={(e) => setNewApplication({ ...newApplication, title: e.target.value })}
-                      required
-                  />
-                </label>
+                  <label>
+                    Position
+                    <input
+                        type="text"
+                        value={newApplication.position}
+                        onChange={(e) => setNewApplication({ ...newApplication, position: e.target.value })}
+                        required
+                    />
+                  </label>
 
-                <label>
-                  Location
-                  <input
-                      type="text"
-                      value={newApplication.location}
-                      onChange={(e) => setNewApplication({ ...newApplication, location: e.target.value })}
-                      placeholder="Remote"
-                  />
-                </label>
+                  <label className="modal-span-2">
+                    Job description
+                    <textarea
+                        rows="5"
+                        value={newApplication.jobDescription}
+                        onChange={(e) =>
+                            setNewApplication({ ...newApplication, jobDescription: e.target.value })
+                        }
+                    />
+                  </label>
 
-                <label>
-                  Description
-                  <textarea
-                      rows="4"
-                      value={newApplication.description}
-                      onChange={(e) =>
-                          setNewApplication({ ...newApplication, description: e.target.value })
-                      }
-                  />
-                </label>
+                  <label className="modal-span-2">
+                    Notes
+                    <textarea
+                        rows="4"
+                        value={newApplication.notes}
+                        onChange={(e) => setNewApplication({ ...newApplication, notes: e.target.value })}
+                    />
+                  </label>
 
-                <div className="button-row">
+                  <label>
+                    First status
+                    <select
+                        value={newApplication.status}
+                        onChange={(e) => setNewApplication({ ...newApplication, status: e.target.value })}
+                    >
+                      {availableStatuses.map((s) => (
+                          <option key={s.name} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label>
+                    Status note
+                    <input
+                        type="text"
+                        value={newApplication.statusNote}
+                        onChange={(e) => setNewApplication({ ...newApplication, statusNote: e.target.value })}
+                        placeholder="Optional note for the first status"
+                    />
+                  </label>
+                </div>
+
+                <div className="button-row modal-actions">
                   <button type="button" className="secondary-btn" onClick={() => setCreateOpen(false)}>
                     Cancel
                   </button>
@@ -524,6 +861,145 @@ function App() {
                   </button>
                 </div>
               </form>
+            </Modal>
+        )}
+
+        {editOpen && (
+            <Modal
+                title="Edit application"
+                subtitle="Update the company, position, or notes."
+                onClose={() => setEditOpen(false)}
+            >
+              <form className="modal-form" onSubmit={handleEditApplication}>
+                <div className="modal-grid">
+                  <label>
+                    Company
+                    <input
+                        type="text"
+                        value={editForm.company}
+                        onChange={(e) => setEditForm({ ...editForm, company: e.target.value })}
+                        required
+                    />
+                  </label>
+
+                  <label>
+                    Position
+                    <input
+                        type="text"
+                        value={editForm.position}
+                        onChange={(e) => setEditForm({ ...editForm, position: e.target.value })}
+                        required
+                    />
+                  </label>
+
+                  <label className="modal-span-2">
+                    Notes
+                    <textarea
+                        rows="4"
+                        value={editForm.notes}
+                        onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                    />
+                  </label>
+                </div>
+
+                <div className="button-row modal-actions">
+                  <button type="button" className="secondary-btn" onClick={() => setEditOpen(false)}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="primary-btn">
+                    Save changes
+                  </button>
+                </div>
+              </form>
+            </Modal>
+        )}
+        {statusEditOpen && (
+            <Modal
+                title={statusEditMode === 'add' ? 'Add status' : 'Edit last status'}
+                subtitle={statusEditMode === 'add' ? 'Push a new status entry onto this application.' : 'Update the latest status entry.'}
+                onClose={() => setStatusEditOpen(false)}
+            >
+              {statusEditForm.allowedStatuses?.length === 0 ? (
+                  <div>
+                    <p className="muted">This application has already reached a final status. No further statuses can be added.</p>
+                    <div className="button-row modal-actions">
+                      <button type="button" className="secondary-btn" onClick={() => setStatusEditOpen(false)}>Close</button>
+                    </div>
+                  </div>
+              ) : (
+                  <form className="modal-form" onSubmit={handleStatusEditSubmit}>
+                    <div className="modal-grid">
+                      <label>
+                        Status
+                        <select
+                            value={statusEditForm.jaStatus}
+                            onChange={(e) => setStatusEditForm({ ...statusEditForm, jaStatus: e.target.value })}
+                        >
+                          {(statusEditForm.allowedStatuses ?? availableStatuses).map((s) => (
+                              <option key={s.name} value={s.name}>{s.name}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="modal-span-2">
+                        Note
+                        <input
+                            type="text"
+                            value={statusEditForm.note}
+                            onChange={(e) => setStatusEditForm({ ...statusEditForm, note: e.target.value })}
+                            placeholder="Optional note"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="button-row modal-actions">
+                      <button type="button" className="secondary-btn" onClick={() => setStatusEditOpen(false)}>
+                        Cancel
+                      </button>
+                      <button type="submit" className="primary-btn">
+                        {statusEditMode === 'add' ? 'Add status' : 'Save changes'}
+                      </button>
+                    </div>
+                  </form>
+              )}
+            </Modal>
+        )}
+        {statusHistoryOpen && statusHistoryApplication && (
+            <Modal
+                title="Status history"
+                subtitle={`${statusHistoryApplication.company} · ${statusHistoryApplication.title}`}
+                onClose={closeStatusHistory}
+            >
+              <div className="stack-list">
+                {(statusHistoryApplication.statusHistory || []).map((entry, index) => (
+                    <div key={entry.id ?? `${entry.jaStatus}-${index}`} className="editable-item">
+                      <div className="editable-item-header">
+                        <div>
+                          <h3>{entry.jaStatus ?? 'Applied'}</h3>
+                          <p className="muted">Created: {formatDateTime(entry.createdAt)}</p>
+                          <p className="muted">Updated: {formatDateTime(entry.updatedAt)}</p>
+                        </div>
+                      </div>
+                      <p>{entry.note || 'No note.'}</p>
+                    </div>
+                ))}
+              </div>
+            </Modal>
+        )}
+        {confirmOpen && (
+            <Modal
+                title="Confirm action"
+                subtitle={confirmMessage}
+                onClose={() => setConfirmOpen(false)}
+            >
+              <div className="button-row modal-actions">
+                <button type="button" className="secondary-btn" onClick={() => setConfirmOpen(false)}>
+                  Cancel
+                </button>
+                <button type="button" className="primary-btn danger" onClick={handleConfirm}>
+                  Confirm
+                </button>
+              </div>
             </Modal>
         )}
       </div>

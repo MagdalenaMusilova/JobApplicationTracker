@@ -25,7 +25,7 @@ public class UserRepository : IUserRepository
             .ToListAsync();
     }
 
-    public async Task<UserDo?> GetByIdAsync(int id)
+    public async Task<UserDo?> GetByIdAsync(Guid id)
     {
         return await _context.Users
             .AsNoTracking()
@@ -72,7 +72,7 @@ public class UserRepository : IUserRepository
         return _mapper.Map<UserDo>(existingUser);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var user = await _context.Users.FindAsync(id);
 

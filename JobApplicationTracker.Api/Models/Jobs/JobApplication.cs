@@ -4,8 +4,8 @@ namespace JobApplicationTracker.Models;
 
 public class JobApplication
 {
-    public int Id { get; set; }
-    public int UserId { get; set; }
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
     public string Company { get; set; }
     public string Position { get; set; }
     public JobListingDto JobListingDto { get; set; }
