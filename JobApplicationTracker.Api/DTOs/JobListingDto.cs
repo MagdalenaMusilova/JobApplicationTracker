@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace JobApplicationTracker.Models.Jobs;
+namespace JobApplicationTracker.DTOs;
 
 [NotMapped]
 public class JobListingDto

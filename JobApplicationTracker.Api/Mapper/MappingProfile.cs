@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using JobApplicationTracker.Dos;
+using JobApplicationTracker.DOs;
 using JobApplicationTracker.DTOs;
 using JobApplicationTracker.Models;
 
@@ -23,8 +24,10 @@ public class MappingProfile: Profile
             .ForMember(dest => dest.StatusHistory, opt => opt.MapFrom(src => src.StatusHistory))
             .ReverseMap()
             .ForMember(dest => dest.StatusHistory, opt => opt.MapFrom(src => src.StatusHistory));
-        
         CreateMap<JAEventDto, JAEventDo>().ReverseMap();
         CreateMap<JAEventDo, JAEvent>().ReverseMap();
+        
+        CreateMap<JobListingDto, JobListingDo>().ReverseMap();
+        CreateMap<JobListingDo, JobListing>().ReverseMap();
     }
 }

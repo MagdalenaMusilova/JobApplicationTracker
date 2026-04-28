@@ -1,4 +1,4 @@
-﻿using JobApplicationTracker.Models.Jobs;
+﻿using JobApplicationTracker.DTOs;
 
 namespace JobApplicationTracker.Services;
 

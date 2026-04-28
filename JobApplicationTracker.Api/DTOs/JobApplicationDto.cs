@@ -7,5 +7,6 @@ public class JobApplicationDto
     public string Company { get; set; }
     public string Position { get; set; }
     public string? Note { get; set; }
+    public JobListingDto JobListing { get; set; }
     public IEnumerable<JAStatusEntryDto> StatusHistory { get; set; } = [];
 }

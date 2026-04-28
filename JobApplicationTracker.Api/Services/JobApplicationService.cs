@@ -46,8 +46,8 @@ public class JobApplicationService : IJobApplicationService
         var createStatusEntry = new CreateJAStatusEntryDto
         {
             JobApplicationId = created.Id,
-            JaStatus = application.JaStatus,
-            Note = application.JaStatusNote
+            JaStatus = application.JaStatusEntry.JaStatus,
+            Note = application.JaStatusEntry.Note
         };
 
         var createdDto = _mapper.Map<JobApplicationDto>(created);

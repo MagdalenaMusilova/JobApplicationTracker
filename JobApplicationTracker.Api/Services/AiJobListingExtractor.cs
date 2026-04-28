@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using JobApplicationTracker.DTOs;
-using JobApplicationTracker.Models.Jobs;
 
 namespace JobApplicationTracker.Services;
 
