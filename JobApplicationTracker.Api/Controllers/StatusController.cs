@@ -1,4 +1,5 @@
-﻿using JobApplicationTracker.Enums;
+﻿using JobApplicationTracker.DTOs.Enums;
+using JobApplicationTracker.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,11 +11,11 @@ namespace JobApplicationTracker.Controllers;
 public class StatusController : ControllerBase
 {
     [HttpGet]
-    public ActionResult<IEnumerable<object>> GetStatuses()
+    public ActionResult<IEnumerable<JAStatusDto>> GetStatuses()
     {
         var statuses = Enum.GetValues<JAStatus>()
             .OrderBy(s => (int)s)
-            .Select(s => new { name = s.ToString(), order = (int)s })
+            .Select(s => new JAStatusDto() { StatusName = s.ToString(), StatusValue = (int)s })
             .ToList();
 
         return Ok(statuses);

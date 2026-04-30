@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using JobApplicationTracker.DTOs;
+using JobApplicationTracker.Enums;
 using JobApplicationTracker.Models;
 using JobApplicationTracker.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -82,6 +83,26 @@ public class JobApplicationController : ControllerBase
 
         var deleted = await _jobApplicationService.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
+    }
+    
+    [HttpPut("{id:Guid}/deny")]
+    public async Task<ActionResult<JobApplicationDto>> MarkApplicationAsRejected(Guid id)
+    {
+        var userId = GetUserId();
+        var existing = await _jobApplicationService.GetByIdAsync(id);
+
+        if (existing is null || existing.UserId != userId)
+            return NotFound();
+
+        CreateJAStatusEntryDto newStatus = new CreateJAStatusEntryDto()
+        {
+            JobApplicationId = id,
+            JaStatus = JAStatus.Rejected,
+            Note = ""
+        };
+
+        var updated = await _jobApplicationService.PushApplicationStatusAsync(newStatus);
+        return updated;
     }
 
     [HttpPost("entry")]

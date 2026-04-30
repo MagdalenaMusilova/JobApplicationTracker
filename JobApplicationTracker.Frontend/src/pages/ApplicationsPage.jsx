@@ -1,16 +1,18 @@
 ﻿import { useMemo, useState } from 'react'
 import ApplicationCard from '../components/ApplicationCard'
+import { useNavigate } from 'react-router-dom'
+
 
 function ApplicationsPage({
                               applications,
                               statusSteps,
-                              navigateToApplication,
-                              setCreateOpen,
                               onDeleteApplication,
+                              onMarkAppRejected,
                           }) {
     const [filters, setFilters] = useState('all')
     const [searchText, setSearchText] = useState('')
-
+    const navigate = useNavigate()
+    
     const filteredApplications = useMemo(() => {
         const normalizedSearch = searchText.trim().toLowerCase()
 
@@ -30,7 +32,7 @@ function ApplicationsPage({
     const visibleCount = filteredApplications.length
     const activeFilterLabel = filters === 'all' ? 'All statuses' : filters
 
-    return (
+return (
         <section className="page applications-page">
             <div className="page-header applications-hero">
                 <div className="applications-hero-copy">
@@ -110,9 +112,9 @@ function ApplicationsPage({
                         <ApplicationCard
                             key={app.id}
                             app={app}
-                            statusSteps={statusSteps}
-                            onClick={() => navigateToApplication(app.id)}
+                            onClick={() => onDeleteApplication(app.id)}
                             onDelete={() => onDeleteApplication(app.id)}
+                            onRejected={() => onMarkAppRejected(app.id)}
                         />
                     ))}
                 </div>

@@ -996,7 +996,10 @@
 .button-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  width: 100%;
+  gap: 8px;
+  margin-top: 0.75rem;
+  justify-content: flex-end; 
 }
 
 /* ─── Search & filter toolbar ────────────────────────────────────────────── */
@@ -1146,144 +1149,99 @@
 
 /* ─── Application card ───────────────────────────────────────────────────── */
 
-.application-card {
+.job-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
   display: grid;
   gap: 14px;
-  padding: 20px 22px;
-  border: 1.5px solid var(--border);
-  background: white;
-  border-radius: 20px;
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+  cursor: pointer;
+  transition: 0.18s ease;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
 }
 
-.application-card:hover {
-  transform: translateY(-3px);
-  border-color: #c7d2fe;
-  box-shadow: 0 16px 36px rgba(99, 102, 241, 0.12);
+.job-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
 }
 
-.application-card-header {
+/* HEADER */
+.job-company {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0;
+}
+
+.job-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 2px 0 0;
+  color: #0f172a;
+}
+
+/* BODY */
+.job-card-body {
+  display: grid;
+  gap: 10px;
+}
+
+.label {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* STATUS */
+.job-status-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
 }
 
-.application-card-heading {
-  display: grid;
-  gap: 4px;
-}
-
-.application-card-company {
-  margin: 0;
-}
-
-.application-card-title {
-  margin: 0;
-  font-size: 17px;
-  line-height: 1.2;
-  color: var(--text-h);
-  font-weight: 700;
-}
-
-.application-card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-}
-
-.application-card-meta-block {
-  display: grid;
-  gap: 4px;
-}
-
-.application-status-pill {
+.status-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--accent-light);
-  color: var(--accent-dark);
-  font-size: 12px;
-  font-weight: 700;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
 
-.application-status-pill::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
-.application-card-meta {
-  display: grid;
-  gap: 5px;
-}
-
-.application-status-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  width: fit-content;
-  padding: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--accent-dark);
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.application-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-}
-
-.application-card-event {
-  color: var(--text-h);
-  font-weight: 700;
-  line-height: 1.3;
-  font-size: 14px;
-}
-
-.application-progress-block {
-  display: grid;
-  gap: 7px;
+/* EVENT */
+.job-event strong {
+  display: block;
   margin-top: 2px;
-}
-
-.application-progress-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.application-status-progress {
-  height: 8px;
-  background: #e2e8f0;
-}
-
-.application-status-progress-bar {
-  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 55%, #22c55e 100%);
-}
-
-.application-card-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
   font-size: 13px;
-  color: var(--text);
+  color: #0f172a;
+}
+
+/* BUTTONS */
+.button-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.secondary-btn {
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.secondary-btn:hover {
+  background: #eef2ff;
+}
+
+.secondary-btn.danger {
+  border-color: #fecaca;
+  color: #b91c1c;
 }
 
 /* ─── Application detail hero ────────────────────────────────────────────── */
@@ -1734,3 +1692,6 @@
     border-radius: 8px;
   }
 }
+
+
+

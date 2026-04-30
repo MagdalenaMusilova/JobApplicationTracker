@@ -4,15 +4,11 @@ import { statusSteps } from '../utils/matchScore'
 function DashboardPage({
                            profile,
                            applications,
-                           dashboardStats,
-                           pipelineSummary,
-                           urgentActionItems,
-                           dashboardRecentApplications,
-                           navigateToApplication,
+                           todoItems
                        }) {
     return (
         <section className="page dashboard-page">
-            <div className="dashboard-hero card">
+            {/*<div className="dashboard-hero card">
                 <div className="dashboard-hero-copy">
                     <span className="eyebrow">Dashboard overview</span>
                     <h1>Hi, {profile.account.username.split(' ')[0]} — here’s the fast view.</h1>
@@ -94,7 +90,9 @@ function DashboardPage({
                         {statusSteps.map((step) => (
                             <div key={step} className="pipeline-item">
                                 <span>{step}</span>
+
                                 <strong>{pipelineSummary[step] ?? 0}</strong>
+
                             </div>
                         ))}
                     </div>
@@ -158,7 +156,7 @@ function DashboardPage({
                         </div>
                     </div>
                 </article>
-            </div>
+            </div>*/}
         </section>
     )
 }

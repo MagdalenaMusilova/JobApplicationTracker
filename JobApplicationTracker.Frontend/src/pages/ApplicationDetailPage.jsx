@@ -1,151 +1,220 @@
-﻿import { statusToProgress } from '../utils/matchScore'
+﻿import { useEffect, useState } from 'react'
+import CreateEventModal from '../components/CreateEventModal'
+import '../styles/ApplicationDetailPage.css'
 
 function ApplicationDetailPage({
-                                   profile,
                                    selectedApplication,
-                                   selectedMatchScore,
-                                   navigateBack,
                                    openCreate,
-                                   openEdit,
                                    onDeleteApplication,
                                    onOpenStatusHistory,
                                    onAddStatus,
                                    onEditLastStatus,
                                    onDeleteLastStatus,
+                                   onSaveApplication,
                                }) {
+    const [isCreateEventModalOpen, setIsCreateEventModalOpen] = useState(false)
+    const [isEditingApplication, setIsEditingApplication] = useState(false)
+    const [draft, setDraft] = useState(selectedApplication)
+
+    useEffect(() => {
+        setDraft(selectedApplication)
+        setIsEditingApplication(false)
+    }, [selectedApplication])
+
     const statusHistory = Array.isArray(selectedApplication.statusHistory)
         ? selectedApplication.statusHistory
         : []
 
-    const latestStatus = statusHistory.length > 0 ? statusHistory[statusHistory.length - 1] : null
+    const latestStatus =
+        statusHistory.length > 0
+            ? statusHistory[statusHistory.length - 1]
+            : null
+
     const scheduledEvents = Array.isArray(selectedApplication.scheduledEvents)
         ? selectedApplication.scheduledEvents
         : []
 
+    const handleSave = () => {
+        onSaveApplication?.(draft)
+        setIsEditingApplication(false)
+    }
+
+    const handleCancel = () => {
+        setDraft(selectedApplication)
+        setIsEditingApplication(false)
+    }
+
     return (
         <section className="page">
+
+            {/* HEADER */}
             <div className="page-header">
                 <div>
-                    <h1>{selectedApplication.title}</h1>
-                    <p>{selectedApplication.company}</p>
+                    <h1>{selectedApplication.company}</h1>
+                    <p>{selectedApplication.title}</p>
                 </div>
+
                 <div className="button-row">
-                    <button type="button" className="secondary-btn" onClick={navigateBack}>
-                        Back
-                    </button>
-                    <button type="button" className="secondary-btn danger" onClick={() => onDeleteApplication(selectedApplication.id)}>
+                    <button
+                        className="secondary-btn danger"
+                        onClick={() => onDeleteApplication(selectedApplication.id)}
+                    >
                         Delete
                     </button>
-                    <button type="button" className="secondary-btn" onClick={openEdit}>
-                        Edit
-                    </button>
-                    <button type="button" className="primary-btn" onClick={openCreate}>
+
+                    <button className="primary-btn" onClick={openCreate}>
                         New Application
                     </button>
                 </div>
             </div>
 
+            {/* APPLICATION CARD */}
             <div className="detail-layout">
                 <article className="card">
-                    <div className="detail-hero">
-                        <div>
-                            <span className="badge">{selectedApplication.status}</span>
-                            <h2>{selectedApplication.title}</h2>
-                            <p className="muted">
-                                {selectedApplication.company} · {selectedApplication.location}
-                            </p>
-                        </div>
 
-                        <div className="application-progress">
-                            <span>Progress</span>
-                            <strong>{statusToProgress[selectedApplication.status] ?? 0}%</strong>
-                            <div className="progress">
-                                <div
-                                    className="progress-bar"
-                                    style={{ width: `${statusToProgress[selectedApplication.status] ?? 0}%` }}
-                                />
+                    {/* HEADER */}
+                    <div className="section-header">
+                        <h2>Application</h2>
+
+                        {!isEditingApplication ? (
+                            <button
+                                className="secondary-btn"
+                                onClick={() => setIsEditingApplication(true)}
+                            >
+                                Edit
+                            </button>
+                        ) : (
+                            <div className="button-row">
+                                <button className="secondary-btn" onClick={handleCancel}>
+                                    Cancel
+                                </button>
+                                <button className="primary-btn" onClick={handleSave}>
+                                    Save
+                                </button>
                             </div>
-                        </div>
+                        )}
                     </div>
 
+                    {/* TITLE + COMPANY */}
+                    <div style={{ marginTop: 12 }}>
+                        {!isEditingApplication ? (
+                            <>
+                                <p className="muted">{selectedApplication.company}</p>
+                                <h2>{selectedApplication.title}</h2>
+                            </>
+                        ) : (
+                            <>
+                                <label className="field" style={{ marginTop: 10 }}>
+                                    <span>Company</span>
+                                    <input
+                                        value={draft.company || ''}
+                                        onChange={(e) =>
+                                            setDraft({ ...draft, company: e.target.value })
+                                        }
+                                    />
+                                </label>
+                                
+                                <label className="field">
+                                    <span>Position</span>
+                                    <input
+                                        value={draft.title || ''}
+                                        onChange={(e) =>
+                                            setDraft({ ...draft, title: e.target.value })
+                                        }
+                                    />
+                                </label>
+                            </>
+                        )}
+                    </div>
+
+                    {/* VIEW ONLY INFO */}
                     <div className="info-list">
                         <div>
-                            <span>Application ID</span>
-                            <strong>{selectedApplication.id}</strong>
-                        </div>
-                        <div>
-                            <span>Updated</span>
-                            <strong>{selectedApplication.updatedAt}</strong>
-                        </div>
-                        <div>
-                            <span>Current stage</span>
+                            <span>Status</span>
                             <strong>{selectedApplication.status}</strong>
                         </div>
+
                         <div>
-                            <span>Next step</span>
-                            <strong>{selectedApplication.nextStep}</strong>
+                            <span>Created</span>
+                            <strong>{selectedApplication.createdAt || '—'}</strong>
+                        </div>
+
+                        <div>
+                            <span>Updated</span>
+                            <strong>{selectedApplication.updatedAt || '—'}</strong>
                         </div>
                     </div>
-                </article>
 
-                <article className="card">
-                    <h2>Automatic match</h2>
-                    <p className="muted">
-                        This score is computed automatically from the role description and your profile skills.
-                    </p>
+                    {/* DESCRIPTION */}
+                    <h3>Job description</h3>
 
-                    <div className="match-score">
-                        <span>Candidate fit</span>
-                        <strong>{selectedMatchScore}%</strong>
-                    </div>
+                    {!isEditingApplication ? (
+                        <p>{selectedApplication.description || 'No description provided.'}</p>
+                    ) : (
+                        <textarea
+                            className="edit-input"
+                            rows="2"
+                            value={draft.description || ''}
+                            onChange={(e) =>
+                                setDraft({ ...draft, description: e.target.value })
+                            }
+                        />
+                    )}
 
-                    <div className="progress">
-                        <div className="progress-bar match-bar" style={{ width: `${selectedMatchScore}%` }} />
-                    </div>
+                    {/* NOTES */}
+                    <h3>Notes</h3>
 
-                    <div className="tag-list">
-                        {profile.skills.map((skill) => (
-                            <span key={skill.id ?? skill.name} className="tag">
-                {skill.name ?? String(skill)}
-              </span>
-                        ))}
-                    </div>
+                    {!isEditingApplication ? (
+                        <p>{selectedApplication.notes || 'No notes provided.'}</p>
+                    ) : (
+                        <textarea
+                            className="edit-input"
+                            rows="2"
+                            value={draft.notes || ''}
+                            onChange={(e) =>
+                                setDraft({ ...draft, notes: e.target.value })
+                            }
+                        />
+                    )}
                 </article>
             </div>
 
+            {/* STATUS */}
             <div className="detail-layout">
                 <article className="card">
-                    <h2>Job description</h2>
-                    <p>{selectedApplication.description || 'No job description provided.'}</p>
-
-                    <h3>Notes</h3>
-                    <p>{selectedApplication.notes || 'No notes provided.'}</p>
-                </article>
-
-                <article className="card">
                     <h2>Status</h2>
+
                     {latestStatus ? (
-                        <button type="button" className="status-summary-btn" onClick={onOpenStatusHistory}>
+                        <button
+                            className="status-summary-btn"
+                            onClick={onOpenStatusHistory}
+                        >
                             <div>
                                 <strong>{latestStatus.jaStatus ?? 'Applied'}</strong>
-                                <p className="muted">{latestStatus.note || 'No note.'}</p>
+                                <p className="muted">
+                                    {latestStatus.note || 'No note.'}
+                                </p>
                             </div>
-                            <span className="badge">View history</span>
+                            <span className="badge">View</span>
                         </button>
                     ) : (
                         <p className="muted">No status history yet.</p>
                     )}
 
-                    <div className="button-row" style={{ marginTop: '1rem' }}>
-                        <button type="button" className="secondary-btn" onClick={onAddStatus}>
-                            Add status
+                    <div className="button-row">
+                        <button className="secondary-btn" onClick={onAddStatus}>
+                            Add
                         </button>
+
                         {latestStatus && (
                             <>
-                                <button type="button" className="secondary-btn" onClick={onEditLastStatus}>
+                                <button className="secondary-btn" onClick={onEditLastStatus}>
                                     Edit last
                                 </button>
-                                <button type="button" className="secondary-btn danger" onClick={onDeleteLastStatus}>
+                                <button
+                                    className="secondary-btn danger"
+                                    onClick={onDeleteLastStatus}
+                                >
                                     Remove last
                                 </button>
                             </>
@@ -154,22 +223,22 @@ function ApplicationDetailPage({
                 </article>
             </div>
 
+            {/* EVENTS */}
             <div className="detail-layout">
                 <article className="card">
                     <h2>Scheduled events</h2>
+
                     {scheduledEvents.length > 0 ? (
                         <div className="stack-list">
                             {scheduledEvents.map((event, index) => (
-                                <div key={event.id ?? `${event.eventName}-${index}`} className="editable-item">
-                                    <div className="editable-item-header">
-                                        <div>
-                                            <h3>{event.eventName ?? 'Event'}</h3>
-                                            <p className="muted">
-                                                {event.eventType ?? 'Other'} ·{' '}
-                                                {event.eventDate ? new Date(event.eventDate).toLocaleString() : 'No date'}
-                                            </p>
-                                        </div>
-                                    </div>
+                                <div key={event.id ?? index} className="editable-item">
+                                    <h3>{event.eventName}</h3>
+                                    <p className="muted">
+                                        {event.eventType} ·{' '}
+                                        {event.eventDate
+                                            ? new Date(event.eventDate).toLocaleString()
+                                            : 'No date'}
+                                    </p>
                                     <p>{event.note || 'No note.'}</p>
                                 </div>
                             ))}
@@ -177,20 +246,41 @@ function ApplicationDetailPage({
                     ) : (
                         <p className="muted">No scheduled events yet.</p>
                     )}
-                </article>
 
+                    <button
+                        className="primary-btn"
+                        onClick={() => setIsCreateEventModalOpen(true)}
+                        style={{ marginTop: 12 }}
+                    >
+                        Add event
+                    </button>
+                </article>
+            </div>
+
+            {/* MATCH */}
+            <div className="detail-layout">
                 <article className="card">
-                    <h2>Application actions</h2>
+                    <h2>Match status</h2>
+
+                    <textarea
+                        className="edit-input"
+                        rows="3"
+                        placeholder="Paste job ad..."
+                    />
+
                     <div className="button-row">
-                        <button type="button" className="secondary-btn" onClick={openEdit}>
-                            Edit application
-                        </button>
-                        <button type="button" className="secondary-btn danger" onClick={() => onDeleteApplication(selectedApplication.id)}>
-                            Delete application
+                        <button className="secondary-btn">Match</button>
+                        <button className="secondary-btn danger">
+                            Clear
                         </button>
                     </div>
                 </article>
             </div>
+
+            {/* MODAL */}
+            {isCreateEventModalOpen && (
+                <CreateEventModal onClose={() => setIsCreateEventModalOpen(false)} />
+            )}
         </section>
     )
 }
