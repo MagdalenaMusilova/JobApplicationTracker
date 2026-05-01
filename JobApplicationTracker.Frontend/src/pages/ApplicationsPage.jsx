@@ -1,39 +1,73 @@
 ﻿import { useMemo, useState } from 'react'
 import ApplicationCard from '../components/ApplicationCard'
-import { useNavigate } from 'react-router-dom'
-
+import Modal from "../components/Modal.jsx"
+import ApplicationFormSection from "../components/forms/ApplicationFormSection.jsx"
+import StatusFormSection from "../components/forms/StatusFormSection.jsx"
+import EventFormSection from "../components/forms/EventFormSection.jsx"
+import CreateApplicationModal from "../modalWindows/CreateApplicationModal.jsx";
 
 function ApplicationsPage({
                               applications,
-                              statusSteps,
+                              avaibleStatuses,
                               onDeleteApplication,
                               onMarkAppRejected,
+                              onCreateApplication
                           }) {
     const [filters, setFilters] = useState('all')
     const [searchText, setSearchText] = useState('')
-    const navigate = useNavigate()
-    
+    const [createOpen, setCreateOpen] = useState(false)
+
     const filteredApplications = useMemo(() => {
-        const normalizedSearch = searchText.trim().toLowerCase()
+        const q = searchText.trim().toLowerCase()
 
         return applications.filter((app) => {
-            const matchesStatus = filters === 'all' || app.status === filters
+            const matchesStatus =
+                filters === 'all' || app.status?.type === filters
+
             const matchesSearch =
-                normalizedSearch.length === 0 ||
-                `${app.company} ${app.title} ${app.description} ${app.notes} ${app.status}`
+                q.length === 0 ||
+                `${app.company} ${app.position} ${app.jobDescription} ${app.notes} ${app.status?.type}`
                     .toLowerCase()
-                    .includes(normalizedSearch)
+                    .includes(q)
 
             return matchesStatus && matchesSearch
         })
     }, [applications, filters, searchText])
 
+    const handleSubmit = () => {
+        const newApplication = {
+            id: Date.now(),
+            ...form,
+            event: form.event || null
+        }
+
+        onCreateApplication(newApplication)
+
+        setForm({
+            company: "",
+            position: "",
+            jobDescription: "",
+            notes: "",
+            status: {
+                type: avaibleStatuses[0] || "",
+                note: ""
+            },
+            event: null
+        })
+
+        setCreateOpen(false)
+    }
+
+
+
     const applicationCount = applications.length
     const visibleCount = filteredApplications.length
     const activeFilterLabel = filters === 'all' ? 'All statuses' : filters
 
-return (
+    return (
         <section className="page applications-page">
+
+            {/* HEADER */}
             <div className="page-header applications-hero">
                 <div className="applications-hero-copy">
                     <span className="eyebrow">Application tracker</span>
@@ -57,12 +91,17 @@ return (
                         </div>
                     </div>
 
-                    <button type="button" className="primary-btn" onClick={() => setCreateOpen(true)}>
+                    <button
+                        type="button"
+                        className="primary-btn"
+                        onClick={() => setCreateOpen(true)}
+                    >
                         + New Application
                     </button>
                 </div>
             </div>
 
+            {/* SEARCH + FILTERS */}
             <div className="card applications-toolbar">
                 <div className="card-top">
                     <div>
@@ -82,16 +121,15 @@ return (
 
                 <div className="filter-row applications-filter-row">
                     <button
-                        type="button"
                         className={filters === 'all' ? 'filter-btn active' : 'filter-btn'}
                         onClick={() => setFilters('all')}
                     >
                         All
                     </button>
-                    {statusSteps.map((step) => (
+
+                    {avaibleStatuses.map((step) => (
                         <button
                             key={step}
-                            type="button"
                             className={filters === step ? 'filter-btn active' : 'filter-btn'}
                             onClick={() => setFilters(step)}
                         >
@@ -101,6 +139,7 @@ return (
                 </div>
             </div>
 
+            {/* LIST */}
             {visibleCount === 0 ? (
                 <div className="empty-state applications-empty-state">
                     <h2>No applications found</h2>
@@ -112,13 +151,20 @@ return (
                         <ApplicationCard
                             key={app.id}
                             app={app}
-                            onClick={() => onDeleteApplication(app.id)}
                             onDelete={() => onDeleteApplication(app.id)}
                             onRejected={() => onMarkAppRejected(app.id)}
                         />
                     ))}
                 </div>
             )}
+
+            {/* MODAL */}
+            {createOpen && (
+                <CreateApplicationModal
+                    onClose={() => setCreateOpen(false)}
+                    avaibleStatuses={avaibleStatuses}
+                />
+                )}
         </section>
     )
 }

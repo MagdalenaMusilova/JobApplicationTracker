@@ -8,7 +8,9 @@
 
     return (
         <div className="modal-section">
-            <h4>{header}</h4>
+            <div className="modal-section-header">
+                <h4>{header}</h4>
+            </div>
 
             <div className="modal-grid">
                 <label>

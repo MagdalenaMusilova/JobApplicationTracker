@@ -207,7 +207,7 @@ function App() {
                     <Route path="/" element={<Navigate to="/dashboard" />} />
 
                     <Route path="/dashboard" element={<DashboardPage applications={applications} />} />
-                    <Route path="/applications" element={<ApplicationsPage applications={applications} statusSteps={statusSteps} onDeleteApplication={ handleOnDeleteApplication} onMarkAppRejected={handleOnMarkAppRejected} />} />
+                    <Route path="/applications" element={<ApplicationsPage applications={applications} avaibleStatuses={statusSteps} onDeleteApplication={ handleOnDeleteApplication} onMarkAppRejected={handleOnMarkAppRejected} />} />
                     <Route path="/applications/:id" element={<ApplicationDetailPage />} />
                     <Route path="/match" element={<JobMatchPage profile={profile} />} />
                     <Route path="/todos" element={<TodosPage />} />
