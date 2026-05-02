@@ -7,10 +7,10 @@ namespace JobApplicationTracker.Repository;
 
 public class JAEventRepository : IJAEventRepository
 {
-    private readonly JAEventDbContext _context;
+    private readonly AppDbContext _context;
     private readonly IMapper _mapper;
     
-    public JAEventRepository(JAEventDbContext context, IMapper mapper)
+    public JAEventRepository(AppDbContext context, IMapper mapper)
     {
         _context = context;
         _mapper = mapper;

@@ -2,7 +2,7 @@
     JAStatusEntryId: string,
     eventName: string;
     eventType: number;
-    eventDate: Date;
+    eventDate: string;
     isWholeDay?: boolean;
     note: string | null;
 }

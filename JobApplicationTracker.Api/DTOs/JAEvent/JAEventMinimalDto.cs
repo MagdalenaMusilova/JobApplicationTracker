@@ -2,7 +2,7 @@
 
 namespace JobApplicationTracker.DTOs.JAEvent;
 
-public class MinimalJAEventDto
+public class JAEventMinimalDto
 {
     Guid Id { get; set; }
     string EventName { get; set; }

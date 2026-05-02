@@ -1,27 +1,21 @@
 ﻿import { ChangeEvent } from 'react'
+import {CreateJobApplication} from "../../models/create/CreateJobApplication";
 
-interface Application {
-    company: string
-    position: string
-    jobDescription: string
-    notes: string
-}
-
-interface ApplicationFormSectionProps {
+interface CreateApplicationSectionProps {
     header?: string
-    application: Application
-    onChange: (updated: Application) => void
+    createdApplication: CreateJobApplication
+    onChange: (updated: CreateJobApplication) => void
 }
 
-function ApplicationFormSection({
+function CreateApplicationSection({
                                     header = "New application",
-                                    application,
+                                    createdApplication,
                                     onChange
-                                }: ApplicationFormSectionProps) {
+                                }: CreateApplicationSectionProps) {
 
-    const update = (field: keyof Application, value: string) => {
+    const update = (field: keyof CreateJobApplication, value: string) => {
         onChange({
-            ...application,
+            ...createdApplication,
             [field]: value,
         })
     }
@@ -37,7 +31,7 @@ function ApplicationFormSection({
                     Company
                     <input
                         type="text"
-                        value={application.company}
+                        value={createdApplication.company}
                         onChange={(e: ChangeEvent<HTMLInputElement>) =>
                             update("company", e.target.value)
                         }
@@ -49,7 +43,7 @@ function ApplicationFormSection({
                     Position
                     <input
                         type="text"
-                        value={application.position}
+                        value={createdApplication.position}
                         onChange={(e: ChangeEvent<HTMLInputElement>) =>
                             update("position", e.target.value)
                         }
@@ -61,7 +55,7 @@ function ApplicationFormSection({
                     Job description
                     <textarea
                         rows={5}
-                        value={application.jobDescription}
+                        value={createdApplication.jobDescription}
                         onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                             update("jobDescription", e.target.value)
                         }
@@ -72,9 +66,9 @@ function ApplicationFormSection({
                     Notes
                     <textarea
                         rows={4}
-                        value={application.notes}
+                        value={createdApplication.note}
                         onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                            update("notes", e.target.value)
+                            update("note", e.target.value)
                         }
                     />
                 </label>
@@ -83,4 +77,4 @@ function ApplicationFormSection({
     )
 }
 
-export default ApplicationFormSection
+export default CreateApplicationSection

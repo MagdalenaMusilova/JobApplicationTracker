@@ -1,22 +1,24 @@
 ﻿import { ChangeEvent } from "react";
 import { JAStatusType } from "../../models/enums/JAStatusType";
-import { CreateJAEvent } from "../../models/create/CreateJAEvent";
-import {CreateJobApplication} from "../../models/create/CreateJobApplication";
+import {CreateJAStatusEntry} from "../../models/create/CreateJAStatusEntry";
 
-interface CreateStatusSectionProps {
+interface CreateStatusEntrySectionProps {
     header?: string
-    createdStatus: CreateJAEvent
+    createdStatus: CreateJAStatusEntry
     availableStatuses: JAStatusType[]
-    onChange: (updated: CreateJAEvent) => void
+    onChange: (updated: CreateJAStatusEntry) => void
 }
 
-function CreateStatusSection({
+function CreateStatusEntrySection({
                                  header = "New status",
                                  createdStatus,
                                  availableStatuses, 
                                  onChange,
-                             }: CreateStatusSectionProps) {
-    const update = (field: keyof CreateJAEvent, value: string) => {
+                             }: CreateStatusEntrySectionProps) {
+    const update = <K extends keyof CreateJAStatusEntry>(
+        field: K,
+        value: CreateJAStatusEntry[K]
+    ) => {
         onChange({
             ...createdStatus,
             [field]: value,
@@ -34,12 +36,16 @@ function CreateStatusSection({
                 <label>
                     Status type
                     <select
-                        value={createdStatus.eventType}
-                        onChange={handleChange}
+                        value={createdStatus.statusType}
+                        onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                            update("statusType", Number(e.target.value))
+                        }
+                        required
                     >
-                        {availableStatuses.map((s) => (
-                            <option key={s.statusValue} value={s.statusName}>
-                                {s.statusName}
+                        <option value="">Select type</option>
+                        {availableStatuses.map((type) => (
+                            <option key={type.value} value={type.value}>
+                                {type.label}
                             </option>
                         ))}
                     </select>
@@ -50,7 +56,9 @@ function CreateStatusSection({
                     <input
                         type="text"
                         value={createdStatus.note ?? ""}
-                        onChange={handleNoteChange}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            update("note", e.target.value)
+                        }
                         placeholder="Optional note for the status"
                     />
                 </label>
@@ -60,4 +68,4 @@ function CreateStatusSection({
     );
 }
 
-export default CreateStatusSection;
+export default CreateStatusEntrySection;

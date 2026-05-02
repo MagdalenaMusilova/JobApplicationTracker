@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using JobApplicationTracker.DTOs;
+using JobApplicationTracker.Enums;
 using JobApplicationTracker.Models;
 using JobApplicationTracker.Repository;
 
@@ -49,8 +50,8 @@ public class JAEventService : IJAEventService
         {
             JAStatusEntryId = jaEvent.JAStatusEntryId,
             EventName = jaEvent.EventName,
-            EventType = jaEvent.EventType,
-            EventDate = jaEvent.EventDate,
+            EventType = (JAEventType)jaEvent.EventType,
+            EventDate = DateTime.Parse(jaEvent.EventDate),
             IsWholeDay = jaEvent.IsWholeDay,
             Note = jaEvent.Note
         };

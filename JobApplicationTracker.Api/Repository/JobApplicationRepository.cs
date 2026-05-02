@@ -8,10 +8,10 @@ namespace JobApplicationTracker.Repository;
 
 public class JobApplicationRepository : IJobApplicationRepository
 {
-    private readonly JobApplicationDbContext _context;
+    private readonly AppDbContext _context;
     private readonly IMapper _mapper;
     
-    public JobApplicationRepository(JobApplicationDbContext context, IMapper mapper)
+    public JobApplicationRepository(AppDbContext context, IMapper mapper)
     {
         _context = context;
         _mapper = mapper;

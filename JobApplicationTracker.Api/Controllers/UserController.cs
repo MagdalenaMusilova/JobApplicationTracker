@@ -17,7 +17,6 @@ public class UserController : ControllerBase
         _userService = userService;
     }
 
-    // Public — used during sign-up
     [HttpPost]
     public async Task<ActionResult<UserDto>> Create([FromBody] CreateUserDto user)
     {
@@ -25,8 +24,7 @@ public class UserController : ControllerBase
         return Ok(createdUser);
     }
 
-    // Authenticated — get your own profile
-    [HttpGet("me")]
+    [HttpGet]
     [Authorize]
     public async Task<ActionResult<UserDto>> GetMe()
     {
@@ -35,8 +33,7 @@ public class UserController : ControllerBase
         return user is null ? NotFound() : Ok(user);
     }
 
-    // Authenticated — update your own profile
-    [HttpPut("me")]
+    [HttpPut]
     [Authorize]
     public async Task<ActionResult<UserDto>> UpdateMe([FromBody] UpdateUserDto user)
     {

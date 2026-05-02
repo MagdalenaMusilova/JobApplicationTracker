@@ -1,9 +1,26 @@
 ﻿import '../styles/Modal.css'
+import { ReactNode, MouseEvent } from 'react'
 
-function Modal({ title, subtitle, children, onClose, footer }) {
+interface ModalProps {
+    title: string
+    subtitle?: string
+    children: ReactNode
+    onClose: () => void
+        footer?: ReactNode
+}
+
+function Modal({ title, subtitle, children, onClose, footer }: ModalProps) {
+    const handleBackdropClick = () => {
+        onClose()
+    }
+
+    const handleModalClick = (e: MouseEvent<HTMLDivElement>) => {
+        e.stopPropagation()
+    }
+
     return (
-        <div className="modal-backdrop" onClick={onClose}>
-            <div className="modal card modal-shell" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-backdrop" onClick={handleBackdropClick}>
+            <div className="modal card modal-shell" onClick={handleModalClick}>
 
                 <div className="modal-header">
                     <div>

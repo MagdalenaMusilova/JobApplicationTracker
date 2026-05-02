@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using JobApplicationTracker.Dos;
 using JobApplicationTracker.DTOs;
+using JobApplicationTracker.Enums;
 using JobApplicationTracker.Repository;
 
 namespace JobApplicationTracker.Services;
@@ -38,9 +39,8 @@ public class JAStatusEntryService : IJAStatusEntryService
         {
             JobApplicationId = jaStatusEntry.JobApplicationId,
             OrderIndex = statusEntriesCount,
-            JaStatus = jaStatusEntry.JaStatus,
+            JaStatusType = (JAStatusType)jaStatusEntry.StatusType,
             CreatedAt = now,
-            UpdatedAt = now,
             Note = jaStatusEntry.Note
         };
         
@@ -55,7 +55,7 @@ public class JAStatusEntryService : IJAStatusEntryService
 
         var updatedDo = new JAStatusEntryDo
         {
-            JaStatus = updated.JaStatus,
+            JaStatusType = (JAStatusType)updated.StatusType,
             Note = updated.Note,
         };
 

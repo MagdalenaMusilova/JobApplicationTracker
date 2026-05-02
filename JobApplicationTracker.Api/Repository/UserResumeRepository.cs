@@ -1,17 +1,17 @@
 ﻿using AutoMapper;
 using JobApplicationTracker.Database;
 using JobApplicationTracker.DOs;
-using JobApplicationTracker.Models.Users;
+using JobApplicationTracker.Models.UserProfile;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobApplicationTracker.Repository;
 
 public class UserResumeRepository : IUserResumeRepository
 {
-    private readonly UserResumeDbContext _context;
+    private readonly AppDbContext _context;
     private readonly IMapper _mapper;
     
-    public UserResumeRepository(UserResumeDbContext context, IMapper mapper)
+    public UserResumeRepository(AppDbContext context, IMapper mapper)
     {
         _context = context;
         _mapper = mapper;
@@ -50,11 +50,11 @@ public class UserResumeRepository : IUserResumeRepository
         if (entity is null) return null;
         
         entity.UserId = entity.UserId;
-        entity.WorkExperiences = _mapper.Map<ICollection<WorkExperience>>(updated.WorkExperiences);
-        entity.Education = _mapper.Map<ICollection<Education>>(updated.Education);
-        entity.Trainings = _mapper.Map<ICollection<Training>>(updated.Trainings);
-        entity.Skills = _mapper.Map<ICollection<JobSkill>>(updated.Skills);
-        entity.UncategorizedSkillUsages = _mapper.Map<ICollection<SkillUsage>>(updated.UncategorizedSkillUsages);
+        entity.WorkExperiences = _mapper.Map<List<WorkExperience>>(updated.WorkExperiences);
+        entity.Education = _mapper.Map<List<Education>>(updated.Education);
+        entity.Trainings = _mapper.Map<List<Training>>(updated.Trainings);
+        entity.Skills = _mapper.Map<List<ResumeSkill>>(updated.Skills);
+        entity.UncategorizedExperiences = _mapper.Map<List<OtherExperience>>(updated.UncategorizedSkillUsages);
 
         await _context.SaveChangesAsync();
 

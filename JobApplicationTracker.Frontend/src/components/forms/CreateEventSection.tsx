@@ -1,28 +1,27 @@
 ﻿import { ChangeEvent } from 'react'
+import {CreateJAEvent} from "../../models/create/CreateJAEvent";
+import {JAEventType} from "../../models/enums/JAEventType";
 
-interface Event {
-    name: string
-    type: string
-    isAllDay: boolean
-    date: string
-    note?: string
-}
-
-interface EventFormSectionProps {
+interface CreateEventSectionProps {
     header?: string
-    event: Event
-    onChange: (updated: Event) => void
+    createdEvent: CreateJAEvent,
+    eventTypes: JAEventType[],
+    onChange: (updated: CreateJAEvent) => void
 }
 
-function EventFormSection({
-                              header = "Event",
-                              event,
+function CreateEventSection({
+                              header = "New event",
+                              createdEvent, 
+                              eventTypes,
                               onChange
-                          }: EventFormSectionProps) {
+                          }: CreateEventSectionProps) {
 
-    const update = (field: keyof Event, value: string | boolean) => {
+    const update = <K extends keyof CreateJAEvent>(
+        field: K,
+        value: CreateJAEvent[K]
+    ) => {
         onChange({
-            ...event,
+            ...createdEvent,
             [field]: value,
         })
     }
@@ -38,9 +37,9 @@ function EventFormSection({
                     Event name
                     <input
                         type="text"
-                        value={event.name}
+                        value={createdEvent.eventName}
                         onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                            update("name", e.target.value)
+                            update("eventName", e.target.value)
                         }
                         required
                     />
@@ -49,24 +48,27 @@ function EventFormSection({
                 <label>
                     Event type
                     <select
-                        value={event.type}
+                        value={createdEvent.eventType}
                         onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                            update("type", e.target.value)
+                            update("eventType", Number(e.target.value))
                         }
                         required
                     >
                         <option value="">Select type</option>
-                        <option value="Interview">Interview</option>
-                        <option value="Meeting">Meeting</option>
+                        {eventTypes.map((type) => (
+                            <option key={type.value} value={type.value}>
+                                {type.label}
+                            </option>
+                        ))}
                     </select>
                 </label>
 
                 <label>
                     Event duration
                     <select
-                        value={event.isAllDay ? "allDay" : "timed"}
+                        value={createdEvent.isWholeDay ? "allDay" : "timed"}
                         onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                            update("isAllDay", e.target.value === "allDay")
+                            update("isWholeDay", e.target.value === "allDay")
                         }
                     >
                         <option value="allDay">Full day</option>
@@ -75,12 +77,12 @@ function EventFormSection({
                 </label>
 
                 <label>
-                    {event.isAllDay ? "Event date" : "Event date & time"}
+                    {createdEvent.isWholeDay ? "Event date" : "Event date & time"}
                     <input
-                        type={event.isAllDay ? "date" : "datetime-local"}
-                        value={event.date}
+                        type={createdEvent.isWholeDay ? "date" : "datetime-local"}
+                        value={createdEvent.eventDate}
                         onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                            update("date", e.target.value)
+                            update("eventDate", e.target.value)
                         }
                         required
                     />
@@ -89,7 +91,7 @@ function EventFormSection({
                 <label className="modal-span-2">
                     Note
                     <textarea
-                        value={event.note ?? ""}
+                        value={createdEvent.note ?? ""}
                         onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                             update("note", e.target.value)
                         }
@@ -100,4 +102,4 @@ function EventFormSection({
     )
 }
 
-export default EventFormSection
+export default CreateEventSection

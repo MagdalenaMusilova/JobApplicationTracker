@@ -1,9 +1,9 @@
 ﻿import { useMemo, useState } from 'react'
 import ApplicationCard from '../components/ApplicationCard'
 import Modal from "../components/Modal.jsx"
-import ApplicationFormSection from "../components/forms/ApplicationFormSection.jsx"
-import StatusFormSection from "../components/forms/StatusFormSection.jsx"
-import EventFormSection from "../components/forms/EventFormSection.jsx"
+import CreateApplicationSection from "../components/forms/CreateApplicationSection.tsx"
+import CreateStatusEntrySection from "../components/forms/CreateStatusEntrySection.tsx"
+import CreateEventSection from "../components/forms/CreateEventSection.tsx"
 import CreateApplicationModal from "../modalWindows/CreateApplicationModal.jsx";
 
 function ApplicationsPage({

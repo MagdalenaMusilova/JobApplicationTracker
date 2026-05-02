@@ -26,4 +26,8 @@
       <ProjectReference Include="..\JobApplicationTracker.Api\JobApplicationTracker.Api.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Repository\" />
+    </ItemGroup>
+
 </Project>

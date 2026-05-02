@@ -1,4 +1,3 @@
-﻿export type JAStatusType = {
-    statusName : string;
-    statusValue : number;
-}
+﻿import {EnumType} from "./EnumType";
+
+export type JAStatusType = EnumType;

@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import  './LoginPage.css'
 
 import { AuthAPI } from '../api/auth'
 import { storage } from '../utils/storage'
@@ -65,28 +66,31 @@ export default function LoginPage() {
     return (
         <div className="auth-shell">
             <section className="auth-card">
-                <h1>{mode === 'signup' ? 'Create account' : 'Welcome back'}</h1>
-                <p className="muted">
-                    {mode === 'signup'
-                        ? 'Sign up to start tracking applications'
-                        : 'Log in to continue'}
-                </p>
+                <div className="auth-header">
+                    <h1>{mode === 'signup' ? 'Create account' : 'Welcome back'}</h1>
+                    <p>
+                        {mode === 'signup'
+                            ? 'Start tracking your job applications'
+                            : 'Log in to continue'}
+                    </p>
+                </div>
 
                 <form onSubmit={handleSubmit} className="auth-form">
-                    <label>
-                        Username
+                    <div className="form-group">
+                        <label>Username</label>
                         <input
                             name="username"
                             type="text"
                             value={form.username}
                             onChange={handleChange}
                             autoComplete="username"
+                            placeholder="Enter your username"
                             required
                         />
-                    </label>
+                    </div>
 
-                    <label>
-                        Password
+                    <div className="form-group">
+                        <label>Password</label>
                         <input
                             name="password"
                             type="password"
@@ -95,24 +99,29 @@ export default function LoginPage() {
                             autoComplete={
                                 mode === 'signup' ? 'new-password' : 'current-password'
                             }
+                            placeholder="Enter your password"
                             required
                         />
-                    </label>
+                    </div>
 
-                    {error && <p className="auth-error">{error}</p>}
+                    {error && <div className="auth-error">{error}</div>}
 
-                    <button type="submit" disabled={loading}>
+                    <button className="auth-submit" type="submit" disabled={loading}>
                         {loading
-                            ? 'Loading...'
+                            ? 'Please wait...'
                             : mode === 'signup'
-                                ? 'Sign up'
+                                ? 'Create account'
                                 : 'Log in'}
                     </button>
                 </form>
 
+                <div className="auth-divider">
+                    <span>or</span>
+                </div>
+
                 <button
                     type="button"
-                    className="link-button"
+                    className="auth-toggle"
                     onClick={() =>
                         setMode((m) => (m === 'signup' ? 'signin' : 'signup'))
                     }

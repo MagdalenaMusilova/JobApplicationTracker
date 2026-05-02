@@ -15,14 +15,8 @@ builder.Services.AddControllers();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-builder.Services.AddDbContext<UserDbContext>(options =>
-    options.UseNpgsql(connectionString));
-builder.Services.AddDbContext<JobApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
-builder.Services.AddDbContext<JAEventDbContext>(options =>
-    options.UseNpgsql(connectionString));
-builder.Services.AddDbContext<UserResumeDbContext>(options =>
-    options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();

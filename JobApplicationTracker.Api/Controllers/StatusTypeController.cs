@@ -8,7 +8,7 @@ namespace JobApplicationTracker.Controllers;
 [ApiController]
 [Route("api/statuses")]
 [Authorize]
-public class StatusTypesController : ControllerBase
+public class StatusTypeController : ControllerBase
 {
     [HttpGet]
     public ActionResult<IEnumerable<JaStatusTypeDto>> GetStatuses()

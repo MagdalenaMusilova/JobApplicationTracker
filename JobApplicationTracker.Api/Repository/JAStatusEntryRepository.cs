@@ -8,10 +8,10 @@ namespace JobApplicationTracker.Repository;
 
 public class JAStatusEntryRepository : IJAStatusEntryRepository
 {
-    private readonly JobApplicationDbContext _context;
+    private readonly AppDbContext _context;
     private readonly IMapper _mapper;
     
-    public JAStatusEntryRepository(JobApplicationDbContext context, IMapper mapper)
+    public JAStatusEntryRepository(AppDbContext context, IMapper mapper)
     {
         _context = context;
         _mapper = mapper;
@@ -49,9 +49,8 @@ public class JAStatusEntryRepository : IJAStatusEntryRepository
         var entity = await _context.JAStatusEntries.FindAsync(id);
         if (entity is null) return null;
 
-        entity.JaStatus = updated.JaStatus;
+        entity.JaStatusType = updated.JaStatusType;
         entity.Note = updated.Note;
-        entity.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
         return _mapper.Map<JAStatusEntryDo>(entity);

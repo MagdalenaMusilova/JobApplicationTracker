@@ -1,4 +1,4 @@
-﻿export type JAStatusType = {
-    statusName : string;
-    statusValue : number;
+﻿export interface CreateJAStatusEntry {
+    statusType: number,
+    note: string | null,
 }

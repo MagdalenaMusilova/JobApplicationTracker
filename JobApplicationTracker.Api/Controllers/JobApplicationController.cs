@@ -38,6 +38,14 @@ public class JobApplicationController : ControllerBase
         var applications = await _jobApplicationService.GetAllByUserAsync(userId);
         return Ok(applications);
     }
+    
+    [HttpGet("/minimal")]
+    public async Task<ActionResult<IEnumerable<JobApplicationDto>>> GetAllMinimalAsync()
+    {
+        var userId = GetUserId();
+        var applications = await _jobApplicationService.GetAllByUserAsync(userId);
+        return Ok(applications);
+    }
 
     [HttpGet("{id:Guid}")]
     public async Task<ActionResult<JobApplicationDto>> GetById(Guid id)
@@ -97,7 +105,7 @@ public class JobApplicationController : ControllerBase
         CreateJAStatusEntryDto newStatus = new CreateJAStatusEntryDto()
         {
             JobApplicationId = id,
-            JaStatus = JAStatus.Rejected,
+            StatusType = (int)JAStatusType.Rejected,
             Note = ""
         };
 

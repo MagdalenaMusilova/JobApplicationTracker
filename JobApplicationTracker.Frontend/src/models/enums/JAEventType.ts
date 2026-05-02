@@ -1,4 +1,3 @@
-﻿export type JAEventType = {
-    value : number;
-    type : string;
-}
+﻿import {EnumType} from "./EnumType";
+
+export type JAEventType = EnumType;

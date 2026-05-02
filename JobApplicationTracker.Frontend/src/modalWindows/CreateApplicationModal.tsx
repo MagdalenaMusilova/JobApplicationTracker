@@ -1,31 +1,76 @@
-﻿import React, {useState} from "react";
+﻿import React, { useState } from "react";
 import Modal from "../components/Modal.jsx";
-import ApplicationFormSection from "../components/forms/ApplicationFormSection.jsx";
-import StatusFormSection from "../components/forms/StatusFormSection.jsx";
-import EventFormSection from "../components/forms/EventFormSection.jsx";
+import CreateApplicationSection from "../components/forms/CreateApplicationSection";
+import CreateStatusEntrySection from "../components/forms/CreateStatusEntrySection";
+import CreateEventSection from "../components/forms/CreateEventSection";
+import { JAStatusType } from "../models/enums/JAStatusType";
+import { JAEventType } from "../models/enums/JAEventType";
+import { ApplicationsAPI } from '../api/applications'; // Import the ApplicationsAPI
+import { useNavigate } from 'react-router-dom';
+import {CreateJobApplication} from "../models/create/CreateJobApplication"; // Import useNavigate for redirection
+
+type CreateApplicationModalProps = {
+    onClose: (open: boolean) => void;
+    availableStatuses: JAStatusType[];
+    eventTypes: JAEventType[];
+};
 
 export default function CreateApplicationModal({
                                                    onClose,
                                                    availableStatuses,
-                                               }) {
-    const [form, setForm] = useState<any>({
+                                                   eventTypes,
+                                               } : CreateApplicationModalProps) {
+    const [form, setForm] = useState<CreateJobApplication>({
         company: "",
         position: "",
         jobDescription: "",
-        notes: "",
-        status: {
-            type: avaibleStatuses[0] || "",
+        note: "",
+        initialStatus: {
+            statusType: 0,
             note: ""
         },
-        event: null
-    })
+        jaEvent: null
+    });
 
-    const handleCreateApplication = () => {
-        console.log("Create Application", form);
-    }
-    
-    const toggleEvent = (checked) => {
-        setForm((prev) => ({
+    // State to hold validation errors
+    const [errors, setErrors] = useState<any>({});
+
+    const navigate = useNavigate(); // Initialize the navigation hook
+
+    const validateForm = () => {
+        let valid = true;
+        const newErrors: any = {};
+
+        if (!form.company) {
+            newErrors.company = "Company is required";
+            valid = false;
+        }
+
+        if (!form.position) {
+            newErrors.position = "Position is required";
+            valid = false;
+        }
+
+        setErrors(newErrors);
+        return valid;
+    };
+
+    const handleCreateApplication = async () => {
+        if (validateForm()) {
+            try {
+                const response = await ApplicationsAPI.create(form);
+                console.log("Application created successfully:", response);
+
+                // Redirect to the new application's page
+                navigate(`/applications/${response.id}`);
+            } catch (error) {
+                console.error("Failed to create application", error);
+            }
+        }
+    };
+
+    const toggleEvent = (checked: boolean) => {
+        setForm((prev: any) => ({
             ...prev,
             event: checked
                 ? {
@@ -36,9 +81,9 @@ export default function CreateApplicationModal({
                     note: ""
                 }
                 : null
-        }))
-    }
-    
+        }));
+    };
+
     return (
         <Modal
             title="New application"
@@ -46,19 +91,21 @@ export default function CreateApplicationModal({
             onClose={() => onClose(false)}
         >
             {/* APPLICATION */}
-            <ApplicationFormSection
-                application={form}
+            <CreateApplicationSection
+                createdApplication={form}
                 onChange={(updated) =>
-                    setForm((prev) => ({ ...prev, ...updated }))
+                    setForm((prev: any) => ({ ...prev, ...updated }))
                 }
             />
+            {errors.company && <p className="error">{errors.company}</p>}
+            {errors.position && <p className="error">{errors.position}</p>}
 
             {/* STATUS */}
-            <StatusFormSection
-                status={form.status}
-                availableStatuses=availableStatuses
+            <CreateStatusEntrySection
+                createdStatus={form.initialStatus}
+                availableStatuses={availableStatuses}
                 onChange={(updatedStatus) =>
-                    setForm((prev) => ({
+                    setForm((prev: any) => ({
                         ...prev,
                         status: updatedStatus,
                     }))
@@ -73,7 +120,7 @@ export default function CreateApplicationModal({
                     <label className="toggle">
                         <input
                             type="checkbox"
-                            checked={!!form.event}
+                            checked={!!form.jaEvent}
                             onChange={(e) => toggleEvent(e.target.checked)}
                         />
                         <span className="toggle-slider"></span>
@@ -81,11 +128,12 @@ export default function CreateApplicationModal({
                     </label>
                 </div>
 
-                {form.event && (
-                    <EventFormSection
-                        event={form.event}
+                {form.jaEvent && (
+                    <CreateEventSection
+                        createdEvent={form.jaEvent}
+                        eventTypes={eventTypes}
                         onChange={(updatedEvent) =>
-                            setForm((prev) => ({
+                            setForm((prev: any) => ({
                                 ...prev,
                                 event: updatedEvent,
                             }))

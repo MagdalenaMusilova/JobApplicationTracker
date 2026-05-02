@@ -1,6 +1,6 @@
 ﻿namespace JobApplicationTracker.Enums;
 
-public enum JAStatus
+public enum JAStatusType
 {
     Whishlist  = 100,
     Applied    = 200,

@@ -1,6 +1,5 @@
 ﻿namespace JobApplicationTracker.DTOs.Enums;
 
-public class JaEventTypeDto
+public class JaEventTypeDto: EnumDto
 {
-    
 }

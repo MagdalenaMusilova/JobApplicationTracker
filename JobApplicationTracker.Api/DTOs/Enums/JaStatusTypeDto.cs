@@ -1,6 +1,5 @@
 ﻿namespace JobApplicationTracker.DTOs.Enums;
 
-public class JaStatusTypeDto
+public class JaStatusTypeDto : EnumDto
 {
-    
 }

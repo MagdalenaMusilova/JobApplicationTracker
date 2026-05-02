@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using JobApplicationTracker.Dos;
 using JobApplicationTracker.DTOs;
+using JobApplicationTracker.Enums;
 using JobApplicationTracker.Repository;
 
 namespace JobApplicationTracker.Services;
@@ -46,8 +47,8 @@ public class JobApplicationService : IJobApplicationService
         var createStatusEntry = new CreateJAStatusEntryDto
         {
             JobApplicationId = created.Id,
-            JaStatus = application.JaStatusEntry.JaStatus,
-            Note = application.JaStatusEntry.Note
+            StatusType = application.InitialStatus.StatusType,
+            Note = application.InitialStatus.Note
         };
 
         var createdDto = _mapper.Map<JobApplicationDto>(created);
