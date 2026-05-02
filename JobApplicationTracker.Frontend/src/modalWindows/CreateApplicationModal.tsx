@@ -5,9 +5,9 @@ import StatusFormSection from "../components/forms/StatusFormSection.jsx";
 import EventFormSection from "../components/forms/EventFormSection.jsx";
 
 export default function CreateApplicationModal({
-                                                onClose,
-                                                avaibleStatuses
-                                            }) {
+                                                   onClose,
+                                                   availableStatuses,
+                                               }) {
     const [form, setForm] = useState<any>({
         company: "",
         position: "",

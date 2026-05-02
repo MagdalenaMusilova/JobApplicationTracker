@@ -11,7 +11,7 @@ public class CreateJobApplicationDto
     // for ja status
     public CreateJAStatusEntryDto JaStatusEntry { get; set; }
     // for job listing
-    public CreateJobListingDto JobDescription { get; set; }
+    public CreateJobListingDto? JobListing { get; set; }
     // for ja event
-    public CreateJAEventDto JAEvent { get; set; }
+    public CreateJAEventDto? JAEvent { get; set; }
 }

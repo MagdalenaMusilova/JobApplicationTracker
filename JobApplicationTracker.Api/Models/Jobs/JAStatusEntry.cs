@@ -1,14 +1,20 @@
-﻿using JobApplicationTracker.Enums;
+﻿using System.ComponentModel.DataAnnotations;
+using JobApplicationTracker.Enums;
 
 namespace JobApplicationTracker.Models;
 
 public class JAStatusEntry
 {
-    public Guid Id { get; set; }
+    [Key]
+    public Guid Id { get; set; } = Guid.NewGuid();
     public Guid JobApplicationId { get; set; }
+    [Required]
     public int OrderIndex { get; set; }
-    public JAStatus JaStatus { get; set; }
+    [Required]
+    public JAStatusType JaStatusType { get; set; }
+    [Required]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? UpdatedAt { get; set; } = null;
+    [MaxLength(2500)]
     public string? Note { get; set; }
+    public JAEvent? JAEvent { get; set; }
 }

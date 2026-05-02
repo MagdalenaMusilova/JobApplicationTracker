@@ -1,10 +1,31 @@
-﻿function EventFormSection({ header = "Event", event, onChange }) {
-    const update = (field, value) => {
+﻿import { ChangeEvent } from 'react'
+
+interface Event {
+    name: string
+    type: string
+    isAllDay: boolean
+    date: string
+    note?: string
+}
+
+interface EventFormSectionProps {
+    header?: string
+    event: Event
+    onChange: (updated: Event) => void
+}
+
+function EventFormSection({
+                              header = "Event",
+                              event,
+                              onChange
+                          }: EventFormSectionProps) {
+
+    const update = (field: keyof Event, value: string | boolean) => {
         onChange({
             ...event,
             [field]: value,
-        });
-    };
+        })
+    }
 
     return (
         <div className="modal-section">
@@ -18,7 +39,9 @@
                     <input
                         type="text"
                         value={event.name}
-                        onChange={(e) => update("name", e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            update("name", e.target.value)
+                        }
                         required
                     />
                 </label>
@@ -27,7 +50,9 @@
                     Event type
                     <select
                         value={event.type}
-                        onChange={(e) => update("type", e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                            update("type", e.target.value)
+                        }
                         required
                     >
                         <option value="">Select type</option>
@@ -40,7 +65,9 @@
                     Event duration
                     <select
                         value={event.isAllDay ? "allDay" : "timed"}
-                        onChange={(e) => update("isAllDay", e.target.value === "allDay")}
+                        onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                            update("isAllDay", e.target.value === "allDay")
+                        }
                     >
                         <option value="allDay">Full day</option>
                         <option value="timed">Specific time</option>
@@ -52,7 +79,9 @@
                     <input
                         type={event.isAllDay ? "date" : "datetime-local"}
                         value={event.date}
-                        onChange={(e) => update("date", e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            update("date", e.target.value)
+                        }
                         required
                     />
                 </label>
@@ -60,13 +89,15 @@
                 <label className="modal-span-2">
                     Note
                     <textarea
-                        value={event.note || ""}
-                        onChange={(e) => update("note", e.target.value)}
+                        value={event.note ?? ""}
+                        onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                            update("note", e.target.value)
+                        }
                     />
                 </label>
             </div>
         </div>
-    );
+    )
 }
 
-export default EventFormSection;
+export default EventFormSection

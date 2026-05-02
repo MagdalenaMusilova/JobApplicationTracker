@@ -8,14 +8,14 @@ namespace JobApplicationTracker.Controllers;
 [ApiController]
 [Route("api/statuses")]
 [Authorize]
-public class StatusController : ControllerBase
+public class StatusTypesController : ControllerBase
 {
     [HttpGet]
-    public ActionResult<IEnumerable<JAStatusDto>> GetStatuses()
+    public ActionResult<IEnumerable<JaStatusTypeDto>> GetStatuses()
     {
-        var statuses = Enum.GetValues<JAStatus>()
+        var statuses = Enum.GetValues<JAStatusType>()
             .OrderBy(s => (int)s)
-            .Select(s => new JAStatusDto() { StatusName = s.ToString(), StatusValue = (int)s })
+            .Select(s => new JaStatusTypeDto() { Label = s.ToString(), Value = (int)s })
             .ToList();
 
         return Ok(statuses);
