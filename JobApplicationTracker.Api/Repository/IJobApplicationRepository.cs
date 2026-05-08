@@ -1,13 +1,14 @@
-﻿using JobApplicationTracker.Dos;
+﻿using JobApplicationTracker.Models;
 
 namespace JobApplicationTracker.Repository;
 
 public interface IJobApplicationRepository
 {
-    Task<IEnumerable<JobApplicationDo>> GetAllAsync();
-    Task<IEnumerable<JobApplicationDo>> GetAllByUserAsync(Guid userId);
-    Task<JobApplicationDo?> GetByIdAsync(Guid id);
-    Task<JobApplicationDo> AddAsync(JobApplicationDo application);
-    Task<JobApplicationDo> UpdateAsync(JobApplicationDo application);
+    IQueryable<JobApplication> Query(Guid userId);
+    Task<IEnumerable<JobApplication>> GetAllAsync();
+    Task<IEnumerable<JobApplication>> GetAllByUserAsync(Guid userId);
+    Task<JobApplication?> GetByIdAsync(Guid id);
+    Task<JobApplication> AddAsync(JobApplication application);
+    Task<JobApplication> UpdateAsync(JobApplication application);
     Task<bool> DeleteAsync(Guid id);
 }

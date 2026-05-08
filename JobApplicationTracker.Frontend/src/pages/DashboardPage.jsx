@@ -1,5 +1,5 @@
 ﻿import StatCard from '../components/StatCard'
-import { statusSteps } from '../utils/matchScore'
+import { avaibleStatuses } from '../utils/matchScore'
 
 function DashboardPage({
                            profile,

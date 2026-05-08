@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
-using JobApplicationTracker.Dos;
 using JobApplicationTracker.DTOs;
 using JobApplicationTracker.Enums;
+using JobApplicationTracker.Models;
 using JobApplicationTracker.Repository;
 
 namespace JobApplicationTracker.Services;
@@ -35,7 +35,7 @@ public class JAStatusEntryService : IJAStatusEntryService
         int statusEntriesCount = jobApplication.StatusHistory.Count();
         
         DateTime now = DateTime.UtcNow;
-        var jaStatusDo = new JAStatusEntryDo
+        var entity = new JAStatusEntry
         {
             JobApplicationId = jaStatusEntry.JobApplicationId,
             OrderIndex = statusEntriesCount,
@@ -44,7 +44,7 @@ public class JAStatusEntryService : IJAStatusEntryService
             Note = jaStatusEntry.Note
         };
         
-        var createdEntry = await _jaStatusEntryRepository.AddAsync(jaStatusDo);
+        var createdEntry = await _jaStatusEntryRepository.AddAsync(entity);
         return _mapper.Map<JAStatusEntryDto>(createdEntry);   
     }
 
@@ -53,13 +53,13 @@ public class JAStatusEntryService : IJAStatusEntryService
         var existing = await _jaStatusEntryRepository.GetByIdAsync(id);
         if (existing is null) return null;
 
-        var updatedDo = new JAStatusEntryDo
+        var entity = new JAStatusEntry
         {
             JaStatusType = (JAStatusType)updated.StatusType,
             Note = updated.Note,
         };
 
-        var result = await _jaStatusEntryRepository.UpdateAsync(id, updatedDo);
+        var result = await _jaStatusEntryRepository.UpdateAsync(id, entity);
         return result is null ? null : _mapper.Map<JAStatusEntryDto>(result);
     }
 

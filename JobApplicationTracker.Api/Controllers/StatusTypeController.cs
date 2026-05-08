@@ -6,12 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace JobApplicationTracker.Controllers;
 
 [ApiController]
-[Route("api/statuses")]
+[Route("api/statuses/types")]
 [Authorize]
 public class StatusTypeController : ControllerBase
 {
     [HttpGet]
-    public ActionResult<IEnumerable<JaStatusTypeDto>> GetStatuses()
+    public ActionResult<IEnumerable<JaStatusTypeDto>> GetStatusTypes()
     {
         var statuses = Enum.GetValues<JAStatusType>()
             .OrderBy(s => (int)s)

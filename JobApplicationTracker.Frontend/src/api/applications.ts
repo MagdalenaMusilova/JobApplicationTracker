@@ -1,7 +1,9 @@
 ﻿import { apiRequest } from './client'
+import {JAEventMinimal} from "../models/JAEventMinimal";
+import {JobApplicationMinimal} from "../models/JobApplicationMinimal";
 
 export const ApplicationsAPI = {
-    getAll: () => apiRequest('/api/applications'),
+    getAll: () : Promise<JobApplicationMinimal[]> => apiRequest('/api/applications'),
 
     create: (payload) =>
         apiRequest('/api/applications', {

@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using JobApplicationTracker.Database;
-using JobApplicationTracker.Dos;
 using JobApplicationTracker.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,53 +8,56 @@ namespace JobApplicationTracker.Repository;
 public class JobApplicationRepository : IJobApplicationRepository
 {
     private readonly AppDbContext _context;
-    private readonly IMapper _mapper;
     
-    public JobApplicationRepository(AppDbContext context, IMapper mapper)
+    public JobApplicationRepository(AppDbContext context)
     {
         _context = context;
-        _mapper = mapper;
     }
-    
-    public async Task<IEnumerable<JobApplicationDo>> GetAllAsync()
+
+    public IQueryable<JobApplication> Query(Guid userId)
+    {
+        return _context.JobApplications.AsQueryable()
+            .Where(ja => ja.UserId == userId);
+    }
+
+    public async Task<IEnumerable<JobApplication>> GetAllAsync()
     {
         var res = await _context.JobApplications
             .AsNoTracking()
             .Include(ja => ja.StatusHistory)
             .ToListAsync();
-        return res.Select(ja => _mapper.Map<JobApplicationDo>(ja));
+        return res;
     }
 
-    public async Task<IEnumerable<JobApplicationDo>> GetAllByUserAsync(Guid userId)
+    public async Task<IEnumerable<JobApplication>> GetAllByUserAsync(Guid userId)
     {
         var res = await _context.JobApplications
             .AsNoTracking()
             .Where(ja => ja.UserId == userId)
             .Include(ja => ja.StatusHistory)
             .ToListAsync();
-        return res.Select(ja => _mapper.Map<JobApplicationDo>(ja));
+        return res;
     }
 
-    public async Task<JobApplicationDo?> GetByIdAsync(Guid id)
+    public async Task<JobApplication?> GetByIdAsync(Guid id)
     {
         var res = await _context.JobApplications
             .AsNoTracking()
             .Where(ja => ja.Id == id)
             .Include(ja => ja.StatusHistory)
             .FirstOrDefaultAsync();    
-        return res is null ? null : _mapper.Map<JobApplicationDo>(res);
+        return res;
     }
 
-    public async Task<JobApplicationDo> AddAsync(JobApplicationDo application)
+    public async Task<JobApplication> AddAsync(JobApplication application)
     {
-        var entity = _mapper.Map<JobApplication>(application);
-        _context.JobApplications.Add(entity);
+        _context.JobApplications.Add(application);
         await _context.SaveChangesAsync();
         
-        return _mapper.Map<JobApplicationDo>(entity);   
+        return application;   
     }
 
-    public async Task<JobApplicationDo> UpdateAsync(JobApplicationDo application)
+    public async Task<JobApplication> UpdateAsync(JobApplication application)
     {
         var existingApplication = await _context.JobApplications.FindAsync(application.Id);
 
@@ -68,12 +70,12 @@ public class JobApplicationRepository : IJobApplicationRepository
         existingApplication.UserId = application.UserId;
         existingApplication.Company = application.Company;
         existingApplication.Position = application.Position;
-        existingApplication.StatusHistory = application.StatusHistory.Select(e => _mapper.Map<JAStatusEntry>(e)).ToList();
+        existingApplication.StatusHistory = application.StatusHistory;
         existingApplication.Note = application.Note;
 
         await _context.SaveChangesAsync();
 
-        return _mapper.Map<JobApplicationDo>(existingApplication);    
+        return existingApplication;    
     }
 
     public async Task<bool> DeleteAsync(Guid id)

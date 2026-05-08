@@ -3,7 +3,7 @@
 .shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 272px 1fr;
+  grid-template-columns: 1fr;
   background: #f1f5f9;
 }
 
@@ -1630,5 +1630,7 @@
   }
 }
 
-
+.shell.with-sidebar {
+  grid-template-columns: 272px 1fr;
+}
 

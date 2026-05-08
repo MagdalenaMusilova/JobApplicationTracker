@@ -4,9 +4,9 @@ namespace JobApplicationTracker.Repository;
 
 public interface IJAEventRepository
 {
-    Task<JAEventDo?> GetByIdAsync(Guid id);
-    Task<List<JAEventDo>> GetByStatusIdsAsync(IEnumerable<Guid> statusIds);
-    Task<JAEventDo> AddAsync(JAEventDo jaEvent);
-    Task<JAEventDo?> UpdateAsync(JAEventDo updated);
+    Task<JAEvent?> GetByIdAsync(Guid id);
+    Task<List<JAEvent>> GetByStatusIdsAsync(IEnumerable<Guid> statusIds);
+    Task<JAEvent> AddAsync(JAEvent jaEvent);
+    Task<JAEvent?> UpdateAsync(JAEvent updated);
     Task<bool> DeleteBulkAsync(IEnumerable<Guid> ids);
 }

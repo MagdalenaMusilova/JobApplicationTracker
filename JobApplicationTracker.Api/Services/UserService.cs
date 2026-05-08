@@ -3,7 +3,6 @@ using JobApplicationTracker.Database;
 using JobApplicationTracker.Models;
 using Microsoft.EntityFrameworkCore;
 using JobApplicationTracker.DTOs;
-using JobApplicationTracker.Dos;
 using JobApplicationTracker.Repository;
 using Microsoft.AspNetCore.Identity;
 
@@ -62,7 +61,7 @@ public class UserService : IUserService
 
         var hashedPassword = _passwordHasher.HashPassword(new object(), user.Password);
 
-        var userDo = new UserDo     // not mapped because adding fields
+        var entity = new User     // not mapped because adding fields
         {
             Username = user.Username.Trim(),
             PasswordHash = hashedPassword,
@@ -70,7 +69,7 @@ public class UserService : IUserService
             DeletedAt = null
         };
 
-        var createdUser = await _userRepository.AddAsync(userDo);
+        var createdUser = await _userRepository.AddAsync(entity);
 
         return _mapper.Map<UserDto>(createdUser);
     }
@@ -84,7 +83,7 @@ public class UserService : IUserService
             return null;
         }
 
-        var userDo = new UserDo // not mapped because adjusting fields
+        var entity = new User // not mapped because adjusting fields
         {
             Id = id,
             Username = user.Username is null ? existingUser.Username : user.Username.Trim(),
@@ -95,7 +94,7 @@ public class UserService : IUserService
             DeletedAt = existingUser.DeletedAt
         };
 
-        var updatedUser = await _userRepository.UpdateAsync(userDo);
+        var updatedUser = await _userRepository.UpdateAsync(entity);
 
         if (updatedUser is null)
         {

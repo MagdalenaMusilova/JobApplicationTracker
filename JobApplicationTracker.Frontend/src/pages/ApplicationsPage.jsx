@@ -8,15 +8,14 @@ import CreateApplicationModal from "../modalWindows/CreateApplicationModal.jsx";
 
 function ApplicationsPage({
                               applications,
-                              avaibleStatuses,
-                              onDeleteApplication,
-                              onMarkAppRejected,
-                              onCreateApplication
+                              availableStatuses,
+                              eventTypes,
+                              setApplications,
                           }) {
     const [filters, setFilters] = useState('all')
     const [searchText, setSearchText] = useState('')
     const [createOpen, setCreateOpen] = useState(false)
-
+    
     const filteredApplications = useMemo(() => {
         const q = searchText.trim().toLowerCase()
 
@@ -127,13 +126,13 @@ function ApplicationsPage({
                         All
                     </button>
 
-                    {avaibleStatuses.map((step) => (
+                    {availableStatuses.map((status) => (
                         <button
-                            key={step}
-                            className={filters === step ? 'filter-btn active' : 'filter-btn'}
-                            onClick={() => setFilters(step)}
+                            key={status.value}
+                            className={filters === status.label ? 'filter-btn active' : 'filter-btn'}
+                            onClick={() => setFilters(status.value)}
                         >
-                            {step}
+                            {status.label}
                         </button>
                     ))}
                 </div>
@@ -162,7 +161,8 @@ function ApplicationsPage({
             {createOpen && (
                 <CreateApplicationModal
                     onClose={() => setCreateOpen(false)}
-                    avaibleStatuses={avaibleStatuses}
+                    availableStatuses={availableStatuses}
+                    eventTypes={eventTypes}
                 />
                 )}
         </section>

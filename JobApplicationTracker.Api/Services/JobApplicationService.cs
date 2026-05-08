@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
-using JobApplicationTracker.Dos;
+using AutoMapper.QueryableExtensions;
 using JobApplicationTracker.DTOs;
 using JobApplicationTracker.Enums;
+using JobApplicationTracker.Models;
 using JobApplicationTracker.Repository;
+using Microsoft.EntityFrameworkCore;
 
 namespace JobApplicationTracker.Services;
 
@@ -25,6 +27,14 @@ public class JobApplicationService : IJobApplicationService
         return applications.Select(a => _mapper.Map<JobApplicationDto>(a));
     }
 
+    public async Task<IEnumerable<JobApplicationMinimalDto>> GetAllByUserMinimalAsync(Guid userId)
+    {
+        var minApplications = await _applicationRepository.Query(userId)
+            .ProjectTo<JobApplicationMinimalDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+        return minApplications;
+    }
+
     public async Task<JobApplicationDto?> GetByIdAsync(Guid id)
     {
         var application = await _applicationRepository.GetByIdAsync(id);
@@ -33,7 +43,7 @@ public class JobApplicationService : IJobApplicationService
 
     public async Task<JobApplicationDto> AddAsync(Guid userId, CreateJobApplicationDto application)
     {
-        var applicationDo = new JobApplicationDo
+        var entity = new JobApplication
         {
             UserId = userId,
             Company = application.Company,
@@ -42,7 +52,7 @@ public class JobApplicationService : IJobApplicationService
             StatusHistory = []
         };
 
-        var created = await _applicationRepository.AddAsync(applicationDo);
+        var created = await _applicationRepository.AddAsync(entity);
 
         var createStatusEntry = new CreateJAStatusEntryDto
         {
@@ -62,7 +72,7 @@ public class JobApplicationService : IJobApplicationService
         var existing = await _applicationRepository.GetByIdAsync(id);
         if (existing is null) return null;
 
-        var applicationDo = new JobApplicationDo
+        var entity = new JobApplication
         {
             Id = existing.Id,
             UserId = existing.UserId,
@@ -72,7 +82,7 @@ public class JobApplicationService : IJobApplicationService
             StatusHistory = existing.StatusHistory
         };
 
-        var updated = await _applicationRepository.UpdateAsync(applicationDo);
+        var updated = await _applicationRepository.UpdateAsync(entity);
         return _mapper.Map<JobApplicationDto>(updated);
     }
 

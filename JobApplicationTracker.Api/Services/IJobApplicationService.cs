@@ -6,6 +6,7 @@ namespace JobApplicationTracker.Services;
 public interface IJobApplicationService
 {
     Task<IEnumerable<JobApplicationDto>> GetAllByUserAsync(Guid userId);
+    Task<IEnumerable<JobApplicationMinimalDto>> GetAllByUserMinimalAsync(Guid userId);
     Task<JobApplicationDto?> GetByIdAsync(Guid id);
     Task<JobApplicationDto> AddAsync(Guid userId, CreateJobApplicationDto application);
     Task<JobApplicationDto?> UpdateAsync(Guid id, UpdateJobApplicationDto application);

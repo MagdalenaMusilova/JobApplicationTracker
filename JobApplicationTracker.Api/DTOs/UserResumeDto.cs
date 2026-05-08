@@ -5,7 +5,7 @@ namespace JobApplicationTracker.DTOs;
 public class UserResumeDto
 {
     public Guid? Id { get; set; }
-    public int? UserId { get; set; }
+    public Guid? UserId { get; set; }
     public ICollection<WorkExperienceDto> WorkExperiences { get; set; } = new List<WorkExperienceDto>();
     public ICollection<EducationDto> Education { get; set; } = new List<EducationDto>();
     public ICollection<TrainingDto> Trainings { get; set; } = new List<TrainingDto>();

@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using JobApplicationTracker.DOs;
 using JobApplicationTracker.DTOs;
+using JobApplicationTracker.Models.UserProfile;
 using JobApplicationTracker.Repository;
 
 namespace JobApplicationTracker.Services;
@@ -24,9 +24,9 @@ public class ResumeService : IResumeService
 
     public async Task<UserResumeDto> CreateAsync(UserResumeDto resume)
     {
-        var resumeDo = _mapper.Map<UserResumeDo>(resume);
-        resumeDo = await _userResumeRepository.CreateAsync(resumeDo);
-        return _mapper.Map<UserResumeDto>(resumeDo);
+        var entity = _mapper.Map<UserResume>(resume);
+        entity = await _userResumeRepository.CreateAsync(entity);
+        return _mapper.Map<UserResumeDto>(entity);
     }
 
     public async Task<UserResumeDto> ExtractFromPdfAsync(IFormFile file)
@@ -61,20 +61,20 @@ public class ResumeService : IResumeService
         var existing = await _userResumeRepository.GetByIdAsync(id);
         if (existing is null) return null;
 
-        var updatedDo = _mapper.Map<UserResumeDo>(updated);
+        var updatedEntity = _mapper.Map<UserResume>(updated);
 
-        UserResumeDo resumeDo = new UserResumeDo()
+        UserResume resume = new UserResume()
         {
             Id = existing.Id,
-            UserId = updatedDo.UserId ?? existing.UserId,
-            WorkExperiences = updatedDo.WorkExperiences.Count > 0 ? updatedDo.WorkExperiences : existing.WorkExperiences,
-            Education = updatedDo.Education.Count > 0 ? updatedDo.Education : existing.Education,
-            Trainings = updatedDo.Trainings.Count > 0 ? updatedDo.Trainings : existing.Trainings,
-            Skills = updatedDo.Skills.Count > 0 ? updatedDo.Skills : existing.Skills,
-            UncategorizedSkillUsages = updatedDo.UncategorizedSkillUsages.Count > 0 ? updatedDo.UncategorizedSkillUsages : existing.UncategorizedSkillUsages,
+            UserId = existing.UserId,
+            WorkExperiences = updatedEntity.WorkExperiences.Count > 0 ? updatedEntity.WorkExperiences : existing.WorkExperiences,
+            Education = updatedEntity.Education.Count > 0 ? updatedEntity.Education : existing.Education,
+            Trainings = updatedEntity.Trainings.Count > 0 ? updatedEntity.Trainings : existing.Trainings,
+            Skills = updatedEntity.Skills.Count > 0 ? updatedEntity.Skills : existing.Skills,
+            UncategorizedExperiences = updatedEntity.UncategorizedExperiences.Count > 0 ? updatedEntity.UncategorizedExperiences : existing.UncategorizedExperiences,
         };
         
-        var result = await _userResumeRepository.UpdateAsync(resumeDo);
+        var result = await _userResumeRepository.UpdateAsync(resume);
         return result is null ? null : _mapper.Map<UserResumeDto>(result);
     }
 

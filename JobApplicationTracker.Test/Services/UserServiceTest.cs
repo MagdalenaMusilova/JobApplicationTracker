@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 using JobApplicationTracker.DTOs;
-using JobApplicationTracker.Dos;
 using JobApplicationTracker.Repository;
 using JobApplicationTracker.Services;
 using Moq;

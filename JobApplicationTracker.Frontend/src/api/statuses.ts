@@ -1,4 +1,6 @@
 ﻿import { apiRequest } from './client'
+import {JAEventType} from "../models/enums/JAEventType";
+import {JAStatusType} from "../models/enums/JAStatusType";
 
 export const StatusAPI = {
     getAll: () => apiRequest('/api/statuses'),
@@ -19,4 +21,6 @@ export const StatusAPI = {
         apiRequest(`/api/applications/entry/${id}`, {
             method: 'DELETE',
         }),
+
+    getTypes: ():Promise<JAStatusType[]> => apiRequest('/api/statuses/types'),
 }

@@ -8,42 +8,37 @@ namespace JobApplicationTracker.Repository;
 public class JAEventRepository : IJAEventRepository
 {
     private readonly AppDbContext _context;
-    private readonly IMapper _mapper;
     
-    public JAEventRepository(AppDbContext context, IMapper mapper)
+    public JAEventRepository(AppDbContext context)
     {
         _context = context;
-        _mapper = mapper;
     }
 
-    public async Task<JAEventDo?> GetByIdAsync(Guid id)
+    public async Task<JAEvent?> GetByIdAsync(Guid id)
     {
         return await _context.JAEventEntries
             .AsNoTracking()
             .Where(e => e.Id == id)
-            .Select(e => _mapper.Map<JAEventDo>(e))
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<JAEventDo>> GetByStatusIdsAsync(IEnumerable<Guid> statusIds)
+    public async Task<List<JAEvent>> GetByStatusIdsAsync(IEnumerable<Guid> statusIds)
     {
         return await _context.JAEventEntries
             .AsNoTracking()
             .Where(e => statusIds.Contains(e.Id))
-            .Select(e => _mapper.Map<JAEventDo>(e))
             .ToListAsync();
     }
 
-    public async Task<JAEventDo> AddAsync(JAEventDo jaEvent)
+    public async Task<JAEvent> AddAsync(JAEvent jaEvent)
     {
-        var entity = _mapper.Map<JAEvent>(jaEvent);
-        _context.JAEventEntries.Add(entity);
+        _context.JAEventEntries.Add(jaEvent);
         await _context.SaveChangesAsync();
         
-        return _mapper.Map<JAEventDo>(entity);  
+        return jaEvent;  
     }
 
-    public async Task<JAEventDo?> UpdateAsync(JAEventDo updated)
+    public async Task<JAEvent?> UpdateAsync(JAEvent updated)
     {
         var entity = await _context.JAEventEntries.FindAsync(updated.Id);
         if (entity is null) return null;
@@ -56,14 +51,14 @@ public class JAEventRepository : IJAEventRepository
         
         await _context.SaveChangesAsync();
         
-        return _mapper.Map<JAEventDo>(entity);  
+        return entity;  
     }
 
     public async Task<bool> DeleteBulkAsync(IEnumerable<Guid> ids)
     {
         await _context.JAEventEntries
             .Where(e => ids.Contains(e.Id))
-            .ExecuteDeleteAsync<JAEvent>();
+            .ExecuteDeleteAsync();
         return true;
     }
 }

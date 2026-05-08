@@ -1,6 +1,4 @@
 ﻿using AutoMapper;
-using JobApplicationTracker.Dos;
-using JobApplicationTracker.DOs;
 using JobApplicationTracker.DTOs;
 using JobApplicationTracker.Models;
 
@@ -10,24 +8,22 @@ public class MappingProfile: Profile
 {
     public MappingProfile()
     {
-        CreateMap<UserDto, UserDo>().ReverseMap();
-        CreateMap<UserDo, User>().ReverseMap();
+        CreateMap<UserDto, User>().ReverseMap();
         
-        CreateMap<JAStatusEntryDto, JAStatusEntryDo>().ReverseMap();
-        CreateMap<JAStatusEntryDo, JAStatusEntry>().ReverseMap();
+        CreateMap<JAStatusEntryDto, JAStatusEntry>().ReverseMap();
         
-        CreateMap<JobApplicationDto, JobApplicationDo>()
+        CreateMap<JobApplicationDto, JobApplication>()
             .ForMember(dest => dest.StatusHistory, opt => opt.MapFrom(src => src.StatusHistory))
             .ReverseMap()
             .ForMember(dest => dest.StatusHistory, opt => opt.MapFrom(src => src.StatusHistory));
-        CreateMap<JobApplicationDo, JobApplication>()
-            .ForMember(dest => dest.StatusHistory, opt => opt.MapFrom(src => src.StatusHistory))
-            .ReverseMap()
-            .ForMember(dest => dest.StatusHistory, opt => opt.MapFrom(src => src.StatusHistory));
-        CreateMap<JAEventDto, JAEventDo>().ReverseMap();
-        CreateMap<JAEventDo, JAEvent>().ReverseMap();
+
         
-        CreateMap<JobListingDto, JobListingDo>().ReverseMap();
-        CreateMap<JobListingDo, JobListing>().ReverseMap();
+        CreateMap<JAEventDto, JAEvent>().ReverseMap();
+        
+        CreateMap<JobListingDto, JobListing>().ReverseMap();
+        
+        
+        CreateMap<JobApplication, JobApplicationMinimalDto>();
+
     }
 }

@@ -1,4 +1,4 @@
-﻿export const statusSteps = ['Applied', 'In progress', 'Interview', 'Offer', 'Closed']
+﻿export const avaibleStatuses = ['Applied', 'In progress', 'Interview', 'Offer', 'Closed']
 
 export const statusToProgress = {
     Applied: 20,
@@ -40,6 +40,6 @@ export function computeAutomaticMatchScore(application, candidateSkills) {
 }
 
 export function getStatusIndex(status) {
-    const index = statusSteps.indexOf(status)
+    const index = avaibleStatuses.indexOf(status)
     return index === -1 ? 0 : index
 }

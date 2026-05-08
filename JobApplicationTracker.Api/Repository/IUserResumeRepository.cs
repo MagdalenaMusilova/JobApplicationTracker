@@ -1,12 +1,12 @@
-﻿using JobApplicationTracker.DOs;
+﻿using JobApplicationTracker.Models.UserProfile;
 
 namespace JobApplicationTracker.Repository;
 
 public interface IUserResumeRepository
 {
-    Task<UserResumeDo> CreateAsync(UserResumeDo resume);
-    Task<UserResumeDo?> GetByIdAsync(Guid id);
-    Task<UserResumeDo?> GetByUserAsync(Guid userId);
-    Task<UserResumeDo?> UpdateAsync(UserResumeDo updated);
+    Task<UserResume> CreateAsync(UserResume resume);
+    Task<UserResume?> GetByIdAsync(Guid id);
+    Task<UserResume?> GetByUserAsync(Guid userId);
+    Task<UserResume?> UpdateAsync(UserResume updated);
     Task<bool> DeleteAsync(Guid id);
 }

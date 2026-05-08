@@ -43,7 +43,7 @@ public class JobApplicationController : ControllerBase
     public async Task<ActionResult<IEnumerable<JobApplicationDto>>> GetAllMinimalAsync()
     {
         var userId = GetUserId();
-        var applications = await _jobApplicationService.GetAllByUserAsync(userId);
+        var applications = await _jobApplicationService.GetAllByUserMinimalAsync(userId);
         return Ok(applications);
     }
 

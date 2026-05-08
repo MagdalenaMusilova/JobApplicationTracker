@@ -1,13 +1,13 @@
-﻿using JobApplicationTracker.Dos;
+﻿using JobApplicationTracker.Models;
 
 namespace JobApplicationTracker.Repository;
 
 public interface IUserRepository
 {
-    Task<IEnumerable<UserDo>> GetAllAsync();
-    Task<UserDo?> GetByIdAsync(Guid id);
-    Task<UserDo?> GetByUsernameAsync(string username);
-    Task<UserDo> AddAsync(UserDo user);
-    Task<UserDo?> UpdateAsync(UserDo user);
+    Task<IEnumerable<User>> GetAllAsync();
+    Task<User?> GetByIdAsync(Guid id);
+    Task<User?> GetByUsernameAsync(string username);
+    Task<User> AddAsync(User user);
+    Task<User?> UpdateAsync(User user);
     Task<bool> DeleteAsync(Guid id);
 }

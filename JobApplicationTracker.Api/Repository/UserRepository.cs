@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using JobApplicationTracker.Database;
-using JobApplicationTracker.Dos;
 using JobApplicationTracker.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,51 +8,44 @@ namespace JobApplicationTracker.Repository;
 public class UserRepository : IUserRepository
 {
     private readonly AppDbContext _context;
-    private readonly IMapper _mapper;
 
-    public UserRepository(AppDbContext context, IMapper mapper)
+    public UserRepository(AppDbContext context)
     {
         _context = context;
-        _mapper = mapper;
     }
 
-    public async Task<IEnumerable<UserDo>> GetAllAsync()
+    public async Task<IEnumerable<User>> GetAllAsync()
     {
         return await _context.Users
             .AsNoTracking()
-            .Select(u => _mapper.Map<UserDo>(u))
             .ToListAsync();
     }
 
-    public async Task<UserDo?> GetByIdAsync(Guid id)
+    public async Task<User?> GetByIdAsync(Guid id)
     {
         return await _context.Users
             .AsNoTracking()
             .Where(u => u.Id == id)
-            .Select(u => _mapper.Map<UserDo>(u))
             .FirstOrDefaultAsync();
     }
 
-    public async Task<UserDo?> GetByUsernameAsync(string username)
+    public async Task<User?> GetByUsernameAsync(string username)
     {
         return await _context.Users
             .AsNoTracking()
             .Where(u => u.Username == username)
-            .Select(u => _mapper.Map<UserDo>(u))
             .FirstOrDefaultAsync();
     }
 
-    public async Task<UserDo> AddAsync(UserDo user)
+    public async Task<User> AddAsync(User user)
     {
-        var entity = _mapper.Map<User>(user);
-
-        _context.Users.Add(entity);
+        _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        return _mapper.Map<UserDo>(entity);
+        return user;
     }
 
-    public async Task<UserDo?> UpdateAsync(UserDo user)
+    public async Task<User?> UpdateAsync(User user)
     {
         var existingUser = await _context.Users.FindAsync(user.Id);
 
@@ -69,7 +61,7 @@ public class UserRepository : IUserRepository
 
         await _context.SaveChangesAsync();
 
-        return _mapper.Map<UserDo>(existingUser);
+        return user;
     }
 
     public async Task<bool> DeleteAsync(Guid id)

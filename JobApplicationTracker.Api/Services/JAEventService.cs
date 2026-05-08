@@ -46,7 +46,7 @@ public class JAEventService : IJAEventService
 
     public async Task<JAEventDto> AddAsync(CreateJAEventDto jaEvent)
     {
-        var jaEventDo = new JAEventDo()
+        var entity = new JAEvent()
         {
             JAStatusEntryId = jaEvent.JAStatusEntryId,
             EventName = jaEvent.EventName,
@@ -56,7 +56,7 @@ public class JAEventService : IJAEventService
             Note = jaEvent.Note
         };
 
-        var created = await _jaEventRepository.AddAsync(jaEventDo);
+        var created = await _jaEventRepository.AddAsync(entity);
         
         return _mapper.Map<JAEventDto>(created);
     }
@@ -66,7 +66,7 @@ public class JAEventService : IJAEventService
         var existing = await _jaEventRepository.GetByIdAsync(id);
         if (existing is null) return null;
 
-        var jaEventDo = new JAEventDo()
+        var entity = new JAEvent()
         {
             Id = existing.Id,
             JAStatusEntryId = existing.JAStatusEntryId,
@@ -77,7 +77,7 @@ public class JAEventService : IJAEventService
             Note = updated.Note ?? existing.Note,
         };
         
-        var updatedDo = await _jaEventRepository.UpdateAsync(jaEventDo);
+        var updatedDo = await _jaEventRepository.UpdateAsync(entity);
         return _mapper.Map<JAEventDto>(updatedDo);
     }
 

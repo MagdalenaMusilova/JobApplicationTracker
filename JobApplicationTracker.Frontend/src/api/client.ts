@@ -1,16 +1,23 @@
 ﻿import { storage } from '../utils/storage'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string
 
-export async function apiRequest(path, options = {}) {
+type ApiRequestOptions = Omit<RequestInit, 'headers'> & {
+    headers?: HeadersInit
+}
+
+export async function apiRequest<T = unknown>(
+    path: string,
+    options: ApiRequestOptions = {}
+): Promise<T | null> {
     const token = storage.getToken()
 
-    const headers = {
+    const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...(options.headers ?? {}),
+        ...(options.headers as Record<string, string>),
     }
 
-    // ✅ only attach token if it exists AND is not empty
+    // only attach token if it exists AND is not empty
     if (token && token !== 'null' && token !== 'undefined') {
         headers.Authorization = `Bearer ${token}`
     }
@@ -20,13 +27,6 @@ export async function apiRequest(path, options = {}) {
         headers,
     })
 
-    // 🚨 GLOBAL 401 HANDLING (IMPORTANT FIX BELOW)
-    if (response.status === 401) {
-        storage.clearToken()
-        window.location.href = '/login'
-        return
-    }
-
     if (!response.ok) {
         const message = await response.text().catch(() => '')
         throw new Error(message || `Request failed (${response.status})`)
@@ -34,5 +34,5 @@ export async function apiRequest(path, options = {}) {
 
     if (response.status === 204) return null
 
-    return response.json()
+    return response.json() as Promise<T>
 }
