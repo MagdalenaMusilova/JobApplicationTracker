@@ -116,6 +116,39 @@ namespace JobApplicationTracker.Migrations
                     b.ToTable("JobApplications");
                 });
 
+            modelBuilder.Entity("JobApplicationTracker.Models.JobApplicationMinimal", b =>
+                {
+                    b.Property<string>("Company")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EventDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EventType")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsWholeDay")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("JAStatus")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Position")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("jaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("View_MinimalJA", (string)null);
+                });
+
             modelBuilder.Entity("JobApplicationTracker.Models.JobListing", b =>
                 {
                     b.Property<Guid>("Id")

@@ -29,6 +29,16 @@ public class JobApplicationRepository : IJobApplicationRepository
         return res;
     }
 
+    public async Task<IEnumerable<JobApplication>> GetAllNotFinishedAsync()
+    {
+        var res = await _context.JobApplications
+            .AsNoTracking()
+            .Where(ja => !ja.StatusHistory.Any(
+                stat => (int)stat.JaStatusType >= 1000))
+            .ToListAsync();
+        return res;
+    }
+
     public async Task<IEnumerable<JobApplication>> GetAllByUserAsync(Guid userId)
     {
         var res = await _context.JobApplications

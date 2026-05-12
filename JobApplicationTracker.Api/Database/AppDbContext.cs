@@ -11,6 +11,8 @@ public class AppDbContext : DbContext
     public DbSet<JobApplication> JobApplications { get; set; }
     public DbSet<JAStatusEntry> JAStatusEntries { get; set; }
     public DbSet<JAEvent> JAEventEntries { get; set; }
+    
+    public DbSet<JobApplicationMinimal> JaMinimalView { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -97,5 +99,14 @@ public class AppDbContext : DbContext
             .WithOne()
             .HasForeignKey(usage => usage.SkillId)
             .IsRequired(false);
+        
+        
+        // minimal JA view
+        modelBuilder.Entity<JobApplicationMinimal>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("View_MinimalJA");
+            entity.Property(jaMin => jaMin.jaId);
+        });
     }
 }

@@ -7,6 +7,6 @@ public enum JAStatusType
     Task       = 300,
     Interview  = 400,
     Offer      = 500,
-    Accepted   = 600,
-    Rejected   = 700,
+    Accepted   = 1000,
+    Rejected   = 2000,
 }
