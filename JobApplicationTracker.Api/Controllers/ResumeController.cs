@@ -48,8 +48,8 @@ public class ResumeController : ControllerBase
         return Ok(resume);   
     }
 
-    [HttpGet("user={userId:guid}")]
-    public async Task<ActionResult<UserResumeDto>> GetByUserId(Guid userId)
+    [HttpGet("user={userId}")]
+    public async Task<ActionResult<UserResumeDto>> GetByUserId(string userId)
     {
         var resume = await _resumeService.GetByUserAsync(userId);
         if (resume is null) return NotFound();

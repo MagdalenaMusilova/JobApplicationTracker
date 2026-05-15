@@ -27,7 +27,7 @@ public class UserService : IUserService
         return users.Select(u => _mapper.Map<UserDto>(u));
     }
 
-    public async Task<UserDto?> GetByIdAsync(Guid id)
+    public async Task<UserDto?> GetByIdAsync(string id)
     {
         var user = await _userRepository.GetByIdAsync(id);
 
@@ -63,7 +63,7 @@ public class UserService : IUserService
 
         var entity = new User     // not mapped because adding fields
         {
-            Username = user.Username.Trim(),
+            UserName = user.Username.Trim(),
             PasswordHash = hashedPassword,
             CreatedAt = DateTime.UtcNow,
             DeletedAt = null
@@ -74,7 +74,7 @@ public class UserService : IUserService
         return _mapper.Map<UserDto>(createdUser);
     }
 
-    public async Task<UserDto?> UpdateAsync(Guid id, UpdateUserDto user)
+    public async Task<UserDto?> UpdateAsync(string id, UpdateUserDto user)
     {
         var existingUser = await _userRepository.GetByIdAsync(id);
 
@@ -85,8 +85,7 @@ public class UserService : IUserService
 
         var entity = new User // not mapped because adjusting fields
         {
-            Id = id,
-            Username = user.Username is null ? existingUser.Username : user.Username.Trim(),
+            UserName = user.Username is null ? existingUser.UserName : user.Username.Trim(),
             PasswordHash = user.Password is null
                 ? existingUser.PasswordHash
                 : _passwordHasher.HashPassword(new object(), user.Password),
@@ -104,7 +103,7 @@ public class UserService : IUserService
         return _mapper.Map<UserDto>(updatedUser);
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(string id)
     {
         return await _userRepository.DeleteAsync(id);
     }

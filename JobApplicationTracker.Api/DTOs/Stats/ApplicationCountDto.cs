@@ -1,4 +1,4 @@
-﻿namespace JobApplicationTracker.Models.Stats;
+﻿namespace JobApplicationTracker.DTOs;
 
 public class ApplicationCountDto
 {

@@ -6,7 +6,7 @@ public class UserResume
 {
     [Key] 
     public Guid Id { get; set; } = Guid.NewGuid();
-    public Guid UserId { get; set; }
+    public string UserId { get; set; }
     public List<WorkExperience> WorkExperiences { get; set; } = new();
     public List<Education> Education { get; set; } = new();
     public List<Training> Trainings { get; set; } = new();

@@ -5,9 +5,9 @@ namespace JobApplicationTracker.Services;
 public interface IUserService
 {
     Task<IEnumerable<UserDto>> GetAllAsync();
-    Task<UserDto?> GetByIdAsync(Guid id);
+    Task<UserDto?> GetByIdAsync(string id);
     Task<UserDto?> GetByUsernameAsync(string username);
     Task<UserDto> AddAsync(CreateUserDto user);
-    Task<UserDto?> UpdateAsync(Guid id, UpdateUserDto user);
-    Task<bool> DeleteAsync(Guid id);
+    Task<UserDto?> UpdateAsync(string id, UpdateUserDto user);
+    Task<bool> DeleteAsync(string id);
 }

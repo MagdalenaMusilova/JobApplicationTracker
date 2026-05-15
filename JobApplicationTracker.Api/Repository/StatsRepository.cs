@@ -1,7 +1,7 @@
 ﻿using JobApplicationTracker.Database;
+using JobApplicationTracker.DTOs;
 using JobApplicationTracker.Models;
 using JobApplicationTracker.Enums;
-using JobApplicationTracker.Models.Stats;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobApplicationTracker.Repository;
@@ -45,7 +45,7 @@ public class StatsRepository : IStatsRepository
             .SelectMany(u => _context.ResumeEntries,
                 (u, resume) => new ProfileXResumeDto
                 {
-                    Username = u.Username,
+                    Username = u.UserName,
                     AboutMe = resume.AboutMe
                 })
             .ToListAsync();

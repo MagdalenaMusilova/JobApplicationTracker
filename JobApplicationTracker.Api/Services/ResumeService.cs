@@ -50,7 +50,7 @@ public class ResumeService : IResumeService
         return resume is null ? null : _mapper.Map<UserResumeDto>(resume);  
     }
 
-    public async Task<UserResumeDto?> GetByUserAsync(Guid userId)
+    public async Task<UserResumeDto?> GetByUserAsync(string userId)
     {
         var resume = await _userResumeRepository.GetByUserAsync(userId);
         return resume is null ? null : _mapper.Map<UserResumeDto>(resume);  

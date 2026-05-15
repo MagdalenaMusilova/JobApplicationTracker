@@ -4,10 +4,10 @@ namespace JobApplicationTracker.Repository;
 
 public interface IJobApplicationRepository
 {
-    IQueryable<JobApplication> Query(Guid userId);
+    IQueryable<JobApplication> Query(string userId);
     Task<IEnumerable<JobApplication>> GetAllAsync();
     Task<IEnumerable<JobApplication>> GetAllNotFinishedAsync();
-    Task<IEnumerable<JobApplication>> GetAllByUserAsync(Guid userId);
+    Task<IEnumerable<JobApplication>> GetAllByUserAsync(string userId);
     Task<JobApplication?> GetByIdAsync(Guid id);
     Task<JobApplication> AddAsync(JobApplication application);
     Task<JobApplication> UpdateAsync(JobApplication application);

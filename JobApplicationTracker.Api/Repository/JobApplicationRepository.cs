@@ -14,7 +14,7 @@ public class JobApplicationRepository : IJobApplicationRepository
         _context = context;
     }
 
-    public IQueryable<JobApplication> Query(Guid userId)
+    public IQueryable<JobApplication> Query(string userId)
     {
         return _context.JobApplications.AsQueryable()
             .Where(ja => ja.UserId == userId);
@@ -39,7 +39,7 @@ public class JobApplicationRepository : IJobApplicationRepository
         return res;
     }
 
-    public async Task<IEnumerable<JobApplication>> GetAllByUserAsync(Guid userId)
+    public async Task<IEnumerable<JobApplication>> GetAllByUserAsync(string userId)
     {
         var res = await _context.JobApplications
             .AsNoTracking()

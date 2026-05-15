@@ -21,7 +21,7 @@ public class UserRepository : IUserRepository
             .ToListAsync();
     }
 
-    public async Task<User?> GetByIdAsync(Guid id)
+    public async Task<User?> GetByIdAsync(string id)
     {
         return await _context.Users
             .AsNoTracking()
@@ -33,7 +33,7 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users
             .AsNoTracking()
-            .Where(u => u.Username == username)
+            .Where(u => u.UserName == username)
             .FirstOrDefaultAsync();
     }
 
@@ -54,7 +54,7 @@ public class UserRepository : IUserRepository
             return null;
         }
 
-        existingUser.Username = user.Username;
+        existingUser.UserName = user.UserName;
         existingUser.PasswordHash = user.PasswordHash;
         existingUser.CreatedAt = user.CreatedAt;
         existingUser.DeletedAt = user.DeletedAt;
@@ -64,7 +64,7 @@ public class UserRepository : IUserRepository
         return user;
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(string id)
     {
         var user = await _context.Users.FindAsync(id);
 

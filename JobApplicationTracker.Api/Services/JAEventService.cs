@@ -28,7 +28,7 @@ public class JAEventService : IJAEventService
         return _mapper.Map<JAEventDto>(res);
     }
 
-    public async Task<List<JAEventDto>> GetAllByUserId(Guid userId)
+    public async Task<List<JAEventDto>> GetAllByUserId(string userId)
     {
         var applications = await _jobApplicationService.GetAllByUserAsync(userId);
         var applicationIds = applications.Select(a => a.Id);

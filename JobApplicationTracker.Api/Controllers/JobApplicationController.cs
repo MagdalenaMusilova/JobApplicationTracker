@@ -27,9 +27,9 @@ public class JobApplicationController : ControllerBase
         _jaEventService = jaEventService;
     }
 
-    private Guid GetUserId() =>
-        Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
-                  ?? throw new UnauthorizedAccessException("User ID not found in token."));
+    private string GetUserId() =>
+        User.FindFirstValue(ClaimTypes.NameIdentifier)
+                  ?? throw new UnauthorizedAccessException("User ID not found in token.");
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<JobApplicationDto>>> GetAllAsync()
@@ -173,8 +173,8 @@ public class JobApplicationController : ControllerBase
         return deleted ? NoContent() : NotFound();
     }
     
-    [HttpGet("/{userId:guid}/events")]
-    public async Task<ActionResult<IEnumerable<JAEventDto>>> GetAllUserEvents(Guid userId)
+    [HttpGet("/{userId}/events")]
+    public async Task<ActionResult<IEnumerable<JAEventDto>>> GetAllUserEvents(string userId)
     {
         var events = await _jaEventService.GetAllByUserId(userId);
         return Ok(events);

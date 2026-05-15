@@ -28,7 +28,7 @@ public class UserController : ControllerBase
     [Authorize]
     public async Task<ActionResult<UserDto>> GetMe()
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var user = await _userService.GetByIdAsync(userId);
         return user is null ? NotFound() : Ok(user);
     }
@@ -37,7 +37,7 @@ public class UserController : ControllerBase
     [Authorize]
     public async Task<ActionResult<UserDto>> UpdateMe([FromBody] UpdateUserDto user)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var updated = await _userService.UpdateAsync(userId, user);
         return updated is null ? NotFound() : Ok(updated);
     }

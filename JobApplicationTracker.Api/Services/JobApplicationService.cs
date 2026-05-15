@@ -21,13 +21,13 @@ public class JobApplicationService : IJobApplicationService
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<JobApplicationDto>> GetAllByUserAsync(Guid userId)
+    public async Task<IEnumerable<JobApplicationDto>> GetAllByUserAsync(string userId)
     {
         var applications = await _applicationRepository.GetAllByUserAsync(userId);
         return applications.Select(a => _mapper.Map<JobApplicationDto>(a));
     }
 
-    public async Task<IEnumerable<JobApplicationMinimalDto>> GetAllByUserMinimalAsync(Guid userId)
+    public async Task<IEnumerable<JobApplicationMinimalDto>> GetAllByUserMinimalAsync(string userId)
     {
         var minApplications = await _applicationRepository.Query(userId)
             .ProjectTo<JobApplicationMinimalDto>(_mapper.ConfigurationProvider)
@@ -41,7 +41,7 @@ public class JobApplicationService : IJobApplicationService
         return application is null ? null : _mapper.Map<JobApplicationDto>(application);
     }
 
-    public async Task<JobApplicationDto> AddAsync(Guid userId, CreateJobApplicationDto application)
+    public async Task<JobApplicationDto> AddAsync(string userId, CreateJobApplicationDto application)
     {
         var entity = new JobApplication
         {

@@ -32,7 +32,7 @@ public class UserResumeRepository : IUserResumeRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<UserResume?> GetByUserAsync(Guid userId)
+    public async Task<UserResume?> GetByUserAsync(string userId)
     {
         return await _context.ResumeEntries
             .AsNoTracking()

@@ -1,16 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using JobApplicationTracker.Models.UserProfile;
+using Microsoft.AspNetCore.Identity;
 
 namespace JobApplicationTracker.Models;
 
-public class User
+public class User : IdentityUser
 {
-    [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
-    [Required]
-    public required string Username { get; set; }
-    [Required]
-    public required string PasswordHash { get; set; } 
     [Required]
     public DateTime CreatedAt { get; set; } 
     public DateTime? DeletedAt { get; set; } = null;

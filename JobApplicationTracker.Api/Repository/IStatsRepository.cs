@@ -1,5 +1,5 @@
-﻿using JobApplicationTracker.Models;
-using JobApplicationTracker.Models.Stats;
+﻿using JobApplicationTracker.DTOs;
+using JobApplicationTracker.Models;
 
 namespace JobApplicationTracker.Repository;
 

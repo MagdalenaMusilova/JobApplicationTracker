@@ -6,7 +6,7 @@ public class JobApplication
 {
     [Key]
     public Guid Id { get; set; } = Guid.NewGuid();
-    public Guid UserId { get; set; }
+    public string UserId { get; set; }
     [Required]
     [MaxLength(200)]
     public string Company { get; set; }

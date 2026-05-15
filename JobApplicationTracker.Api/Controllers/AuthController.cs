@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using JobApplicationTracker.Database;
 using JobApplicationTracker.DTOs;
+using JobApplicationTracker.Models;
 using JobApplicationTracker.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,58 +16,68 @@ namespace JobApplicationTracker.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly IUserService _userService;
-    private readonly IConfiguration _configuration;
-    private readonly PasswordHasher<object> _passwordHasher = new();
+    private readonly UserManager<User> _userManager;
+    private readonly IAuthTokenService _tokenService;
 
-    public AuthController(IUserService userService, IConfiguration configuration)
+    public AuthController(UserManager<User> userManager, IAuthTokenService tokenService)
     {
-        _userService = userService;
-        _configuration = configuration;
+        _userManager = userManager;
+        _tokenService = tokenService;
     }
 
     [HttpPost("signin")]
     public async Task<ActionResult<SignInResponseDto>> SignIn([FromBody] SignInDto dto)
     {
-        var user = await _userService.GetByUsernameAsync(dto.Username);
+        var user = await _userManager.FindByNameAsync(dto.Username);
 
         if (user is null)
         {
             return Unauthorized("Invalid username or password.");
         }
 
-        var verificationResult = _passwordHasher.VerifyHashedPassword(
-            new object(),
-            user.PasswordHash,
-            dto.Password);
+        var isPasswordValid = await _userManager.CheckPasswordAsync(user, dto.Password);
 
-        if (verificationResult == PasswordVerificationResult.Failed)
+        if (!isPasswordValid)
         {
             return Unauthorized("Invalid username or password.");
         }
 
-        var jwt = _configuration.GetSection("Jwt");
-        var key = jwt["Key"] ?? throw new InvalidOperationException("Jwt:Key is missing.");
-
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Name, user.Username)
-        };
-
-        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-        var creds = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
-
-        var token = new JwtSecurityToken(
-            issuer: jwt["Issuer"],
-            audience: jwt["Audience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddHours(2),
-            signingCredentials: creds);
+        var token = _tokenService.GenerateToken(user);
 
         return Ok(new SignInResponseDto
         {
-            Token = new JwtSecurityTokenHandler().WriteToken(token)
+            Token = token
+        });
+    }
+
+    [HttpPost("signup")]
+    public async Task<ActionResult<SignInResponseDto>> SignUp([FromBody] SignUpDto dto)
+    {
+        var existingUser = await _userManager.FindByNameAsync(dto.Username);
+        if (existingUser is not null)
+        {
+            return BadRequest("Username already exists.");
+        }
+
+        var user = new User
+        {
+            UserName = dto.Username,
+            Email = dto.Email,
+        };
+
+        var result = await _userManager.CreateAsync(user, dto.Password);
+
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            return BadRequest($"Failed to create user: {errors}");
+        }
+
+        var token = _tokenService.GenerateToken(user);
+
+        return Ok(new SignInResponseDto
+        {
+            Token = token
         });
     }
 }
