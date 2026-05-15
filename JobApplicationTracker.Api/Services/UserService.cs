@@ -51,58 +51,6 @@ public class UserService : IUserService
         return _mapper.Map<UserDto>(user);
     }
 
-    public async Task<UserDto> AddAsync(CreateUserDto user)
-    {
-        var existingUser = await _userRepository.GetByUsernameAsync(user.Username.Trim());
-        if (existingUser is not null)
-        {
-            throw new InvalidOperationException("Username already exists.");
-        }
-
-        var hashedPassword = _passwordHasher.HashPassword(new object(), user.Password);
-
-        var entity = new User     // not mapped because adding fields
-        {
-            UserName = user.Username.Trim(),
-            PasswordHash = hashedPassword,
-            CreatedAt = DateTime.UtcNow,
-            DeletedAt = null
-        };
-
-        var createdUser = await _userRepository.AddAsync(entity);
-
-        return _mapper.Map<UserDto>(createdUser);
-    }
-
-    public async Task<UserDto?> UpdateAsync(string id, UpdateUserDto user)
-    {
-        var existingUser = await _userRepository.GetByIdAsync(id);
-
-        if (existingUser is null)
-        {
-            return null;
-        }
-
-        var entity = new User // not mapped because adjusting fields
-        {
-            UserName = user.Username is null ? existingUser.UserName : user.Username.Trim(),
-            PasswordHash = user.Password is null
-                ? existingUser.PasswordHash
-                : _passwordHasher.HashPassword(new object(), user.Password),
-            CreatedAt = existingUser.CreatedAt,
-            DeletedAt = existingUser.DeletedAt
-        };
-
-        var updatedUser = await _userRepository.UpdateAsync(entity);
-
-        if (updatedUser is null)
-        {
-            return null;
-        }
-
-        return _mapper.Map<UserDto>(updatedUser);
-    }
-
     public async Task<bool> DeleteAsync(string id)
     {
         return await _userRepository.DeleteAsync(id);

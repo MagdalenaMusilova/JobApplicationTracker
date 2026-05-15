@@ -16,14 +16,7 @@ public class UserController : ControllerBase
     {
         _userService = userService;
     }
-
-    [HttpPost]
-    public async Task<ActionResult<UserDto>> Create([FromBody] CreateUserDto user)
-    {
-        var createdUser = await _userService.AddAsync(user);
-        return Ok(createdUser);
-    }
-
+    
     [HttpGet]
     [Authorize]
     public async Task<ActionResult<UserDto>> GetMe()
@@ -31,14 +24,5 @@ public class UserController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var user = await _userService.GetByIdAsync(userId);
         return user is null ? NotFound() : Ok(user);
-    }
-
-    [HttpPut]
-    [Authorize]
-    public async Task<ActionResult<UserDto>> UpdateMe([FromBody] UpdateUserDto user)
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var updated = await _userService.UpdateAsync(userId, user);
-        return updated is null ? NotFound() : Ok(updated);
     }
 }
