@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobApplicationTracker.Test"
 		{6329F1CA-6B8C-4159-8E31-9E63F1A1A720} = {6329F1CA-6B8C-4159-8E31-9E63F1A1A720}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobApplicationTracker.WPF", "JobApplicationTracker.WPF\JobApplicationTracker.WPF.csproj", "{9A770BE6-38CE-48A3-9790-AFF21BD3C896}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{8FA61A63-DB0B-4659-B98E-E6C853EAACB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8FA61A63-DB0B-4659-B98E-E6C853EAACB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8FA61A63-DB0B-4659-B98E-E6C853EAACB1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A770BE6-38CE-48A3-9790-AFF21BD3C896}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A770BE6-38CE-48A3-9790-AFF21BD3C896}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A770BE6-38CE-48A3-9790-AFF21BD3C896}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A770BE6-38CE-48A3-9790-AFF21BD3C896}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

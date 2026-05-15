@@ -1,0 +1,88 @@
+<Page x:Class="JobApplicationTracker.Wpf.Views.DashboardView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="#F3F4F6">
+
+    <ScrollViewer>
+        <StackPanel Margin="30">
+
+            <TextBlock Text="Dashboard"
+                       FontSize="36"
+                       FontWeight="Bold"/>
+
+            <TextBlock Text="Overview of your job applications"
+                       FontSize="16"
+                       Foreground="Gray"
+                       Margin="0 5 0 30"/>
+
+            <!-- Stats -->
+            <WrapPanel>
+
+                <Border Width="240"
+                        Height="140"
+                        Background="#2563EB"
+                        Margin="10">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="Applications"
+                                   Foreground="White"
+                                   FontSize="18"/>
+                        <TextBlock Text="42"
+                                   Foreground="White"
+                                   FontSize="48"
+                                   FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Width="240"
+                        Height="140"
+                        Background="#059669"
+                        Margin="10">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="Interviews"
+                                   Foreground="White"
+                                   FontSize="18"/>
+                        <TextBlock Text="8"
+                                   Foreground="White"
+                                   FontSize="48"
+                                   FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Width="240"
+                        Height="140"
+                        Background="#DC2626"
+                        Margin="10">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="Rejected"
+                                   Foreground="White"
+                                   FontSize="18"/>
+                        <TextBlock Text="12"
+                                   Foreground="White"
+                                   FontSize="48"
+                                   FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
+
+            </WrapPanel>
+
+            <!-- Recent Activity -->
+            <Border Background="White"
+                    Margin="10"
+                    Padding="20">
+
+                <StackPanel>
+                    <TextBlock Text="Recent Activity"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Margin="0 0 0 20"/>
+
+                    <TextBlock Text="• Applied to Senior .NET Developer at Microsoft"/>
+                    <TextBlock Text="• Interview scheduled with Google"/>
+                    <TextBlock Text="• Resume updated for Amazon role"/>
+                    <TextBlock Text="• Rejected by Spotify"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

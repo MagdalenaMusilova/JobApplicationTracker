@@ -108,5 +108,31 @@ public class AppDbContext : DbContext
             entity.ToView("View_MinimalJA");
             entity.Property(jaMin => jaMin.jaId);
         });
+        
+        // Configure Identity columns properly
+        modelBuilder.Entity<User>()
+            .Property(u => u.NormalizedUserName)
+            .HasMaxLength(256);
+    
+        modelBuilder.Entity<User>()
+            .Property(u => u.NormalizedEmail)
+            .HasMaxLength(256);
+    
+        modelBuilder.Entity<User>()
+            .Property(u => u.UserName)
+            .HasMaxLength(256);
+    
+        modelBuilder.Entity<User>()
+            .Property(u => u.Email)
+            .HasMaxLength(256);
+    
+        // Create unique indexes for these columns
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.NormalizedUserName)
+            .IsUnique();
+    
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.NormalizedEmail)
+            .IsUnique();
     }
 }

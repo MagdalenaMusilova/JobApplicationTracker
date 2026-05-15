@@ -66,7 +66,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-builder.Services.AddIdentity<User, IdentityRole>()    
+builder.Services.AddIdentity<User, IdentityRole>(options =>
+    {
+        options.Password.RequireNonAlphanumeric = false;
+    })
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 builder.Services.AddScoped<IAuthTokenService, AuthTokenService>();

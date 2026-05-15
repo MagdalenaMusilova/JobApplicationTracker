@@ -1,0 +1,88 @@
+<Page x:Class="JobApplicationTracker.Wpf.Views.MatchJobDescriptionView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="#F3F4F6">
+
+    <Grid Margin="30">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Match Job Description"
+                   FontSize="36"
+                   FontWeight="Bold"/>
+
+        <Grid Grid.Row="1"
+              Margin="0 20">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Background="White"
+                    Padding="20"
+                    Margin="0 0 20 0">
+
+                <StackPanel>
+                    <TextBlock Text="Paste Job Description"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Margin="0 0 0 15"/>
+
+                    <TextBox Height="400"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto"
+                             Text="We are looking for a Senior .NET Developer with Azure and Docker experience."/>
+
+                    <Button Content="Analyze Match"
+                            Width="200"
+                            Height="40"
+                            Margin="0 20 0 0"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Background="White"
+                    Padding="20">
+
+                <StackPanel>
+
+                    <TextBlock Text="Analysis"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Margin="0 0 0 20"/>
+
+                    <TextBlock Text="Match Score"
+                               FontWeight="Bold"/>
+
+                    <ProgressBar Value="84"
+                                 Height="30"
+                                 Margin="0 10"/>
+
+                    <TextBlock Text="84%"
+                               FontSize="28"
+                               FontWeight="Bold"
+                               Margin="0 0 0 20"/>
+
+                    <TextBlock Text="Missing Skills"
+                               FontWeight="Bold"/>
+
+                    <TextBlock Text="• Docker"/>
+                    <TextBlock Text="• Kubernetes"/>
+                    <TextBlock Text="• CI/CD"/>
+
+                    <TextBlock Text="Suggestions"
+                               FontWeight="Bold"
+                               Margin="0 20 0 10"/>
+
+                    <TextBlock TextWrapping="Wrap"
+                               Text="Add more cloud deployment experience and DevOps tooling to improve the score."/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

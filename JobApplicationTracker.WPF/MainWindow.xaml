@@ -1,0 +1,49 @@
+<Window x:Class="JobApplicationTracker.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:JobApplicationTracker.Wpf.Views"
+        Title="Job Application Tracker"
+        Width="1400"
+        Height="850"
+        Background="#F3F4F6">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Background="#111827">
+            <StackPanel Margin="20">
+
+                <TextBlock Text="Job Tracker"
+                           FontSize="28"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           Margin="10 20"/>
+
+                <Button x:Name="DashboardButton"
+                        Content="Dashboard"
+                        Click="Dashboard_Click"/>
+
+                <Button x:Name="ApplicationsButton"
+                        Content="Applications"
+                        Click="Applications_Click"/>
+
+                <Button x:Name="ProfileButton"
+                        Content="Profile"
+                        Click="Profile_Click"/>
+
+                <Button x:Name="MatchButton"
+                        Content="Match Job Description"
+                        Click="Match_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Content -->
+        <Frame x:Name="MainFrame"
+               Grid.Column="1"
+               NavigationUIVisibility="Hidden"/>
+    </Grid>
+</Window>
