@@ -1,5 +1,97 @@
+############################################
+# .NET
+############################################
+
 bin/
 obj/
+.vs/
+TestResults/
+
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+
+# NuGet / legacy
+*.nupkg
+.nuget/
+project.assets.json
+
+############################################
+# Old packages folder (only if legacy exists)
+############################################
 /packages/
-riderModule.iml
-/_ReSharper.Caches/
+
+############################################
+# Rider / ReSharper
+############################################
+
+.idea/
+*.sln.iml
+*.iml
+_ReSharper*/
+dotTrace/
+dotMemory/
+dotCover/
+
+############################################
+# Logs
+############################################
+
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+############################################
+# Node / React / Frontend
+############################################
+
+node_modules/
+dist/
+dist-ssr/
+build/
+.next/
+.nuxt/
+
+# env files (important)
+.env
+.env.*
+!.env.example
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# caches
+.eslintcache
+.vite/
+.cache/
+
+############################################
+# Editor (VS Code)
+############################################
+
+.vscode/*
+!.vscode/extensions.json
+
+############################################
+# OS files
+############################################
+
+.DS_Store
+Thumbs.db
+*.sw?
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+############################################
+# other
+############################################
+
+*.zip
