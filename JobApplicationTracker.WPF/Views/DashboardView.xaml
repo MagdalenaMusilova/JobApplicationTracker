@@ -6,80 +6,69 @@
     <ScrollViewer>
         <StackPanel Margin="30">
 
-            <TextBlock Text="Dashboard"
-                       FontSize="36"
-                       FontWeight="Bold"/>
-
+            <TextBlock Text="Dashboard" FontSize="36" FontWeight="Bold"/>
             <TextBlock Text="Overview of your job applications"
-                       FontSize="16"
-                       Foreground="Gray"
-                       Margin="0 5 0 30"/>
+                       FontSize="14" Foreground="Gray" Margin="0 4 0 24"/>
 
-            <!-- Stats -->
+            <!-- Loading / Error -->
+            <TextBlock Text="Loading..." Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"
+                       Foreground="Gray" Margin="0 0 0 12"/>
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626"
+                       Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"
+                       Margin="0 0 0 12" TextWrapping="Wrap"/>
+
+            <!-- Stat cards -->
             <WrapPanel>
-
-                <Border Width="240"
-                        Height="140"
-                        Background="#2563EB"
-                        Margin="10">
-                    <StackPanel Margin="20">
-                        <TextBlock Text="Applications"
-                                   Foreground="White"
-                                   FontSize="18"/>
-                        <TextBlock Text="42"
-                                   Foreground="White"
-                                   FontSize="48"
-                                   FontWeight="Bold"/>
+                <Border Width="220" Height="130" Background="#2563EB" CornerRadius="10" Margin="0 0 16 16">
+                    <StackPanel Margin="20" VerticalAlignment="Center">
+                        <TextBlock Text="Total" Foreground="White" FontSize="14"/>
+                        <TextBlock Text="{Binding Total}" Foreground="White" FontSize="48" FontWeight="Bold"/>
                     </StackPanel>
                 </Border>
-
-                <Border Width="240"
-                        Height="140"
-                        Background="#059669"
-                        Margin="10">
-                    <StackPanel Margin="20">
-                        <TextBlock Text="Interviews"
-                                   Foreground="White"
-                                   FontSize="18"/>
-                        <TextBlock Text="8"
-                                   Foreground="White"
-                                   FontSize="48"
-                                   FontWeight="Bold"/>
+                <Border Width="220" Height="130" Background="#059669" CornerRadius="10" Margin="0 0 16 16">
+                    <StackPanel Margin="20" VerticalAlignment="Center">
+                        <TextBlock Text="Interviews" Foreground="White" FontSize="14"/>
+                        <TextBlock Text="{Binding Interviews}" Foreground="White" FontSize="48" FontWeight="Bold"/>
                     </StackPanel>
                 </Border>
-
-                <Border Width="240"
-                        Height="140"
-                        Background="#DC2626"
-                        Margin="10">
-                    <StackPanel Margin="20">
-                        <TextBlock Text="Rejected"
-                                   Foreground="White"
-                                   FontSize="18"/>
-                        <TextBlock Text="12"
-                                   Foreground="White"
-                                   FontSize="48"
-                                   FontWeight="Bold"/>
+                <Border Width="220" Height="130" Background="#D97706" CornerRadius="10" Margin="0 0 16 16">
+                    <StackPanel Margin="20" VerticalAlignment="Center">
+                        <TextBlock Text="Offers" Foreground="White" FontSize="14"/>
+                        <TextBlock Text="{Binding Offers}" Foreground="White" FontSize="48" FontWeight="Bold"/>
                     </StackPanel>
                 </Border>
-
+                <Border Width="220" Height="130" Background="#DC2626" CornerRadius="10" Margin="0 0 16 16">
+                    <StackPanel Margin="20" VerticalAlignment="Center">
+                        <TextBlock Text="Rejected" Foreground="White" FontSize="14"/>
+                        <TextBlock Text="{Binding Rejected}" Foreground="White" FontSize="48" FontWeight="Bold"/>
+                    </StackPanel>
+                </Border>
             </WrapPanel>
 
-            <!-- Recent Activity -->
-            <Border Background="White"
-                    Margin="10"
-                    Padding="20">
-
+            <!-- Recent applications -->
+            <Border Background="White" CornerRadius="10" Padding="20" Margin="0 8 0 0">
                 <StackPanel>
-                    <TextBlock Text="Recent Activity"
-                               FontSize="24"
-                               FontWeight="Bold"
-                               Margin="0 0 0 20"/>
-
-                    <TextBlock Text="• Applied to Senior .NET Developer at Microsoft"/>
-                    <TextBlock Text="• Interview scheduled with Google"/>
-                    <TextBlock Text="• Resume updated for Amazon role"/>
-                    <TextBlock Text="• Rejected by Spotify"/>
+                    <TextBlock Text="Recent Applications" FontSize="20" FontWeight="Bold" Margin="0 0 0 12"/>
+                    <ItemsControl ItemsSource="{Binding RecentApplications}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="#E5E7EB" BorderThickness="0 0 0 1" Padding="0 10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Company}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Position}" Foreground="Gray" FontSize="13"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding Status}"
+                                                   Foreground="#2563EB" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Border>
 

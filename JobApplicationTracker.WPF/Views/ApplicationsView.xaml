@@ -3,63 +3,184 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Background="#F3F4F6">
 
-    <Grid Margin="30">
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
+        <!-- Filter pill -->
+        <Style x:Key="StatusFilterButton" TargetType="RadioButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Border"
+                                Background="White"
+                                BorderBrush="#D1D5DB"
+                                BorderThickness="1"
+                                CornerRadius="20"
+                                Padding="16 0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#2563EB"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#2563EB"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#EFF6FF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="MinWidth" Value="90"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+
+        <!-- Status badge -->
+        <Style x:Key="StatusBadge" TargetType="Border">
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="10 3"/>
+            <Setter Property="Background" Value="#E5E7EB"/>
+        </Style>
+
+        <!-- Card template -->
+        <DataTemplate x:Key="ApplicationCardTemplate">
+            <Border Background="White"
+                    BorderBrush="#E5E7EB"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="20 16"
+                    Margin="0 0 0 12"
+                    Cursor="Hand">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" Opacity="0.06" BlurRadius="8" ShadowDepth="2" Direction="270"/>
+                </Border.Effect>
+                <Border.InputBindings>
+                    <MouseBinding MouseAction="LeftClick"
+                                  Command="{Binding DataContext.OpenDetailCommand,
+                                            RelativeSource={RelativeSource AncestorType=Page}}"
+                                  CommandParameter="{Binding}"/>
+                </Border.InputBindings>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Company}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="#111827"/>
+                        <TextBlock Text="{Binding Position}"
+                                   FontSize="13"
+                                   Foreground="#6B7280"
+                                   Margin="0 2 0 0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Margin="16 0 0 0">
+                        <Border Style="{StaticResource StatusBadge}" HorizontalAlignment="Right">
+                            <TextBlock Text="{Binding JAStatus.Label}"
+                                       FontSize="12"
+                                       FontWeight="Medium"
+                                       Foreground="#374151"/>
+                        </Border>
+                        <TextBlock Text="{Binding JAEvent.EventDate, StringFormat='{}{0:MMM d, yyyy}', FallbackValue=''}"
+                                   FontSize="12"
+                                   Foreground="#9CA3AF"
+                                   HorizontalAlignment="Right"
+                                   Margin="0 4 0 0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid Margin="30 24">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <TextBlock Text="Applications"
-                   FontSize="36"
-                   FontWeight="Bold"/>
+                   FontSize="32"
+                   FontWeight="Bold"
+                   Foreground="#111827"/>
 
+        <!-- Search + Add -->
         <StackPanel Grid.Row="1"
                     Orientation="Horizontal"
-                    Margin="0 20">
-
-            <TextBox Width="300"
-                     Height="40"
-                     Text="Search company or position"/>
-
-            <Button Content="Add Application"
-                    Width="180"
-                    Height="40"
-                    Margin="20 0"/>
+                    Margin="0 20 0 16">
+            <TextBox Width="300" Height="40" Text="Search company or position"/>
+            <Button Content="＋  Add Application"
+                    Width="180" Height="40"
+                    Margin="16 0 0 0"
+                    Command="{Binding OpenCreateDialogCommand}"/>
         </StackPanel>
 
-        <Border Grid.Row="2"
-                Background="White"
-                Padding="10">
+        <!-- Dynamic filter pills from API -->
+        <ItemsControl Grid.Row="2"
+                      ItemsSource="{Binding StatusFilters}"
+                      Margin="0 0 0 20">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <RadioButton Content="{Binding Label}"
+                                 Style="{StaticResource StatusFilterButton}"
+                                 IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                 GroupName="StatusFilter"
+                                 Margin="0 0 8 8"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
 
-            <DataGrid AutoGenerateColumns="False"
-                      HeadersVisibility="Column"
-                      RowHeight="40">
+        <!-- Card list -->
+        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="No applications match the selected filter."
+                           FontSize="14"
+                           Foreground="#9CA3AF"
+                           HorizontalAlignment="Center"
+                           Margin="0 40">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Applications.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
 
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Company"
-                                        Binding="{Binding Company}"/>
+                <ItemsControl ItemsSource="{Binding Applications}"
+                              ItemTemplate="{StaticResource ApplicationCardTemplate}"/>
+            </StackPanel>
+        </ScrollViewer>
 
-                    <DataGridTextColumn Header="Position"
-                                        Binding="{Binding Position}"/>
-
-                    <DataGridTextColumn Header="Status"
-                                        Binding="{Binding Status}"/>
-
-                    <DataGridTextColumn Header="Applied"
-                                        Binding="{Binding Date}"/>
-
-                    <DataGridTextColumn Header="Match Score"
-                                        Binding="{Binding Match}"/>
-                </DataGrid.Columns>
-
-                <DataGrid.Items>
-                    <x:Array Type="{x:Type sys:String}"
-                             xmlns:sys="clr-namespace:System;assembly=mscorlib">
-                    </x:Array>
-                </DataGrid.Items>
-            </DataGrid>
+        <!-- Loading overlay -->
+        <Border Grid.Row="3"
+                Background="#88FFFFFF"
+                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="Loading…"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="16"
+                       Foreground="#6B7280"/>
         </Border>
     </Grid>
 </Page>

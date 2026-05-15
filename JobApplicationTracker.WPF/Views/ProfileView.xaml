@@ -3,46 +3,284 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Background="#F3F4F6">
 
-    <ScrollViewer>
-        <StackPanel Margin="30"
-                    Width="700">
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
-            <TextBlock Text="Profile"
-                       FontSize="36"
-                       FontWeight="Bold"/>
+        <Style x:Key="SectionCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
 
-            <Border Background="White"
-                    Margin="0 20"
-                    Padding="20">
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
 
+        <Style x:Key="ItemBox" TargetType="Border">
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="14"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#6B7280"/>
+            <Setter Property="Margin" Value="0,0,0,2"/>
+        </Style>
+
+        <Style x:Key="FieldValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#111827"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="30" MaxWidth="760" HorizontalAlignment="Left">
+
+            <TextBlock Text="Profile" FontSize="36" FontWeight="Bold"/>
+            <TextBlock Text="What the application knows about you"
+                       FontSize="14" Foreground="Gray" Margin="0,4,0,24"/>
+
+            <!-- Loading / Error -->
+            <TextBlock Text="Loading…"
+                       Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"
+                       Foreground="Gray" Margin="0,0,0,12"/>
+            <TextBlock Text="{Binding ErrorMessage}"
+                       Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"
+                       Foreground="#DC2626" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+            <!-- Account -->
+            <Border Style="{StaticResource SectionCard}">
                 <StackPanel>
-
-                    <TextBlock Text="Personal Information"
-                               FontSize="24"
-                               FontWeight="Bold"
-                               Margin="0 0 0 20"/>
-
-                    <TextBlock Text="Full Name"/>
-                    <TextBox Height="40"
-                             Margin="0 5 0 15"
-                             Text="John Doe"/>
-
-                    <TextBlock Text="Email"/>
-                    <TextBox Height="40"
-                             Margin="0 5 0 15"
-                             Text="john@email.com"/>
-
-                    <TextBlock Text="Skills"/>
-                    <TextBox Height="100"
-                             AcceptsReturn="True"
-                             Text="C#, .NET, SQL, Azure"/>
-
-                    <Button Content="Save Profile"
-                            Width="180"
-                            Height="40"
-                            Margin="0 20 0 0"/>
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="Account"/>
+                    <TextBlock Text="Keep your login details up to date."
+                               FontSize="13" Foreground="Gray" Margin="0,0,0,14"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,16,0">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Username"/>
+                            <TextBlock Style="{StaticResource FieldValue}" Text="{Binding Username}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Email"/>
+                            <TextBlock Style="{StaticResource FieldValue}" Text="{Binding Email}"/>
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
+
+            <!-- About Me -->
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="About Me"/>
+                    <TextBlock Style="{StaticResource FieldValue}" Text="{Binding AboutMe}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Education -->
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource SectionTitle}" Text="Education"/>
+                        <TextBlock Grid.Column="1" Text="{Binding EducationCount}"
+                                   FontSize="13" Foreground="Gray" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding EducationItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource ItemBox}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Degree}" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="{Binding Subtitle}" FontSize="12" Foreground="Gray" Margin="0,2,0,10"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,12,0">
+                                                <TextBlock Style="{StaticResource FieldLabel}" Text="School"/>
+                                                <TextBlock Style="{StaticResource FieldValue}" Text="{Binding School}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                                <TextBlock Style="{StaticResource FieldLabel}" Text="Status"/>
+                                                <TextBlock Style="{StaticResource FieldValue}" Text="{Binding Status}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Style="{StaticResource FieldLabel}" Text="Majors"/>
+                                                <TextBlock Style="{StaticResource FieldValue}" Text="{Binding MajorsText}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <StackPanel Margin="0,10,0,0">
+                                            <TextBlock Style="{StaticResource FieldLabel}" Text="Notes"/>
+                                            <TextBlock Style="{StaticResource FieldValue}" Text="{Binding Notes}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Work Experience -->
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource SectionTitle}" Text="Work Experience"/>
+                        <TextBlock Grid.Column="1" Text="{Binding WorkExpCount}"
+                                   FontSize="13" Foreground="Gray" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding WorkExperiences}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource ItemBox}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Position}" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="{Binding Company}" FontSize="12" Foreground="Gray" Margin="0,2,0,10"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,12,0">
+                                                <TextBlock Style="{StaticResource FieldLabel}" Text="Dates"/>
+                                                <TextBlock Style="{StaticResource FieldValue}" Text="{Binding DateRange}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Style="{StaticResource FieldLabel}" Text="Description"/>
+                                                <TextBlock Style="{StaticResource FieldValue}" Text="{Binding Description}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <StackPanel Margin="0,10,0,0">
+                                            <TextBlock Style="{StaticResource FieldLabel}" Text="Notes"/>
+                                            <TextBlock Style="{StaticResource FieldValue}" Text="{Binding Notes}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Trainings -->
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource SectionTitle}" Text="Trainings"/>
+                        <TextBlock Grid.Column="1" Text="{Binding TrainingsCount}"
+                                   FontSize="13" Foreground="Gray" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding Trainings}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource ItemBox}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="{Binding Subtitle}" FontSize="12" Foreground="Gray" Margin="0,2,0,10"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,12,0">
+                                                <TextBlock Style="{StaticResource FieldLabel}" Text="Type"/>
+                                                <TextBlock Style="{StaticResource FieldValue}" Text="{Binding Type}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                                <TextBlock Style="{StaticResource FieldLabel}" Text="Dates"/>
+                                                <TextBlock Style="{StaticResource FieldValue}" Text="{Binding DateRange}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Style="{StaticResource FieldLabel}" Text="Certification"/>
+                                                <TextBlock Style="{StaticResource FieldValue}" Text="{Binding CertificationText}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <StackPanel Margin="0,10,0,0">
+                                            <TextBlock Style="{StaticResource FieldLabel}" Text="Notes"/>
+                                            <TextBlock Style="{StaticResource FieldValue}" Text="{Binding Notes}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Skills -->
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource SectionTitle}" Text="Skills"/>
+                        <TextBlock Grid.Column="1" Text="{Binding SkillsCount}"
+                                   FontSize="13" Foreground="Gray" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding Skills}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource ItemBox}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="{Binding LevelText}" FontSize="12" Foreground="Gray" Margin="0,2,0,10"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,12,0">
+                                                <TextBlock Style="{StaticResource FieldLabel}" Text="Aliases"/>
+                                                <TextBlock Style="{StaticResource FieldValue}" Text="{Binding AliasesText}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Style="{StaticResource FieldLabel}" Text="Notes"/>
+                                                <TextBlock Style="{StaticResource FieldValue}" Text="{Binding Notes}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Notes -->
+            <Border Style="{StaticResource SectionCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="Notes"/>
+                    <TextBlock Style="{StaticResource FieldValue}" Text="{Binding Notes}"/>
+                </StackPanel>
+            </Border>
+
         </StackPanel>
     </ScrollViewer>
 </Page>

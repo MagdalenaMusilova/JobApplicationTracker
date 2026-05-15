@@ -3,86 +3,79 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       Background="#F3F4F6">
 
-    <Grid Margin="30">
+    <ScrollViewer>
+        <StackPanel Margin="30" MaxWidth="900">
 
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+            <TextBlock Text="Match Job Description" FontSize="36" FontWeight="Bold"/>
+            <TextBlock Text="Paste a job ad and see how well it fits your profile."
+                       FontSize="14" Foreground="Gray" Margin="0 4 0 24"/>
 
-        <TextBlock Text="Match Job Description"
-                   FontSize="36"
-                   FontWeight="Bold"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="1"
-              Margin="0 20">
+                <!-- Input -->
+                <Border Background="White" CornerRadius="10" Padding="20">
+                    <Grid>
+                        <TextBox x:Name="JobDescBox" AcceptsReturn="True" TextWrapping="Wrap"
+                                 Height="300" Padding="10" BorderBrush="#E5E7EB"
+                                 VerticalScrollBarVisibility="Auto"/>
+                        <TextBlock Text="Paste the job ad here..." Foreground="Gray"
+                                   Margin="12 10 0 0" IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=JobDescBox}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </Border>
 
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+                <!-- Result -->
+                <Border Grid.Column="2" Background="White" CornerRadius="10" Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Match result" FontSize="16" FontWeight="SemiBold" Margin="0 0 0 10"/>
 
-            <Border Background="White"
-                    Padding="20"
-                    Margin="0 0 20 0">
+                        <StackPanel x:Name="ResultPanel" Visibility="Collapsed">
+                            <Grid Margin="0 0 0 10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Match score" VerticalAlignment="Center" FontSize="14"/>
+                                <TextBlock x:Name="ScoreText" Grid.Column="1"
+                                           FontSize="28" FontWeight="Bold" Foreground="#2563EB"/>
+                            </Grid>
+                            <ProgressBar x:Name="ScoreBar" Height="10" Maximum="100"
+                                         Foreground="#2563EB" Background="#DBEAFE"
+                                         BorderThickness="0" Margin="0 0 0 16"/>
+                            <TextBlock x:Name="SummaryText" TextWrapping="Wrap"
+                                       Foreground="Gray" Margin="0 0 0 16"/>
 
-                <StackPanel>
-                    <TextBlock Text="Paste Job Description"
-                               FontSize="24"
-                               FontWeight="Bold"
-                               Margin="0 0 0 15"/>
+                            <TextBlock Text="Matched skills" FontWeight="SemiBold" Margin="0 0 0 6"/>
+                            <TextBlock x:Name="MatchedSkillsText" TextWrapping="Wrap"
+                                       Foreground="#059669" Margin="0 0 0 12"/>
 
-                    <TextBox Height="400"
-                             AcceptsReturn="True"
-                             TextWrapping="Wrap"
-                             VerticalScrollBarVisibility="Auto"
-                             Text="We are looking for a Senior .NET Developer with Azure and Docker experience."/>
+                            <TextBlock Text="Missing skills" FontWeight="SemiBold" Margin="0 0 0 6"/>
+                            <TextBlock x:Name="MissingSkillsText" TextWrapping="Wrap"
+                                       Foreground="#DC2626"/>
+                        </StackPanel>
 
-                    <Button Content="Analyze Match"
-                            Width="200"
-                            Height="40"
-                            Margin="0 20 0 0"/>
-                </StackPanel>
-            </Border>
+                        <TextBlock x:Name="PlaceholderText"
+                                   Text="Paste a job description and click Analyze match."
+                                   Foreground="Gray"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
 
-            <Border Grid.Column="1"
-                    Background="White"
-                    Padding="20">
-
-                <StackPanel>
-
-                    <TextBlock Text="Analysis"
-                               FontSize="24"
-                               FontWeight="Bold"
-                               Margin="0 0 0 20"/>
-
-                    <TextBlock Text="Match Score"
-                               FontWeight="Bold"/>
-
-                    <ProgressBar Value="84"
-                                 Height="30"
-                                 Margin="0 10"/>
-
-                    <TextBlock Text="84%"
-                               FontSize="28"
-                               FontWeight="Bold"
-                               Margin="0 0 0 20"/>
-
-                    <TextBlock Text="Missing Skills"
-                               FontWeight="Bold"/>
-
-                    <TextBlock Text="• Docker"/>
-                    <TextBlock Text="• Kubernetes"/>
-                    <TextBlock Text="• CI/CD"/>
-
-                    <TextBlock Text="Suggestions"
-                               FontWeight="Bold"
-                               Margin="0 20 0 10"/>
-
-                    <TextBlock TextWrapping="Wrap"
-                               Text="Add more cloud deployment experience and DevOps tooling to improve the score."/>
-                </StackPanel>
-            </Border>
-        </Grid>
-    </Grid>
+        </StackPanel>
+    </ScrollViewer>
 </Page>

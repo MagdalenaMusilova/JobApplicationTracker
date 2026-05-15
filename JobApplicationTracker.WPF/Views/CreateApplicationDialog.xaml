@@ -1,0 +1,109 @@
+﻿<Window x:Class="JobApplicationTracker.Wpf.Views.CreateApplicationDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="New Application"
+        Width="500"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F3F4F6">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0 10 0 3"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="6 4"/>
+            <Setter Property="BorderBrush" Value="#D1D5DB"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="32"/>
+        </Style>
+    </Window.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24">
+
+            <TextBlock Text="New Application"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Margin="0 0 0 16"/>
+
+            <!-- Basic Info -->
+            <TextBlock Text="Company *" Style="{StaticResource Label}"/>
+            <TextBox Text="{Binding Company, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <TextBlock Text="Position *" Style="{StaticResource Label}"/>
+            <TextBox Text="{Binding Position, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <TextBlock Text="Note" Style="{StaticResource Label}"/>
+            <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                     Height="60"
+                     TextWrapping="Wrap"
+                     AcceptsReturn="True"
+                     VerticalScrollBarVisibility="Auto"/>
+
+            <TextBlock Text="Job Description" Style="{StaticResource Label}"/>
+            <TextBox Text="{Binding JobDescription, UpdateSourceTrigger=PropertyChanged}"
+                     Height="80"
+                     TextWrapping="Wrap"
+                     AcceptsReturn="True"
+                     VerticalScrollBarVisibility="Auto"/>
+
+            <!-- Initial Status -->
+            <TextBlock Text="Initial Status *" Style="{StaticResource Label}"/>
+            <ComboBox ItemsSource="{Binding StatusTypes}"
+                      SelectedItem="{Binding SelectedStatus}"
+                      DisplayMemberPath="Label"/>
+
+            <TextBlock Text="Status Note" Style="{StaticResource Label}"/>
+            <TextBox Text="{Binding StatusNote, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <!-- Optional Event -->
+            <CheckBox Content="Add an event"
+                      IsChecked="{Binding AddEvent}"
+                      Margin="0 14 0 0"
+                      FontWeight="SemiBold"/>
+
+            <StackPanel Visibility="{Binding AddEvent,
+                            Converter={StaticResource BoolToVisibilityConverter}}">
+
+                <TextBlock Text="Event Name" Style="{StaticResource Label}"/>
+                <TextBox Text="{Binding EventName, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <TextBlock Text="Event Type" Style="{StaticResource Label}"/>
+                <ComboBox ItemsSource="{Binding EventTypes}"
+                          SelectedItem="{Binding SelectedEventType}"
+                          DisplayMemberPath="Label"/>
+
+                <TextBlock Text="Event Date" Style="{StaticResource Label}"/>
+                <DatePicker SelectedDate="{Binding EventDate}"
+                            Height="32"/>
+
+                <CheckBox Content="Whole-day event"
+                          IsChecked="{Binding IsWholeDay}"
+                          Margin="0 8 0 0"/>
+
+                <TextBlock Text="Event Note" Style="{StaticResource Label}"/>
+                <TextBox Text="{Binding EventNote, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+
+            <!-- Buttons -->
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="0 20 0 0">
+                <Button Content="Cancel"
+                        Width="90" Height="34"
+                        Margin="0 0 10 0"
+                        Command="{Binding CancelCommand}"/>
+                <Button Content="Create"
+                        Width="90" Height="34"
+                        Command="{Binding ConfirmCommand}"/>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</Window>
