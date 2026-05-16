@@ -31,8 +31,15 @@ public class JobApplicationController : ControllerBase
         User.FindFirstValue(ClaimTypes.NameIdentifier)
                   ?? throw new UnauthorizedAccessException("User ID not found in token.");
 
+    [HttpGet("/all")]
+    public async Task<ActionResult<IEnumerable<JobApplicationDto>>> GetAllByAsync()
+    {
+        var applications = await _jobApplicationService.GetAllAsync();
+        return Ok(applications);
+    }
+    
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<JobApplicationDto>>> GetAllAsync()
+    public async Task<ActionResult<IEnumerable<JobApplicationDto>>> GetAllByUserAsync()
     {
         var userId = GetUserId();
         var applications = await _jobApplicationService.GetAllByUserAsync(userId);
@@ -40,7 +47,7 @@ public class JobApplicationController : ControllerBase
     }
     
     [HttpGet("/minimal")]
-    public async Task<ActionResult<IEnumerable<JobApplicationDto>>> GetAllMinimalAsync()
+    public async Task<ActionResult<IEnumerable<JobApplicationDto>>> GetAllByUserMinimalAsync()
     {
         var userId = GetUserId();
         var applications = await _jobApplicationService.GetAllByUserMinimalAsync(userId);

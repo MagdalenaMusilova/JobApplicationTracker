@@ -14,6 +14,7 @@ namespace JobApplicationTracker.Migrations
                 CREATE VIEW View_MinimalJA AS
                 SELECT 
                     ja.Id AS jaId,
+                    ja.UserId,
                     ja.Company,
                     ja.Position,
                     stat.JaStatusType AS JAStatus,

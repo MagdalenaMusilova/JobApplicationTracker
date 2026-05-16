@@ -7,6 +7,7 @@ namespace JobApplicationTracker.Models;
 public class JobApplicationMinimal
 {
     public Guid jaId { get; set; }
+    public string UserId { get; set; }
     public string Company { get; set; }
     public string Position { get; set; }
     public JAStatusType JAStatus { get; set; }

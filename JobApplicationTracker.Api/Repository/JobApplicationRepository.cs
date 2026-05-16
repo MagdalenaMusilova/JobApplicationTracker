@@ -14,12 +14,6 @@ public class JobApplicationRepository : IJobApplicationRepository
         _context = context;
     }
 
-    public IQueryable<JobApplication> Query(string userId)
-    {
-        return _context.JobApplications.AsQueryable()
-            .Where(ja => ja.UserId == userId);
-    }
-
     public async Task<IEnumerable<JobApplication>> GetAllAsync()
     {
         var res = await _context.JobApplications
@@ -45,6 +39,15 @@ public class JobApplicationRepository : IJobApplicationRepository
             .AsNoTracking()
             .Where(ja => ja.UserId == userId)
             .Include(ja => ja.StatusHistory)
+            .ToListAsync();
+        return res;
+    }
+
+    public async Task<IEnumerable<JobApplicationMinimal>> GetAllByUserMinimalAsync(string userId)
+    {
+        var res = await _context.JaMinimalView
+            .AsNoTracking()
+            .Where(ja => ja.UserId == userId)
             .ToListAsync();
         return res;
     }
