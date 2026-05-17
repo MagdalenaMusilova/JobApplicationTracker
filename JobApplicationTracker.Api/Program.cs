@@ -16,7 +16,6 @@ using JobApplicationTracker.Middleware;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddControllers();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -65,8 +64,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
                 errorNumbersToAdd: null);
         }));
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
     {
@@ -93,15 +90,19 @@ builder.Services.AddScoped<IJAEventService, JAEventService>();
 builder.Services.AddScoped<IJAEventRepository, JAEventRepository>();
 builder.Services.AddScoped<IUserResumeRepository, UserResumeRepository>();
 builder.Services.AddScoped<IResumeMergeService, ResumeMergeService>();
-
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+builder.Services.AddScoped<IStatsRepository, StatsRepository>();
+builder.Services.AddScoped<IStatsService, StatsService>();
+builder.Services.AddScoped<IUserStatsRepository, UserStatsRepository>();
+builder.Services.AddScoped<IUserStatsService, UserStatsService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+
+        options.JsonSerializerOptions.PropertyNamingPolicy =
+            System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
 builder.Services.AddHttpClient<OpenAiAgentService>();
@@ -133,8 +134,6 @@ builder.Services.AddAuthentication(options =>
                 Encoding.UTF8.GetBytes(jwt["Key"]))
         };
     });
-
-builder.Services.AddAuthorization();
 
 builder.Services.AddAuthorization();
 

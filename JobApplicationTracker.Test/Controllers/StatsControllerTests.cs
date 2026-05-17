@@ -26,14 +26,14 @@ public class StatsControllerTests
             new() { Id = "user1", UserName = "alice" },
             new() { Id = "user2", UserName = "bob" }
         };
-        _mockStatsService.Setup(s => s.GetAllUsersWOnlyWhishlistedAsync()).ReturnsAsync(users);
+        _mockStatsService.Setup(s => s.GetAllUsersWOnlyWishlistedAsync()).ReturnsAsync(users);
 
         // Act
-        var result = await _controller.GetAllUsersWOnlyWhishlistedAsync();
+        var result = await _controller.GetAllUsersWOnlyWishlistedAsync();
 
         // Assert
         result.Should().HaveCount(2);
-        _mockStatsService.Verify(s => s.GetAllUsersWOnlyWhishlistedAsync(), Times.Once);
+        _mockStatsService.Verify(s => s.GetAllUsersWOnlyWishlistedAsync(), Times.Once);
     }
 
     [Fact]

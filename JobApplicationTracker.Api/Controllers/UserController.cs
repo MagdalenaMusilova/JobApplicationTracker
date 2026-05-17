@@ -8,6 +8,7 @@ namespace JobApplicationTracker.Controllers;
 
 [ApiController]
 [Route("api/users")]
+[Authorize]
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;

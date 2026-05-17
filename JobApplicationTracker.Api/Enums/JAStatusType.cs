@@ -2,7 +2,7 @@
 
 public enum JAStatusType
 {
-    Whishlist  = 100,
+    Wishlist  = 100,
     Applied    = 200,
     Task       = 300,
     Interview  = 400,

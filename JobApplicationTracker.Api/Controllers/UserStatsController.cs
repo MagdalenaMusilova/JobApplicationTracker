@@ -1,11 +1,13 @@
 ﻿using JobApplicationTracker.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobApplicationTracker.Controllers;
 
 [ApiController]
 [Route("api/userStats")]
-public class UserStatsController
+[Authorize]
+public class UserStatsController : ControllerBase
 {
     private readonly IUserStatsService _userStatsService;
     

@@ -15,7 +15,7 @@ public class EventTypesController: ControllerBase
     {
         var statuses = Enum.GetValues<JAEventType>()
             .OrderBy(s => (int)s)
-            .Select(s => new JaStatusTypeDto() { Label = s.ToString(), Value = (int)s })
+            .Select(s => new JaEventTypeDto() { Label = s.ToString(), Value = (int)s })
             .ToList();
 
         return Ok(statuses);

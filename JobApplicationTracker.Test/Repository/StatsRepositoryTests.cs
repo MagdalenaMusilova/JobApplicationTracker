@@ -36,7 +36,7 @@ public class StatsRepositoryTests
             Position = "Developer",
             StatusHistory = new List<JAStatusEntry>
             {
-                new() { JaStatusType = JAStatusType.Whishlist, OrderIndex = 1 }
+                new() { JaStatusType = JAStatusType.Wishlist, OrderIndex = 1 }
             }
         };
         var app2 = new JobApplication
@@ -46,7 +46,7 @@ public class StatsRepositoryTests
             Position = "Engineer",
             StatusHistory = new List<JAStatusEntry>
             {
-                new() { JaStatusType = JAStatusType.Whishlist, OrderIndex = 1 },
+                new() { JaStatusType = JAStatusType.Wishlist, OrderIndex = 1 },
                 new() { JaStatusType = JAStatusType.Applied, OrderIndex = 2 }
             }
         };
@@ -54,7 +54,7 @@ public class StatsRepositoryTests
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetAllUsersWOnlyWhishlistedAsync();
+        var result = await repository.GetAllUsersWOnlyWishlistedAsync();
 
         // Assert
         result.Should().HaveCount(1);
@@ -75,7 +75,7 @@ public class StatsRepositoryTests
             UserId = "user1",
             StatusHistory = new List<JAStatusEntry>
             {
-                new() { JaStatusType = JAStatusType.Whishlist, OrderIndex = 1 }
+                new() { JaStatusType = JAStatusType.Wishlist, OrderIndex = 1 }
             }
         };
         var applied = new JobApplication
@@ -92,7 +92,7 @@ public class StatsRepositoryTests
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetJANotWhishlistedAsync();
+        var result = await repository.GetJANotWishlistedAsync();
 
         // Assert
         result.Should().HaveCount(1);
@@ -146,7 +146,7 @@ public class StatsRepositoryTests
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetStatusXEventAsync();
+        var result = await repository.GetUserXResumeAsync();
 
         // Assert
         result.Should().HaveCount(4); // 2 users * 2 resumes

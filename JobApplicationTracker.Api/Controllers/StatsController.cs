@@ -1,11 +1,13 @@
 ﻿using JobApplicationTracker.DTOs;
 using JobApplicationTracker.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobApplicationTracker.Controllers;
 
 [ApiController]
 [Route("api/stats")]
+[Authorize]
 public class StatsController : ControllerBase
 {
     private readonly IStatsService _statsService;
@@ -16,9 +18,9 @@ public class StatsController : ControllerBase
     }
     
     [HttpGet("usersOnlyWishlisted")]
-    public async Task<IEnumerable<UserDto>> GetAllUsersWOnlyWhishlistedAsync()
+    public async Task<IEnumerable<UserDto>> GetAllUsersWOnlyWishlistedAsync()
     {
-        var res = await _statsService.GetAllUsersWOnlyWhishlistedAsync();
+        var res = await _statsService.GetAllUsersWOnlyWishlistedAsync();
         return res;
     }
     
@@ -30,9 +32,9 @@ public class StatsController : ControllerBase
     }
     
     [HttpGet("statusXEvent")]
-    public async Task<IEnumerable<ProfileXResumeDto>> GetStatusXEventAsync()
+    public async Task<IEnumerable<UserXResumeDto>> GetUserXResumeAsync()
     {
-        var res = await _statsService.GetStatusXEventAsync();
+        var res = await _statsService.GetUserXResumeAsync();
         return res;
     }
     
@@ -65,9 +67,9 @@ public class StatsController : ControllerBase
     }
     
     [HttpGet("JANotWhishlisted")]
-    public async Task<IEnumerable<JobApplicationDto>> GetJANotWhishlistedAsync()
+    public async Task<IEnumerable<JobApplicationDto>> GetJANotWishlistedAsync()
     {
-        var res = await _statsService.GetJANotWhishlistedAsync();
+        var res = await _statsService.GetJANotWishlistedAsync();
         return res;
     }
     

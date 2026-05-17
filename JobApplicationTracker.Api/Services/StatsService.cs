@@ -15,9 +15,9 @@ public class StatsService : IStatsService
         _mapper = mapper;
     }
     
-    public async Task<IEnumerable<UserDto>> GetAllUsersWOnlyWhishlistedAsync()
+    public async Task<IEnumerable<UserDto>> GetAllUsersWOnlyWishlistedAsync()
     {
-        var res = await _statsRepository.GetAllUsersWOnlyWhishlistedAsync();
+        var res = await _statsRepository.GetAllUsersWOnlyWishlistedAsync();
         return res.Select(u => _mapper.Map<UserDto>(u));
     }
 
@@ -27,9 +27,9 @@ public class StatsService : IStatsService
         return res.Select(ja => _mapper.Map<JobApplicationDto>(ja));
     }
 
-    public async Task<IEnumerable<ProfileXResumeDto>> GetStatusXEventAsync()
+    public async Task<IEnumerable<UserXResumeDto>> GetUserXResumeAsync()
     {
-        var res = await _statsRepository.GetStatusXEventAsync();
+        var res = await _statsRepository.GetUserXResumeAsync();
         return res;
     }
 
@@ -57,9 +57,9 @@ public class StatsService : IStatsService
         return res.Select(ja => _mapper.Map<JobApplicationDto>(ja));    
     }
 
-    public async Task<IEnumerable<JobApplicationDto>> GetJANotWhishlistedAsync()
+    public async Task<IEnumerable<JobApplicationDto>> GetJANotWishlistedAsync()
     {
-        var res = await _statsRepository.GetJANotWhishlistedAsync();
+        var res = await _statsRepository.GetJANotWishlistedAsync();
         return res.Select(ja => _mapper.Map<JobApplicationDto>(ja));    
     }
 

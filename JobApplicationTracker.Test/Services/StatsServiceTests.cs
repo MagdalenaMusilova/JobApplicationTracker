@@ -34,16 +34,16 @@ public class StatsServiceTests
             new() { Id = "user1", UserName = "alice" }
         };
 
-        _mockRepository.Setup(r => r.GetAllUsersWOnlyWhishlistedAsync()).ReturnsAsync(users);
+        _mockRepository.Setup(r => r.GetAllUsersWOnlyWishlistedAsync()).ReturnsAsync(users);
         _mockMapper.Setup(m => m.Map<UserDto>(It.IsAny<User>()))
             .Returns((User u) => new UserDto { Id = u.Id, UserName = u.UserName });
 
         // Act
-        var result = await _service.GetAllUsersWOnlyWhishlistedAsync();
+        var result = await _service.GetAllUsersWOnlyWishlistedAsync();
 
         // Assert
         result.Should().HaveCount(1);
-        _mockRepository.Verify(r => r.GetAllUsersWOnlyWhishlistedAsync(), Times.Once);
+        _mockRepository.Verify(r => r.GetAllUsersWOnlyWishlistedAsync(), Times.Once);
     }
 
     [Fact]
@@ -71,19 +71,19 @@ public class StatsServiceTests
     public async Task GetStatusXEventAsync_ReturnsProfileXResumeData()
     {
         // Arrange
-        var data = new List<ProfileXResumeDto>
+        var data = new List<UserXResumeDto>
         {
             new() { Username = "alice", AboutMe = "Resume 1" }
         };
 
-        _mockRepository.Setup(r => r.GetStatusXEventAsync()).ReturnsAsync(data);
+        _mockRepository.Setup(r => r.GetUserXResumeAsync()).ReturnsAsync(data);
 
         // Act
-        var result = await _service.GetStatusXEventAsync();
+        var result = await _service.GetUserXResumeAsync();
 
         // Assert
         result.Should().HaveCount(1);
-        _mockRepository.Verify(r => r.GetStatusXEventAsync(), Times.Once);
+        _mockRepository.Verify(r => r.GetUserXResumeAsync(), Times.Once);
     }
 
     [Fact]
@@ -95,16 +95,16 @@ public class StatsServiceTests
             new() { Id = Guid.NewGuid(), Company = "Company A" }
         };
 
-        _mockRepository.Setup(r => r.GetJANotWhishlistedAsync()).ReturnsAsync(applications);
+        _mockRepository.Setup(r => r.GetJANotWishlistedAsync()).ReturnsAsync(applications);
         _mockMapper.Setup(m => m.Map<JobApplicationDto>(It.IsAny<JobApplication>()))
             .Returns((JobApplication ja) => new JobApplicationDto { Id = ja.Id });
 
         // Act
-        var result = await _service.GetJANotWhishlistedAsync();
+        var result = await _service.GetJANotWishlistedAsync();
 
         // Assert
         result.Should().HaveCount(1);
-        _mockRepository.Verify(r => r.GetJANotWhishlistedAsync(), Times.Once);
+        _mockRepository.Verify(r => r.GetJANotWishlistedAsync(), Times.Once);
     }
 
     [Fact]

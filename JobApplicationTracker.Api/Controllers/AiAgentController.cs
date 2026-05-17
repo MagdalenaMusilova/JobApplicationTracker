@@ -1,10 +1,12 @@
 ﻿using JobApplicationTracker.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobApplicationTracker.Controllers;
 
 [ApiController]
 [Route("api/ai")]
+[Authorize]
 public class AiAgentController : ControllerBase
 {
     private readonly IAiAgentService _aiAgentService;
