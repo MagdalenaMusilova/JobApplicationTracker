@@ -63,6 +63,11 @@ build/
 .env.*
 !.env.example
 
+# appsettings
+appsettings.json
+appsettings.Development.json
+!appsettings.Example.json
+
 # TypeScript build cache
 *.tsbuildinfo
 
