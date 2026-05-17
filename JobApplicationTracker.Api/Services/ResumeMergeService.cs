@@ -117,9 +117,6 @@ public class ResumeMergeService : IResumeMergeService
             }
             else
             {
-                // Keep existing level/weight, only fill if missing
-                match.Level ??= newSkill.Level;
-                match.Weight ??= newSkill.Weight;
                 match.Aliases = (match.Aliases ?? [])
                     .Union(newSkill.Aliases ?? [], StringComparer.OrdinalIgnoreCase)
                     .ToList();

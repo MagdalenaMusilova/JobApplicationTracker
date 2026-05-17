@@ -4,8 +4,8 @@ namespace JobApplicationTracker.DTOs;
 
 public class UserResumeDto
 {
-    public Guid? Id { get; set; }
-    public Guid? UserId { get; set; }
+    public Guid Id { get; set; }
+    public string UserId { get; set; }
     public ICollection<WorkExperienceDto> WorkExperiences { get; set; } = new List<WorkExperienceDto>();
     public ICollection<EducationDto> Education { get; set; } = new List<EducationDto>();
     public ICollection<TrainingDto> Trainings { get; set; } = new List<TrainingDto>();
@@ -131,8 +131,6 @@ public class JobSkillDto
     public Guid? Id { get; set; }
     public string? Name { get; set; }
     public IEnumerable<string>? Aliases { get; set; }
-    public SkillLevel? Level { get; set; }
-    public SkillWeight? Weight { get; set; }
     public ICollection<SkillUsageDto> Skills { get; set; } = new List<SkillUsageDto>();
     public string? Notes { get; set; } = string.Empty; 
 }

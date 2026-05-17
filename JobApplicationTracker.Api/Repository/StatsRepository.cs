@@ -105,7 +105,11 @@ public class StatsRepository : IStatsRepository
     public async Task<IEnumerable<JobApplication>> GetJANotWhishlistedAsync()
     {
         var wishlisted = _context.JobApplications
-            .Where(ja => ja.StatusHistory.MaxBy(stat => stat.OrderIndex).JaStatusType == JAStatusType.Whishlist);
+            .Where(ja => 
+                ja.StatusHistory
+                    .OrderByDescending(stat => stat.OrderIndex)
+                    .FirstOrDefault().JaStatusType == JAStatusType.Whishlist
+                );
         var res = await _context.JobApplications.Except(wishlisted).ToListAsync();
         return res;
     }

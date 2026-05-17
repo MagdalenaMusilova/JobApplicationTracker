@@ -117,7 +117,7 @@ public class JobApplicationController : ControllerBase
         };
 
         var updated = await _jobApplicationService.PushApplicationStatusAsync(newStatus);
-        return updated;
+        return Ok(updated);
     }
 
     [HttpPost("entry")]

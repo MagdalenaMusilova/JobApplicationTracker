@@ -56,9 +56,14 @@ public class JAEventRepository : IJAEventRepository
 
     public async Task<bool> DeleteBulkAsync(IEnumerable<Guid> ids)
     {
-        await _context.JAEventEntries
+        var entities = await _context.JAEventEntries
             .Where(e => ids.Contains(e.Id))
-            .ExecuteDeleteAsync();
+            .ToListAsync();
+
+        _context.JAEventEntries.RemoveRange(entities);
+
+        await _context.SaveChangesAsync();
+
         return true;
     }
 }

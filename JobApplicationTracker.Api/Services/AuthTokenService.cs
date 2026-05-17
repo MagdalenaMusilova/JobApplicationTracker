@@ -22,21 +22,42 @@ public class AuthTokenService : IAuthTokenService
 
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user.Id),
-            new(ClaimTypes.Name, user.UserName ?? ""),
-            new(ClaimTypes.Email, user.Email ?? "")
+            new(JwtRegisteredClaimNames.Sub, user.Id)
         };
+    
+        // Only add claims if they have non-null and non-whitespace values
+        if (!string.IsNullOrWhiteSpace(user.UserName))
+        {
+            claims.Add(new Claim("name", user.UserName));
+        }
+    
+        if (!string.IsNullOrWhiteSpace(user.Email))
+        {
+            claims.Add(new Claim("email", user.Email));
+        }
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
         var creds = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
+        var now = DateTime.UtcNow;
         var token = new JwtSecurityToken(
             issuer: jwt["Issuer"],
             audience: jwt["Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(2),
+            notBefore: now,
+            expires: now.AddHours(2),
             signingCredentials: creds);
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+            
+        // Debug: verify claims are in the token before writing
+        System.Diagnostics.Debug.WriteLine($"Claims count: {claims.Count}");
+        foreach (var claim in claims)
+        {
+            System.Diagnostics.Debug.WriteLine($"  Claim: {claim.Type} = {claim.Value}");
+        }
+            
+        return tokenString;
     }
+    
 }

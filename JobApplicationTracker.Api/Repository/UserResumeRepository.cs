@@ -59,9 +59,15 @@ public class UserResumeRepository : IUserResumeRepository
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        await _context.ResumeEntries
-            .Where(r => r.Id == id)
-            .ExecuteDeleteAsync();
-        return true;   
+        var entity = await _context.ResumeEntries.FindAsync(id);
+
+        if (entity == null)
+            return false;
+
+        _context.ResumeEntries.Remove(entity);
+
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 }
