@@ -23,7 +23,7 @@ public class EventTypesControllerTests
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-        var eventTypes = okResult.Value.Should().BeAssignableTo<IEnumerable<JaStatusTypeDto>>().Subject;
+        var eventTypes = okResult.Value.Should().BeAssignableTo<IEnumerable<JaEventTypeDto>>().Subject;
         
         var enumCount = Enum.GetValues<JAEventType>().Length;
         eventTypes.Should().HaveCount(enumCount);

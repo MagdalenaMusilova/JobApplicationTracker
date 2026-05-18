@@ -238,45 +238,4 @@ public class JobApplicationServiceTests
         result.Should().NotBeNull();
         _mockStatusEntryService.Verify(s => s.AddAsync(It.IsAny<JobApplicationDto>(), statusEntry), Times.Once);
     }
-
-    [Fact]
-    public async Task DeleteJAStatusEntryAsync_ThrowsException_WhenApplicationNotFound()
-    {
-        // Arrange
-        var entryId = Guid.NewGuid();
-        var statusEntry = new JAStatusEntryDto { Id = entryId, JobApplicationId = Guid.NewGuid() };
-
-        _mockStatusEntryService.Setup(s => s.GetByIdAsync(entryId)).ReturnsAsync(statusEntry);
-        _mockRepository.Setup(r => r.GetByIdAsync(statusEntry.JobApplicationId))
-            .ReturnsAsync((JobApplication?)null);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.DeleteJAStatusEntryAsync(entryId));
-    }
-
-    [Fact]
-    public async Task DeleteJAStatusEntryAsync_ThrowsException_WhenLastStatus()
-    {
-        // Arrange
-        var entryId = Guid.NewGuid();
-        var appId = Guid.NewGuid();
-        var statusEntry = new JAStatusEntryDto { Id = entryId, JobApplicationId = appId };
-        var application = new JobApplication
-        {
-            Id = appId,
-            StatusHistory = new List<JAStatusEntry> { new() { Id = entryId } }
-        };
-        var applicationDto = new JobApplicationDto
-        {
-            Id = appId,
-            StatusHistory = new List<JAStatusEntryDto> { statusEntry }
-        };
-
-        _mockStatusEntryService.Setup(s => s.GetByIdAsync(entryId)).ReturnsAsync(statusEntry);
-        _mockRepository.Setup(r => r.GetByIdAsync(appId)).ReturnsAsync(application);
-        _mockMapper.Setup(m => m.Map<JobApplicationDto>(application)).Returns(applicationDto);
-
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.DeleteJAStatusEntryAsync(entryId));
-    }
 }

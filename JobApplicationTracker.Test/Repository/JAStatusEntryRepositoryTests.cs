@@ -128,7 +128,6 @@ public class JAStatusEntryRepositoryTests
         var updatedEntry = new JAStatusEntry
         {
             Id = statusEntry.Id,
-            JaStatusType = JAStatusType.Interview,
             Note = "Updated note"
         };
 
@@ -137,7 +136,6 @@ public class JAStatusEntryRepositoryTests
 
         // Assert
         result.Should().NotBeNull();
-        result!.JaStatusType.Should().Be(JAStatusType.Interview);
         result.Note.Should().Be("Updated note");
     }
 
@@ -161,30 +159,28 @@ public class JAStatusEntryRepositoryTests
     }
 
     [Fact]
-    public async Task DeleteBulkAsync_DeletesMultipleEntries()
+    public async Task DeleteAsync_DeletesMultipleEntries()
     {
         // Arrange
         await using var context = CreateInMemoryContext();
         var repository = new JAStatusEntryRepository(context);
         var id1 = Guid.NewGuid();
         var id2 = Guid.NewGuid();
-        var id3 = Guid.NewGuid();
         var statusEntries = new List<JAStatusEntry>
         {
             new() { Id = id1, JobApplicationId = Guid.NewGuid(), JaStatusType = JAStatusType.Applied },
             new() { Id = id2, JobApplicationId = Guid.NewGuid(), JaStatusType = JAStatusType.Interview },
-            new() { Id = id3, JobApplicationId = Guid.NewGuid(), JaStatusType = JAStatusType.Rejected }
         };
         context.JAStatusEntries.AddRange(statusEntries);
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.DeleteBulkAsync(new[] { id1, id2 });
+        var result = await repository.DeleteAsync(id1);
 
         // Assert
         result.Should().BeTrue();
         var remainingEntries = await context.JAStatusEntries.ToListAsync();
         remainingEntries.Should().HaveCount(1);
-        remainingEntries[0].Id.Should().Be(id3);
+        remainingEntries[0].Id.Should().Be(id2);
     }
 }

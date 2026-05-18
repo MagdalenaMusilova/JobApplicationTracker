@@ -58,7 +58,7 @@ public class JobApplicationRepositoryTests
         {
             Company = "Company B",
             Position = "Engineer",
-            UserId = "user2",
+            UserId = "user1",
             StatusHistory = new List<JAStatusEntry>
             {
                 new() { JaStatusType = JAStatusType.Applied, OrderIndex = 1 }
@@ -68,7 +68,7 @@ public class JobApplicationRepositoryTests
         await context.SaveChangesAsync();
 
         // Act
-        var result = await repository.GetAllNotFinishedAsync();
+        var result = await repository.GetAllNotFinishedAsync("user1");
 
         // Assert
         result.Should().HaveCount(1);

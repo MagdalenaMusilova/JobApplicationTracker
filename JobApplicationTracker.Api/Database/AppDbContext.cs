@@ -25,66 +25,71 @@ public class AppDbContext : DbContext
             .HasOne(stat => stat.JAEvent)
             .WithOne(ev => ev.JAStatusEntry)
             .HasForeignKey<JAEvent>(ev => ev.JAStatusEntryId)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
 
         modelBuilder.Entity<JobApplication>()
             .HasMany(ja => ja.StatusHistory)
             .WithOne()
-            .HasForeignKey(stat => stat.JobApplicationId);
+            .HasForeignKey(stat => stat.JobApplicationId)
+            .OnDelete(DeleteBehavior.Cascade);
         
         modelBuilder.Entity<JobApplication>()
             .HasOne(ja => ja.JobListing)
             .WithOne()
             .HasForeignKey<JobListing>(jl => jl.JobApplicationId)
+             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
         modelBuilder.Entity<JobApplication>()
             .HasOne<User>()
             .WithMany()
-            .HasForeignKey(ja => ja.UserId);
+            .HasForeignKey(ja => ja.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
         
         // user resume
         modelBuilder.Entity<User>()
             .HasOne(user => user.UserResume)
             .WithOne()
             .HasForeignKey<UserResume>(ur => ur.UserId)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
 
-        modelBuilder.Entity<Experience>()
-            .HasDiscriminator<string>("ExperienceType")
-            .HasValue<WorkExperience>("WorkExperience")
-            .HasValue<Education>("Education")
-            .HasValue<Training>("Training")
-            .HasValue<OtherExperience>("OtherExperience");
-
+        modelBuilder.Entity<Experience>().UseTpcMappingStrategy();
+        
         // linking stuff in user resume to user resume
         modelBuilder.Entity<UserResume>()
             .HasMany(resume => resume.WorkExperiences)
             .WithOne()
             .HasForeignKey(we => we.UserResumeId)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
         
         modelBuilder.Entity<UserResume>()
             .HasMany(resume => resume.Education)
             .WithOne()
             .HasForeignKey(ed => ed.UserResumeId)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
         
         modelBuilder.Entity<UserResume>()
             .HasMany(resume => resume.Trainings)
             .WithOne()
             .HasForeignKey(tr => tr.UserResumeId)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
         
         modelBuilder.Entity<UserResume>()
             .HasMany(resume => resume.Skills)
             .WithOne()
             .HasForeignKey(skill => skill.UserResumeId)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
         
         modelBuilder.Entity<UserResume>()
             .HasMany(resume => resume.UncategorizedExperiences)
             .WithOne()
             .HasForeignKey(skill => skill.UserResumeId)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
         
         // skill usage must be linked to experience and skill
@@ -92,12 +97,14 @@ public class AppDbContext : DbContext
             .HasMany(xp => xp.Skills)
             .WithOne()
             .HasForeignKey(usage => usage.ExperienceId)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
         
         modelBuilder.Entity<ResumeSkill>()
             .HasMany(skill => skill.Usages)
             .WithOne()
             .HasForeignKey(usage => usage.SkillId)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired(false);
         
         
