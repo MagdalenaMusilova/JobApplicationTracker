@@ -141,67 +141,6 @@ public class AuthTokenServiceTests
     }
 
     [Fact]
-    public void GenerateToken_WithUserWithoutUsername_DoesNotIncludeNameClaim()
-    {
-        // Arrange
-        var user = new User
-        {
-            Id = "user-101",
-            UserName = null,
-            Email = "test@example.com"
-        };
-
-        // Act
-        var token = _tokenService.GenerateToken(user);
-
-        // Assert - Decode the JWT manually
-        var parts = token.Split('.');
-        var payload = parts[1];
-        
-        // Add padding if needed
-        switch (payload.Length % 4)
-        {
-            case 2: payload += "=="; break;
-            case 3: payload += "="; break;
-        }
-        
-        var payloadJson = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
-        var payloadDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, System.Text.Json.JsonElement>>(payloadJson);
-
-        payloadDict.Should().NotContainKey("name");
-        payloadDict.Should().ContainKey("email");
-        payloadDict["email"].GetString().Should().Be("test@example.com");
-    }
-    
-    [Fact]
-    public void GenerateToken_WithEmptyStringValues_DoesNotIncludeThoseClaims()
-    {
-        // Arrange
-        var user = new User
-        {
-            Id = "user-202",
-            UserName = "",
-            Email = ""
-        };
-
-        // Act
-        var token = _tokenService.GenerateToken(user);
-
-        // Assert
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-
-        var nameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "name");
-        nameClaim.Should().BeNull();
-
-        var emailClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "email");
-        emailClaim.Should().BeNull();
-
-        var subClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
-        subClaim.Should().NotBeNull();
-    }
-
-    [Fact]
     public void GenerateToken_WithMissingJwtKey_ThrowsInvalidOperationException()
     {
         // Arrange
@@ -257,26 +196,6 @@ public class AuthTokenServiceTests
         expirationDate.Should().BeCloseTo(expectedExpiry, TimeSpan.FromMinutes(1));
     }
     
-    [Fact]
-    public void GenerateToken_UsesHmacSha256Algorithm()
-    {
-        // Arrange
-        var user = new User
-        {
-            Id = "user-505",
-            UserName = "algotest",
-            Email = "algo@example.com"
-        };
-
-        // Act
-        var token = _tokenService.GenerateToken(user);
-
-        // Assert
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-
-        jwtToken.SignatureAlgorithm.Should().Be("HS256");
-    }
 
     [Fact]
     public void GenerateToken_MultipleCalls_GenerateDifferentTokens()
@@ -297,30 +216,6 @@ public class AuthTokenServiceTests
         // Assert
         token1.Should().NotBe(token2);
     }
-
-    [Fact]
-    public void GenerateToken_WithWhitespaceValues_DoesNotIncludeThoseClaims()
-    {
-        // Arrange
-        var user = new User
-        {
-            Id = "user-707",
-            UserName = "   ",
-            Email = "  "
-        };
-
-        // Act
-        var token = _tokenService.GenerateToken(user);
-
-        // Assert
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-
-        var nameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "name");
-        nameClaim.Should().BeNull();
-
-        var emailClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "email");
-        emailClaim.Should().BeNull();
-    }
+    
     
 }

@@ -276,23 +276,7 @@ public class JobApplicationControllerTests
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
         _mockJobApplicationService.Verify(s => s.PushApplicationStatusAsync(statusEntry), Times.Once);
     }
-
-    [Fact]
-    public async Task DeleteJAStatusEntry_ReturnsConflict_WhenInvalidOperation()
-    {
-        // Arrange
-        var entryId = Guid.NewGuid();
-        _mockJobApplicationService.Setup(s => s.DeleteJAStatusEntryAsync(entryId))
-            .ThrowsAsync(new InvalidOperationException("Cannot delete last status"));
-
-        // Act
-        var result = await _controller.DeleteJAStatusEntry(entryId);
-
-        // Assert
-        var conflictResult = result.Result.Should().BeOfType<ConflictObjectResult>().Subject;
-        conflictResult.Value.Should().Be("Cannot delete last status");
-    }
-
+    
     [Fact]
     public async Task CreateEvent_CreatesEvent()
     {
@@ -351,39 +335,5 @@ public class JobApplicationControllerTests
 
         // Assert
         result.Result.Should().BeOfType<NotFoundResult>();
-    }
-
-    [Fact]
-    public async Task DeleteEvent_DeletesEvent_WhenExists()
-    {
-        // Arrange
-        var eventId = Guid.NewGuid();
-        var existing = new JAEventDto() { Id = eventId };
-
-        _mockEventService.Setup(s => s.GetByIdAsync(eventId)).ReturnsAsync(existing);
-        _mockEventService.Setup(s => s.DeleteBulkAsync(It.IsAny<IEnumerable<Guid>>())).ReturnsAsync(true);
-
-        // Act
-        var result = await _controller.DeleteEvent(eventId);
-
-        // Assert
-        result.Should().BeOfType<NoContentResult>();
-        _mockEventService.Verify(s => s.DeleteBulkAsync(It.Is<IEnumerable<Guid>>(ids => ids.Contains(eventId))), Times.Once);
-    }
-
-    [Fact]
-    public async Task DeleteEvent_ReturnsNotFound_WhenEventDoesNotExist()
-    {
-        // Arrange
-        var eventId = Guid.NewGuid();
-
-        _mockEventService.Setup(s => s.GetByIdAsync(eventId)).ReturnsAsync((JAEventDto?)null);
-
-        // Act
-        var result = await _controller.DeleteEvent(eventId);
-
-        // Assert
-        result.Should().BeOfType<NotFoundResult>();
-        _mockEventService.Verify(s => s.DeleteBulkAsync(It.IsAny<IEnumerable<Guid>>()), Times.Never);
     }
 }

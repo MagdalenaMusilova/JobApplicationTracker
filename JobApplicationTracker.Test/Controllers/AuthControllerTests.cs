@@ -24,9 +24,7 @@ public class AuthControllerTests
         _mockTokenService = new Mock<IAuthTokenService>();
         _controller = new AuthController(_mockUserManager.Object, _mockTokenService.Object);
     }
-
-    #region SignIn Tests
-
+    
     [Fact]
     public async Task SignIn_WithValidCredentials_ReturnsOkWithToken()
     {
@@ -128,10 +126,6 @@ public class AuthControllerTests
         _mockUserManager.Verify(x => x.CheckPasswordAsync(user, signInDto.Password), Times.Once);
         _mockTokenService.Verify(x => x.GenerateToken(It.IsAny<User>()), Times.Never);
     }
-
-    #endregion
-
-    #region SignUp Tests
 
     [Fact]
     public async Task SignUp_WithValidData_ReturnsOkWithToken()
@@ -241,6 +235,4 @@ public class AuthControllerTests
         _mockUserManager.Verify(x => x.CreateAsync(It.IsAny<User>(), signUpDto.Password), Times.Once);
         _mockTokenService.Verify(x => x.GenerateToken(It.IsAny<User>()), Times.Never);
     }
-
-    #endregion
 }

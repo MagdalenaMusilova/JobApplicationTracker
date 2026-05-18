@@ -77,9 +77,7 @@ public class ResumeControllerTests
             }
         };
     }
-
-    #region Create Tests
-
+    
     [Fact]
     public async Task Create_ReturnsOk_WithCreatedResume()
     {
@@ -122,10 +120,6 @@ public class ResumeControllerTests
             s => s.CreateAsync(It.Is<UserResumeDto>(r => r.UserId == resumeDto.UserId)),
             Times.Once);
     }
-
-    #endregion
-
-    #region ExtractFromPdf Tests
 
     [Fact]
     public async Task ExtractFromPdf_ReturnsOk_WithExtractedResume()
@@ -224,10 +218,7 @@ public class ResumeControllerTests
         result.Should().BeOfType<OkObjectResult>();
         _mockResumeService.Verify(s => s.ExtractFromPdfAsync(mockFile), Times.Once);
     }
-
-    #endregion
-
-    #region GetById Tests
+    
 
     [Fact]
     public async Task GetById_ReturnsOk_WhenResumeExists()
@@ -268,10 +259,6 @@ public class ResumeControllerTests
         _mockResumeService.Verify(s => s.GetByIdAsync(resumeId), Times.Once);
     }
 
-    #endregion
-
-    #region GetByUserId Tests
-
     [Fact]
     public async Task GetByUserId_ReturnsOk_WhenResumeExists()
     {
@@ -310,10 +297,6 @@ public class ResumeControllerTests
         result.Result.Should().BeOfType<NotFoundResult>();
         _mockResumeService.Verify(s => s.GetByUserAsync(userId), Times.Once);
     }
-
-    #endregion
-
-    #region Update Tests
 
     [Fact]
     public async Task Update_ReturnsOk_WhenResumeIsUpdated()
@@ -360,10 +343,6 @@ public class ResumeControllerTests
         result.Result.Should().BeOfType<NotFoundResult>();
         _mockResumeService.Verify(s => s.UpdateAsync(resumeId, updateDto), Times.Once);
     }
-
-    #endregion
-
-    #region Merge Tests
 
     [Fact]
     public async Task Merge_ReturnsOk_WhenResumeIsMerged()
@@ -449,10 +428,6 @@ public class ResumeControllerTests
         callOrder.Should().ContainInOrder("extract", "merge");
     }
 
-    #endregion
-
-    #region Delete Tests
-
     [Fact]
     public async Task Delete_ReturnsNoContent()
     {
@@ -486,6 +461,4 @@ public class ResumeControllerTests
             s => s.DeleteAsync(It.Is<Guid>(id => id == resumeId)),
             Times.Once);
     }
-
-    #endregion
 }
