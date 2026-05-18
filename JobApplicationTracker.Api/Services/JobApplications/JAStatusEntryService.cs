@@ -63,8 +63,8 @@ public class JAStatusEntryService : IJAStatusEntryService
         return result is null ? null : _mapper.Map<JAStatusEntryDto>(result);
     }
 
-    public async Task<bool> DeleteBulkAsync(IEnumerable<Guid> ids)
+    public async Task<bool> DeleteAsync(Guid id)
     {
-        return await _jaStatusEntryRepository.DeleteBulkAsync(ids);
+        return await _jaStatusEntryRepository.DeleteAsync(id);
     }
 }

@@ -153,7 +153,7 @@ public class JobApplicationController : ControllerBase
     {
         try
         {
-            var application = await _jaStatusEntryService.DeleteBulkAsync([entryId]);
+            var application = await _jaStatusEntryService.DeleteAsync(entryId);
             return Ok(application);
         }
         catch (InvalidOperationException ex)

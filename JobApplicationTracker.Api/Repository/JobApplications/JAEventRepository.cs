@@ -19,6 +19,7 @@ public class JAEventRepository : IJAEventRepository
         return await _context.JAEventEntries
             .AsNoTracking()
             .Where(e => e.Id == id)
+            .Include(e => e.JAStatusEntry)
             .FirstOrDefaultAsync();
     }
 
@@ -27,6 +28,7 @@ public class JAEventRepository : IJAEventRepository
         return await _context.JAEventEntries
             .AsNoTracking()
             .Where(e => statusIds.Contains(e.Id))
+            .Include(e => e.JAStatusEntry)
             .ToListAsync();
     }
 

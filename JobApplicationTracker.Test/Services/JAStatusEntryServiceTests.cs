@@ -161,19 +161,5 @@ public class JAStatusEntryServiceTests
         result.Should().BeNull();
         _mockRepository.Verify(r => r.UpdateAsync(It.IsAny<Guid>(), It.IsAny<JAStatusEntry>()), Times.Never);
     }
-
-    [Fact]
-    public async Task DeleteBulkAsync_DeletesMultipleEntries()
-    {
-        // Arrange
-        var ids = new[] { Guid.NewGuid(), Guid.NewGuid() };
-        _mockRepository.Setup(r => r.DeleteBulkAsync(ids)).ReturnsAsync(true);
-
-        // Act
-        var result = await _service.DeleteBulkAsync(ids);
-
-        // Assert
-        result.Should().BeTrue();
-        _mockRepository.Verify(r => r.DeleteBulkAsync(ids), Times.Once);
-    }
+    
 }

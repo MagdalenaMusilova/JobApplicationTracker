@@ -29,6 +29,16 @@ public class UserResumeRepository : IUserResumeRepository
         return await _context.ResumeEntries
             .AsNoTracking()
             .Where(r => r.Id == id)
+            .Include(x => x.WorkExperiences)
+            .ThenInclude(x => x.Skills)
+            .Include(x => x.Education)
+            .ThenInclude(x => x.Skills)
+            .Include(x => x.Trainings)
+            .ThenInclude(x => x.Skills)
+            .Include(x => x.UncategorizedExperiences)
+            .ThenInclude(x => x.Skills)
+            .Include(x => x.Skills)
+            .ThenInclude(x => x.Usages)
             .FirstOrDefaultAsync();
     }
 
@@ -37,6 +47,16 @@ public class UserResumeRepository : IUserResumeRepository
         return await _context.ResumeEntries
             .AsNoTracking()
             .Where(r => r.UserId == userId)
+            .Include(x => x.WorkExperiences)
+            .ThenInclude(x => x.Skills)
+            .Include(x => x.Education)
+            .ThenInclude(x => x.Skills)
+            .Include(x => x.Trainings)
+            .ThenInclude(x => x.Skills)
+            .Include(x => x.UncategorizedExperiences)
+            .ThenInclude(x => x.Skills)
+            .Include(x => x.Skills)
+            .ThenInclude(x => x.Usages)
             .FirstOrDefaultAsync();
     }
 

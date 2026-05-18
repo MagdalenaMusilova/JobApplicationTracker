@@ -8,5 +8,5 @@ public interface IJAStatusEntryRepository
     public Task<IEnumerable<JAStatusEntry>> GetByJobApplicationIdsAsync(IEnumerable<Guid> jobApplicationIds);
     Task<JAStatusEntry> AddAsync(JAStatusEntry jaStatusEntry);
     Task<JAStatusEntry?> UpdateAsync(Guid id, JAStatusEntry updated);
-    Task<bool> DeleteBulkAsync(IEnumerable<Guid> ids);
+    Task<bool> DeleteAsync(Guid id);
 }

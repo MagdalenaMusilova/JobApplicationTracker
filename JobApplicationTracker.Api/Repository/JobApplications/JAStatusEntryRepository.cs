@@ -52,10 +52,10 @@ public class JAStatusEntryRepository : IJAStatusEntryRepository
         return entity;
     }
 
-    public async Task<bool> DeleteBulkAsync(IEnumerable<Guid> ids)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var entities = _context.JAStatusEntries
-            .Where(e => ids.Contains(e.Id));
+            .Where(e => id == e.Id);
         _context.JAStatusEntries.RemoveRange(entities);
         
         await _context.SaveChangesAsync();
