@@ -5,6 +5,7 @@ using FluentAssertions;
 using JobApplicationTracker.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 
@@ -13,21 +14,22 @@ namespace Test.Integration;
 public class AiAgentIntegrationTests
 {
     [Fact(Skip = "Only run manually with real API key")]
-    [Trait("Category", "Integration")]
-    public async Task MakeRequest_WithRealOpenAI_Works()
+    public async Task MakeRequestAsync_RealOpenAI_ReturnsValidResponse()
     {
-        // Arrange - Use a factory without mocking
-        var factory = new WebApplicationFactory<Program>();
-        var client = factory.CreateClient();
+        // Arrange
+        var httpClient = new HttpClient();
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json")
+            .Build();
     
-        var prompt = "Say 'Hello Test' and nothing else";
+        var service = new OpenAiAgentService(httpClient, configuration);
+        var prompt = "Say 'test' and nothing else";
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/ai", prompt);
+        var result = await service.MakeRequestAsync(prompt);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadAsStringAsync();
         result.Should().NotBeNullOrEmpty();
+        result.Should().Contain("test");
     }
 }

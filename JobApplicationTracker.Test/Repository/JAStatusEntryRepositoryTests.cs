@@ -128,7 +128,6 @@ public class JAStatusEntryRepositoryTests
         var updatedEntry = new JAStatusEntry
         {
             Id = statusEntry.Id,
-            JaStatusType = JAStatusType.Interview,
             Note = "Updated note"
         };
 
@@ -137,7 +136,6 @@ public class JAStatusEntryRepositoryTests
 
         // Assert
         result.Should().NotBeNull();
-        result!.JaStatusType.Should().Be(JAStatusType.Interview);
         result.Note.Should().Be("Updated note");
     }
 

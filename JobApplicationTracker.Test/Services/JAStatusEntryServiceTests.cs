@@ -90,19 +90,27 @@ public class JAStatusEntryServiceTests
         var jobAppDto = new JobApplicationDto
         {
             Id = Guid.NewGuid(),
-            StatusHistory = new List<JAStatusEntryDto>()
+            StatusHistory = new List<JAStatusEntryDto>
+            {
+                new JAStatusEntryDto
+                {
+                    Id = Guid.NewGuid(),
+                    OrderIndex = 0,
+                    JaStatusType = JAStatusType.Applied
+                }
+            }
         };
         var createDto = new CreateJAStatusEntryDto
         {
             JobApplicationId = jobAppDto.Id,
-            StatusType = (int)JAStatusType.Applied,
+            StatusType = (int)JAStatusType.Interview,
             Note = "Test note"
         };
         var createdEntry = new JAStatusEntry
         {
             Id = Guid.NewGuid(),
             JobApplicationId = jobAppDto.Id,
-            JaStatusType = JAStatusType.Applied,
+            JaStatusType = JAStatusType.Interview,
             Note = "Test note"
         };
         var createdDto = new JAStatusEntryDto { Id = createdEntry.Id };

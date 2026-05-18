@@ -45,7 +45,6 @@ public class JAStatusEntryRepository : IJAStatusEntryRepository
         var entity = await _context.JAStatusEntries.FindAsync(id);
         if (entity is null) return null;
 
-        entity.JaStatusType = updated.JaStatusType;
         entity.Note = updated.Note;
 
         await _context.SaveChangesAsync();

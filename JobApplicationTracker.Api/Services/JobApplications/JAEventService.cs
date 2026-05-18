@@ -46,6 +46,9 @@ public class JAEventService : IJAEventService
 
     public async Task<JAEventDto> AddAsync(CreateJAEventDto jaEvent)
     {
+        var existingEvent = await _jaEventRepository.GetByStatusIdsAsync([jaEvent.JAStatusEntryId]);
+        if (existingEvent != null) throw new InvalidOperationException("Event already exists for this status entry");
+        
         var entity = new JAEvent()
         {
             JAStatusEntryId = jaEvent.JAStatusEntryId,

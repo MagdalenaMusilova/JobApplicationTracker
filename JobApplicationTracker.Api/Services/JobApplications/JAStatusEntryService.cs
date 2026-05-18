@@ -33,6 +33,39 @@ public class JAStatusEntryService : IJAStatusEntryService
     public async Task<JAStatusEntryDto> AddAsync(JobApplicationDto jobApplication, CreateJAStatusEntryDto jaStatusEntry)
     {
         int statusEntriesCount = jobApplication.StatusHistory.Count();
+        JAStatusEntryDto lastStatus = jobApplication.StatusHistory
+            .OrderByDescending(x => x.OrderIndex)
+            .First();
+
+        if ((int)lastStatus.JaStatusType >= (int)jaStatusEntry.StatusType)   // check that the next status is valid
+        {
+            switch (lastStatus.JaStatusType)
+            {
+                case JAStatusType.Task:
+                    if (jaStatusEntry.StatusType != (int)JAStatusType.Task)
+                    {
+                        throw new InvalidOperationException("New status cannot be lower than current status");
+                    }
+                    break;
+                case JAStatusType.Interview:
+                    if (jaStatusEntry.StatusType != (int)JAStatusType.Task && 
+                        jaStatusEntry.StatusType != (int)JAStatusType.Interview)
+                    {
+                        throw new InvalidOperationException("New status cannot be lower than current status");
+                    }
+                    break;
+                case JAStatusType.Offer:
+                    break;
+                default:
+                    if (jaStatusEntry.StatusType != (int)JAStatusType.Task && 
+                        jaStatusEntry.StatusType != (int)JAStatusType.Interview &&
+                        jaStatusEntry.StatusType != (int)JAStatusType.Offer)
+                    {
+                        throw new InvalidOperationException("New status cannot be lower than current status");
+                    }
+                    break;
+            }
+        }
         
         DateTime now = DateTime.UtcNow;
         var entity = new JAStatusEntry
@@ -55,7 +88,6 @@ public class JAStatusEntryService : IJAStatusEntryService
 
         var entity = new JAStatusEntry
         {
-            JaStatusType = (JAStatusType)updated.StatusType,
             Note = updated.Note,
         };
 
@@ -65,6 +97,13 @@ public class JAStatusEntryService : IJAStatusEntryService
 
     public async Task<bool> DeleteAsync(Guid id)
     {
+        var status = await _jaStatusEntryRepository.GetByIdAsync(id);
+        if (status == null) return false;
+        var statuses = await GetByJobApplicationIdsAsync([status.JobApplicationId]);
+        if (statuses.Count == 1)
+        {
+            throw new InvalidOperationException("Cannot delete last status entry for a job application");
+        }
         return await _jaStatusEntryRepository.DeleteAsync(id);
     }
 }
