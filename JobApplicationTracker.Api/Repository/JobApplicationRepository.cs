@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using JobApplicationTracker.Database;
+using JobApplicationTracker.Enums;
 using JobApplicationTracker.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +20,8 @@ public class JobApplicationRepository : IJobApplicationRepository
         var res = await _context.JobApplications
             .AsNoTracking()
             .Include(ja => ja.StatusHistory)
+                .ThenInclude(ja => ja.JAEvent)
+            .Include(ja => ja.JobListing)
             .ToListAsync();
         return res;
     }
@@ -39,6 +42,8 @@ public class JobApplicationRepository : IJobApplicationRepository
             .AsNoTracking()
             .Where(ja => ja.UserId == userId)
             .Include(ja => ja.StatusHistory)
+            .ThenInclude(ja => ja.JAEvent)
+            .Include(ja => ja.JobListing)
             .ToListAsync();
         return res;
     }
@@ -58,6 +63,8 @@ public class JobApplicationRepository : IJobApplicationRepository
             .AsNoTracking()
             .Where(ja => ja.Id == id)
             .Include(ja => ja.StatusHistory)
+            .ThenInclude(ja => ja.JAEvent)
+            .Include(ja => ja.JobListing)
             .FirstOrDefaultAsync();    
         return res;
     }
@@ -78,9 +85,7 @@ public class JobApplicationRepository : IJobApplicationRepository
         {
             return null;
         }
-
-        existingApplication.Id = application.Id;
-        existingApplication.UserId = application.UserId;
+        
         existingApplication.Company = application.Company;
         existingApplication.Position = application.Position;
         existingApplication.StatusHistory = application.StatusHistory;

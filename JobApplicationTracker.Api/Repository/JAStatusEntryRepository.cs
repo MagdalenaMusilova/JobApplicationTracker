@@ -19,6 +19,7 @@ public class JAStatusEntryRepository : IJAStatusEntryRepository
         return await _context.JAStatusEntries
             .AsNoTracking()
             .Where(e => e.Id == id)
+            .Include(e => e.JAEvent)
             .FirstOrDefaultAsync();   
     }
 
@@ -27,6 +28,7 @@ public class JAStatusEntryRepository : IJAStatusEntryRepository
         return await _context.JAStatusEntries
             .AsNoTracking()
             .Where(e => jobApplicationIds.Contains(e.JobApplicationId))
+            .Include(e => e.JAEvent)
             .ToListAsync();
     }
 

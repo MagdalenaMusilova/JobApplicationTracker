@@ -18,6 +18,7 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users
             .AsNoTracking()
+            .Include(e => e.UserResume)
             .ToListAsync();
     }
 
@@ -25,6 +26,7 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users
             .AsNoTracking()
+            .Include(e => e.UserResume)
             .Where(u => u.Id == id)
             .FirstOrDefaultAsync();
     }
@@ -34,6 +36,7 @@ public class UserRepository : IUserRepository
         return await _context.Users
             .AsNoTracking()
             .Where(u => u.UserName == username)
+            .Include(e => e.UserResume)
             .FirstOrDefaultAsync();
     }
 
