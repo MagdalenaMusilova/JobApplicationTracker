@@ -53,6 +53,14 @@ public class JobApplicationController : ControllerBase
         var applications = await _jobApplicationService.GetAllByUserMinimalAsync(userId);
         return Ok(applications);
     }
+    
+    [HttpGet("/notFinished")]
+    public async Task<ActionResult<IEnumerable<JobApplicationDto>>> GetAllNotFinishedAsync()
+    {
+        var userId = GetUserId();
+        var applications = await _jobApplicationService.GetAllNotFinishedAsync(userId);
+        return Ok(applications);
+    }
 
     [HttpGet("{id:Guid}")]
     public async Task<ActionResult<JobApplicationDto>> GetById(Guid id)
@@ -145,7 +153,7 @@ public class JobApplicationController : ControllerBase
     {
         try
         {
-            var application = await _jobApplicationService.DeleteJAStatusEntryAsync(entryId);
+            var application = await _jaStatusEntryService.DeleteBulkAsync([entryId]);
             return Ok(application);
         }
         catch (InvalidOperationException ex)

@@ -31,6 +31,9 @@
 
     <ItemGroup>
       <Folder Include="Migrations\" />
+      <Folder Include="Services\AiMatching\" />
+      <Folder Include="Services\JobApplication\" />
+      <Folder Include="Services\User\" />
     </ItemGroup>
 
 </Project>
