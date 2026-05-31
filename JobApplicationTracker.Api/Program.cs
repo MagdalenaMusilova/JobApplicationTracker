@@ -90,10 +90,6 @@ builder.Services.AddScoped<IJAEventService, JAEventService>();
 builder.Services.AddScoped<IJAEventRepository, JAEventRepository>();
 builder.Services.AddScoped<IUserResumeRepository, UserResumeRepository>();
 builder.Services.AddScoped<IResumeMergeService, ResumeMergeService>();
-builder.Services.AddScoped<IStatsRepository, StatsRepository>();
-builder.Services.AddScoped<IStatsService, StatsService>();
-builder.Services.AddScoped<IUserStatsRepository, UserStatsRepository>();
-builder.Services.AddScoped<IUserStatsService, UserStatsService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

@@ -35,6 +35,13 @@ public class ResumeControllerTests
         };
     }
 
+    private static void AssertError(object? value, string expectedCode, string expectedMessage)
+    {
+        var error = value.Should().BeOfType<ErrorResponseDto>().Subject;
+        error.Code.Should().Be(expectedCode);
+        error.Message.Should().Be(expectedMessage);
+    }
+
     private static IFormFile CreateMockFormFile(
         string fileName = "resume.pdf",
         string contentType = "application/pdf",
@@ -59,10 +66,10 @@ public class ResumeControllerTests
         return new UserResumeDto
         {
             Id = id ?? Guid.NewGuid(),
-            UserId = userId != null ? userId : "userId",
+            UserId = userId ?? "userId",
             Skills = new List<JobSkillDto>
             {
-                new() { Name = "C#"},
+                new() { Name = "C#" },
                 new() { Name = ".NET" }
             },
             WorkExperiences = new List<WorkExperienceDto>
@@ -77,7 +84,7 @@ public class ResumeControllerTests
             }
         };
     }
-    
+
     [Fact]
     public async Task Create_ReturnsOk_WithCreatedResume()
     {
@@ -85,8 +92,12 @@ public class ResumeControllerTests
         var userId = "user123";
         SetupUser(userId);
 
-        var resumeDto = CreateSampleResume(userId: userId);
+        var resumeDto = CreateSampleResume(userId: "differentUser");
         var createdResume = CreateSampleResume(id: Guid.NewGuid(), userId: userId);
+
+        _mockResumeService
+            .Setup(s => s.GetByUserAsync(userId))
+            .ReturnsAsync((UserResumeDto?)null);
 
         _mockResumeService
             .Setup(s => s.CreateAsync(resumeDto))
@@ -101,23 +112,58 @@ public class ResumeControllerTests
         returnedResume.Id.Should().Be(createdResume.Id);
         returnedResume.UserId.Should().Be(userId);
 
+        resumeDto.UserId.Should().Be(userId);
+        _mockResumeService.Verify(s => s.GetByUserAsync(userId), Times.Once);
         _mockResumeService.Verify(s => s.CreateAsync(resumeDto), Times.Once);
     }
 
     [Fact]
-    public async Task Create_CallsServiceWithCorrectResume()
+    public async Task Create_ReturnsConflict_WhenResumeAlreadyExists()
     {
         // Arrange
-        var resumeDto = CreateSampleResume(userId: "user123");
-        _mockResumeService.Setup(s => s.CreateAsync(It.IsAny<UserResumeDto>()))
-            .ReturnsAsync(resumeDto);
+        var userId = "user123";
+        SetupUser(userId);
+
+        var resumeDto = CreateSampleResume(userId: userId);
+        var existingResume = CreateSampleResume(userId: userId);
+
+        _mockResumeService
+            .Setup(s => s.GetByUserAsync(userId))
+            .ReturnsAsync(existingResume);
+
+        // Act
+        var result = await _controller.Create(resumeDto);
+
+        // Assert
+        var conflictResult = result.Result.Should().BeOfType<ConflictObjectResult>().Subject;
+        AssertError(conflictResult.Value, "RESUME_ALREADY_EXISTS", "A resume already exists for this user.");
+
+        _mockResumeService.Verify(s => s.CreateAsync(It.IsAny<UserResumeDto>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Create_CallsServiceWithCurrentUserId()
+    {
+        // Arrange
+        var userId = "user123";
+        SetupUser(userId);
+
+        var resumeDto = CreateSampleResume(userId: "otherUser");
+
+        _mockResumeService
+            .Setup(s => s.GetByUserAsync(userId))
+            .ReturnsAsync((UserResumeDto?)null);
+
+        _mockResumeService
+            .Setup(s => s.CreateAsync(It.IsAny<UserResumeDto>()))
+            .ReturnsAsync((UserResumeDto resume) => resume);
 
         // Act
         await _controller.Create(resumeDto);
 
         // Assert
         _mockResumeService.Verify(
-            s => s.CreateAsync(It.Is<UserResumeDto>(r => r.UserId == resumeDto.UserId)),
+            s => s.CreateAsync(It.Is<UserResumeDto>(r => r.UserId == userId)),
             Times.Once);
     }
 
@@ -155,7 +201,7 @@ public class ResumeControllerTests
 
         // Assert
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequestResult.Value.Should().Be("Please upload a PDF file.");
+        AssertError(badRequestResult.Value, "PDF_FILE_REQUIRED", "Please upload a PDF file.");
 
         _mockResumeService.Verify(
             s => s.ExtractFromPdfAsync(It.IsAny<IFormFile>()),
@@ -174,7 +220,7 @@ public class ResumeControllerTests
 
         // Assert
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequestResult.Value.Should().Be("Please upload a PDF file.");
+        AssertError(badRequestResult.Value, "PDF_FILE_REQUIRED", "Please upload a PDF file.");
 
         _mockResumeService.Verify(
             s => s.ExtractFromPdfAsync(It.IsAny<IFormFile>()),
@@ -193,7 +239,7 @@ public class ResumeControllerTests
 
         // Assert
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequestResult.Value.Should().Be("Only PDF files are allowed.");
+        AssertError(badRequestResult.Value, "INVALID_FILE_TYPE", "Only PDF files are allowed.");
 
         _mockResumeService.Verify(
             s => s.ExtractFromPdfAsync(It.IsAny<IFormFile>()),
@@ -218,14 +264,16 @@ public class ResumeControllerTests
         result.Should().BeOfType<OkObjectResult>();
         _mockResumeService.Verify(s => s.ExtractFromPdfAsync(mockFile), Times.Once);
     }
-    
 
     [Fact]
-    public async Task GetById_ReturnsOk_WhenResumeExists()
+    public async Task GetById_ReturnsOk_WhenResumeExistsAndUserOwnsIt()
     {
         // Arrange
+        var userId = "user123";
         var resumeId = Guid.NewGuid();
-        var resume = CreateSampleResume(id: resumeId);
+        var resume = CreateSampleResume(id: resumeId, userId: userId);
+
+        SetupUser(userId);
 
         _mockResumeService
             .Setup(s => s.GetByIdAsync(resumeId))
@@ -246,7 +294,11 @@ public class ResumeControllerTests
     public async Task GetById_ReturnsNotFound_WhenResumeDoesNotExist()
     {
         // Arrange
+        var userId = "user123";
         var resumeId = Guid.NewGuid();
+
+        SetupUser(userId);
+
         _mockResumeService
             .Setup(s => s.GetByIdAsync(resumeId))
             .ReturnsAsync((UserResumeDto?)null);
@@ -255,16 +307,42 @@ public class ResumeControllerTests
         var result = await _controller.GetById(resumeId);
 
         // Assert
-        result.Result.Should().BeOfType<NotFoundResult>();
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        AssertError(notFoundResult.Value, "RESUME_NOT_FOUND", "Resume was not found.");
+
         _mockResumeService.Verify(s => s.GetByIdAsync(resumeId), Times.Once);
     }
 
     [Fact]
-    public async Task GetByUserId_ReturnsOk_WhenResumeExists()
+    public async Task GetById_ReturnsNotFound_WhenUserDoesNotOwnResume()
+    {
+        // Arrange
+        var userId = "user123";
+        var resumeId = Guid.NewGuid();
+        var resume = CreateSampleResume(id: resumeId, userId: "otherUser");
+
+        SetupUser(userId);
+
+        _mockResumeService
+            .Setup(s => s.GetByIdAsync(resumeId))
+            .ReturnsAsync(resume);
+
+        // Act
+        var result = await _controller.GetById(resumeId);
+
+        // Assert
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        AssertError(notFoundResult.Value, "RESUME_NOT_FOUND", "Resume was not found.");
+    }
+
+    [Fact]
+    public async Task GetByUserId_ReturnsOk_WhenResumeExistsAndRequestedUserIsCurrentUser()
     {
         // Arrange
         var userId = "user123";
         var resume = CreateSampleResume(userId: userId);
+
+        SetupUser(userId);
 
         _mockResumeService
             .Setup(s => s.GetByUserAsync(userId))
@@ -282,10 +360,28 @@ public class ResumeControllerTests
     }
 
     [Fact]
+    public async Task GetByUserId_ReturnsNotFound_WhenRequestedUserIsNotCurrentUser()
+    {
+        // Arrange
+        SetupUser("user123");
+
+        // Act
+        var result = await _controller.GetByUserId("otherUser");
+
+        // Assert
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        AssertError(notFoundResult.Value, "RESUME_NOT_FOUND", "Resume was not found.");
+
+        _mockResumeService.Verify(s => s.GetByUserAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
     public async Task GetByUserId_ReturnsNotFound_WhenResumeDoesNotExist()
     {
         // Arrange
         var userId = "user123";
+        SetupUser(userId);
+
         _mockResumeService
             .Setup(s => s.GetByUserAsync(userId))
             .ReturnsAsync((UserResumeDto?)null);
@@ -294,21 +390,31 @@ public class ResumeControllerTests
         var result = await _controller.GetByUserId(userId);
 
         // Assert
-        result.Result.Should().BeOfType<NotFoundResult>();
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        AssertError(notFoundResult.Value, "RESUME_NOT_FOUND", "Resume was not found.");
+
         _mockResumeService.Verify(s => s.GetByUserAsync(userId), Times.Once);
     }
 
     [Fact]
-    public async Task Update_ReturnsOk_WhenResumeIsUpdated()
+    public async Task Update_ReturnsOk_WhenResumeIsUpdatedAndUserOwnsIt()
     {
         // Arrange
+        var userId = "user123";
         var resumeId = Guid.NewGuid();
-        var updateDto = CreateSampleResume(id: resumeId);
-        var updatedResume = CreateSampleResume(id: resumeId);
+        var updateDto = CreateSampleResume(id: resumeId, userId: "otherUser");
+        var existingResume = CreateSampleResume(id: resumeId, userId: userId);
+        var updatedResume = CreateSampleResume(id: resumeId, userId: userId);
         updatedResume.Skills = new List<JobSkillDto>
         {
             new() { Name = "Python" }
         };
+
+        SetupUser(userId);
+
+        _mockResumeService
+            .Setup(s => s.GetByIdAsync(resumeId))
+            .ReturnsAsync(existingResume);
 
         _mockResumeService
             .Setup(s => s.UpdateAsync(resumeId, updateDto))
@@ -322,6 +428,10 @@ public class ResumeControllerTests
         var returnedResume = okResult.Value.Should().BeOfType<UserResumeDto>().Subject;
         returnedResume.Id.Should().Be(resumeId);
 
+        updateDto.Id.Should().Be(resumeId);
+        updateDto.UserId.Should().Be(userId);
+
+        _mockResumeService.Verify(s => s.GetByIdAsync(resumeId), Times.Once);
         _mockResumeService.Verify(s => s.UpdateAsync(resumeId, updateDto), Times.Once);
     }
 
@@ -329,31 +439,69 @@ public class ResumeControllerTests
     public async Task Update_ReturnsNotFound_WhenResumeDoesNotExist()
     {
         // Arrange
+        var userId = "user123";
         var resumeId = Guid.NewGuid();
-        var updateDto = CreateSampleResume(id: resumeId);
+        var updateDto = CreateSampleResume(id: resumeId, userId: userId);
+
+        SetupUser(userId);
 
         _mockResumeService
-            .Setup(s => s.UpdateAsync(resumeId, updateDto))
+            .Setup(s => s.GetByIdAsync(resumeId))
             .ReturnsAsync((UserResumeDto?)null);
 
         // Act
         var result = await _controller.Update(resumeId, updateDto);
 
         // Assert
-        result.Result.Should().BeOfType<NotFoundResult>();
-        _mockResumeService.Verify(s => s.UpdateAsync(resumeId, updateDto), Times.Once);
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        AssertError(notFoundResult.Value, "RESUME_NOT_FOUND", "Resume was not found.");
+
+        _mockResumeService.Verify(s => s.UpdateAsync(It.IsAny<Guid>(), It.IsAny<UserResumeDto>()), Times.Never);
     }
 
     [Fact]
-    public async Task Merge_ReturnsOk_WhenResumeIsMerged()
+    public async Task Update_ReturnsNotFound_WhenUserDoesNotOwnResume()
     {
         // Arrange
+        var userId = "user123";
+        var resumeId = Guid.NewGuid();
+        var updateDto = CreateSampleResume(id: resumeId, userId: userId);
+        var existingResume = CreateSampleResume(id: resumeId, userId: "otherUser");
+
+        SetupUser(userId);
+
+        _mockResumeService
+            .Setup(s => s.GetByIdAsync(resumeId))
+            .ReturnsAsync(existingResume);
+
+        // Act
+        var result = await _controller.Update(resumeId, updateDto);
+
+        // Assert
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        AssertError(notFoundResult.Value, "RESUME_NOT_FOUND", "Resume was not found.");
+
+        _mockResumeService.Verify(s => s.UpdateAsync(It.IsAny<Guid>(), It.IsAny<UserResumeDto>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Merge_ReturnsOk_WhenResumeIsMergedAndUserOwnsIt()
+    {
+        // Arrange
+        var userId = "user123";
         var resumeId = Guid.NewGuid();
         var mockFile = CreateMockFormFile();
         var request = new PdfUploadRequestDto { File = mockFile };
-        
-        var extractedResume = CreateSampleResume();
-        var mergedResume = CreateSampleResume(id: resumeId);
+
+        var existingResume = CreateSampleResume(id: resumeId, userId: userId);
+        var extractedResume = CreateSampleResume(userId: userId);
+        var mergedResume = CreateSampleResume(id: resumeId, userId: userId);
+
+        SetupUser(userId);
+
+        _mockResumeService
+            .Setup(s => s.GetByIdAsync(resumeId))
+            .ReturnsAsync(existingResume);
 
         _mockResumeService
             .Setup(s => s.ExtractFromPdfAsync(mockFile))
@@ -371,6 +519,7 @@ public class ResumeControllerTests
         var returnedResume = okResult.Value.Should().BeOfType<UserResumeDto>().Subject;
         returnedResume.Id.Should().Be(resumeId);
 
+        _mockResumeService.Verify(s => s.GetByIdAsync(resumeId), Times.Once);
         _mockResumeService.Verify(s => s.ExtractFromPdfAsync(mockFile), Times.Once);
         _mockResumeService.Verify(s => s.MergeAsync(resumeId, extractedResume), Times.Once);
     }
@@ -379,47 +528,82 @@ public class ResumeControllerTests
     public async Task Merge_ReturnsNotFound_WhenResumeDoesNotExist()
     {
         // Arrange
+        var userId = "user123";
         var resumeId = Guid.NewGuid();
         var mockFile = CreateMockFormFile();
         var request = new PdfUploadRequestDto { File = mockFile };
-        
-        var extractedResume = CreateSampleResume();
+
+        SetupUser(userId);
 
         _mockResumeService
-            .Setup(s => s.ExtractFromPdfAsync(mockFile))
-            .ReturnsAsync(extractedResume);
-
-        _mockResumeService
-            .Setup(s => s.MergeAsync(resumeId, extractedResume))
+            .Setup(s => s.GetByIdAsync(resumeId))
             .ReturnsAsync((UserResumeDto?)null);
 
         // Act
         var result = await _controller.Merge(resumeId, request);
 
         // Assert
-        result.Result.Should().BeOfType<NotFoundResult>();
-        _mockResumeService.Verify(s => s.MergeAsync(resumeId, extractedResume), Times.Once);
+        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        AssertError(notFoundResult.Value, "RESUME_NOT_FOUND", "Resume was not found.");
+
+        _mockResumeService.Verify(s => s.ExtractFromPdfAsync(It.IsAny<IFormFile>()), Times.Never);
+        _mockResumeService.Verify(s => s.MergeAsync(It.IsAny<Guid>(), It.IsAny<UserResumeDto>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Merge_ReturnsBadRequest_WhenFileIsNotPdf()
+    {
+        // Arrange
+        var userId = "user123";
+        var resumeId = Guid.NewGuid();
+        var mockFile = CreateMockFormFile("resume.docx", "application/vnd.openxmlformats");
+        var request = new PdfUploadRequestDto { File = mockFile };
+        var existingResume = CreateSampleResume(id: resumeId, userId: userId);
+
+        SetupUser(userId);
+
+        _mockResumeService
+            .Setup(s => s.GetByIdAsync(resumeId))
+            .ReturnsAsync(existingResume);
+
+        // Act
+        var result = await _controller.Merge(resumeId, request);
+
+        // Assert
+        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        AssertError(badRequestResult.Value, "INVALID_FILE_TYPE", "Only PDF files are allowed.");
+
+        _mockResumeService.Verify(s => s.ExtractFromPdfAsync(It.IsAny<IFormFile>()), Times.Never);
+        _mockResumeService.Verify(s => s.MergeAsync(It.IsAny<Guid>(), It.IsAny<UserResumeDto>()), Times.Never);
     }
 
     [Fact]
     public async Task Merge_CallsExtractBeforeMerge()
     {
         // Arrange
+        var userId = "user123";
         var resumeId = Guid.NewGuid();
         var mockFile = CreateMockFormFile();
         var request = new PdfUploadRequestDto { File = mockFile };
-        
+        var existingResume = CreateSampleResume(id: resumeId, userId: userId);
+
         var callOrder = new List<string>();
-        
+
+        SetupUser(userId);
+
+        _mockResumeService
+            .Setup(s => s.GetByIdAsync(resumeId))
+            .ReturnsAsync(existingResume);
+
         _mockResumeService
             .Setup(s => s.ExtractFromPdfAsync(It.IsAny<IFormFile>()))
             .Callback(() => callOrder.Add("extract"))
-            .ReturnsAsync(CreateSampleResume());
+            .ReturnsAsync(CreateSampleResume(userId: userId));
 
         _mockResumeService
             .Setup(s => s.MergeAsync(It.IsAny<Guid>(), It.IsAny<UserResumeDto>()))
             .Callback(() => callOrder.Add("merge"))
-            .ReturnsAsync(CreateSampleResume());
+            .ReturnsAsync(CreateSampleResume(id: resumeId, userId: userId));
 
         // Act
         await _controller.Merge(resumeId, request);
@@ -429,10 +613,19 @@ public class ResumeControllerTests
     }
 
     [Fact]
-    public async Task Delete_ReturnsNoContent()
+    public async Task Delete_ReturnsNoContent_WhenUserOwnsResume()
     {
         // Arrange
+        var userId = "user123";
         var resumeId = Guid.NewGuid();
+        var existingResume = CreateSampleResume(id: resumeId, userId: userId);
+
+        SetupUser(userId);
+
+        _mockResumeService
+            .Setup(s => s.GetByIdAsync(resumeId))
+            .ReturnsAsync(existingResume);
+
         _mockResumeService
             .Setup(s => s.DeleteAsync(resumeId))
             .ReturnsAsync(true);
@@ -442,14 +635,49 @@ public class ResumeControllerTests
 
         // Assert
         result.Should().BeOfType<NoContentResult>();
+
+        _mockResumeService.Verify(s => s.GetByIdAsync(resumeId), Times.Once);
         _mockResumeService.Verify(s => s.DeleteAsync(resumeId), Times.Once);
+    }
+
+    [Fact]
+    public async Task Delete_ReturnsNotFound_WhenUserDoesNotOwnResume()
+    {
+        // Arrange
+        var userId = "user123";
+        var resumeId = Guid.NewGuid();
+        var existingResume = CreateSampleResume(id: resumeId, userId: "otherUser");
+
+        SetupUser(userId);
+
+        _mockResumeService
+            .Setup(s => s.GetByIdAsync(resumeId))
+            .ReturnsAsync(existingResume);
+
+        // Act
+        var result = await _controller.Delete(resumeId);
+
+        // Assert
+        var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        AssertError(notFoundResult.Value, "RESUME_NOT_FOUND", "Resume was not found.");
+
+        _mockResumeService.Verify(s => s.DeleteAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]
     public async Task Delete_CallsServiceWithCorrectId()
     {
         // Arrange
+        var userId = "user123";
         var resumeId = Guid.NewGuid();
+        var existingResume = CreateSampleResume(id: resumeId, userId: userId);
+
+        SetupUser(userId);
+
+        _mockResumeService
+            .Setup(s => s.GetByIdAsync(resumeId))
+            .ReturnsAsync(existingResume);
+
         _mockResumeService.Setup(s => s.DeleteAsync(It.IsAny<Guid>()))
             .ReturnsAsync(true);
 
