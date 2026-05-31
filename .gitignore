@@ -64,9 +64,8 @@ build/
 !.env.example
 
 # appsettings
-appsettings.json
-appsettings.Development.json
-!appsettings.Example.json
+JobApplicationTracker.Api/appsettings.json
+JobApplicationTracker.Api/appsettings.Development.json
 
 # TypeScript build cache
 *.tsbuildinfo
