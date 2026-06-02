@@ -7,12 +7,12 @@ using Microsoft.Extensions.Configuration;
 
 namespace Test.Services;
 
-public class AuthTokenServiceTests
+public class AuthTokenTokenServiceTests
 {
     private readonly IConfiguration _configuration;
-    private readonly AuthTokenService _tokenService;
+    private readonly AuthTokenTokenService _tokenTokenService;
 
-    public AuthTokenServiceTests()
+    public AuthTokenTokenServiceTests()
     {
         // Disable default claim type mapping
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -28,7 +28,7 @@ public class AuthTokenServiceTests
             .AddInMemoryCollection(inMemorySettings!)
             .Build();
 
-        _tokenService = new AuthTokenService(_configuration);
+        _tokenTokenService = new AuthTokenTokenService(_configuration);
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public class AuthTokenServiceTests
         };
 
         // Act
-        var token = _tokenService.GenerateToken(user);
+        var token = _tokenTokenService.GenerateToken(user);
 
         // Assert
         token.Should().NotBeNullOrEmpty();
@@ -72,7 +72,7 @@ public class AuthTokenServiceTests
         payloadDict.Should().ContainKey("exp");
         var expValue = payloadDict["exp"].GetInt64();
         var expirationDate = DateTimeOffset.FromUnixTimeSeconds(expValue).UtcDateTime;
-        expirationDate.Should().BeCloseTo(DateTime.UtcNow.AddHours(2), TimeSpan.FromMinutes(1));
+        expirationDate.Should().BeCloseTo(DateTime.UtcNow.AddMinutes(15), TimeSpan.FromMinutes(1));
     }
 
 
@@ -88,7 +88,7 @@ public class AuthTokenServiceTests
         };
 
         // Act
-        var token = _tokenService.GenerateToken(user);
+        var token = _tokenTokenService.GenerateToken(user);
 
         // Assert - Decode the JWT manually
         var parts = token.Split('.');
@@ -126,7 +126,7 @@ public class AuthTokenServiceTests
         };
 
         // Act
-        var token = _tokenService.GenerateToken(user);
+        var token = _tokenTokenService.GenerateToken(user);
 
         // Assert
         var handler = new JwtSecurityTokenHandler();
@@ -152,7 +152,7 @@ public class AuthTokenServiceTests
             }!)
             .Build();
 
-        var tokenService = new AuthTokenService(configWithoutKey);
+        var tokenService = new AuthTokenTokenService(configWithoutKey);
 
         var user = new User
         {
@@ -167,7 +167,7 @@ public class AuthTokenServiceTests
     }
 
     [Fact]
-    public void GenerateToken_TokenExpiresInTwoHours()
+    public void GenerateToken_TokenExpiresInFifteenMin()
     {
         // Arrange
         var user = new User
@@ -180,7 +180,7 @@ public class AuthTokenServiceTests
         var beforeGeneration = DateTime.UtcNow;
 
         // Act
-        var token = _tokenService.GenerateToken(user);
+        var token = _tokenTokenService.GenerateToken(user);
 
         var afterGeneration = DateTime.UtcNow;
 
@@ -191,8 +191,8 @@ public class AuthTokenServiceTests
         // Use ValidTo property instead of parsing exp claim
         var expirationDate = jwtToken.ValidTo;
 
-        // Verify expiration is approximately 2 hours from now
-        var expectedExpiry = beforeGeneration.AddHours(2);
+        // Verify expiration is approximately 15 min from now
+        var expectedExpiry = beforeGeneration.AddMinutes(15);
         expirationDate.Should().BeCloseTo(expectedExpiry, TimeSpan.FromMinutes(1));
     }
     
@@ -209,9 +209,9 @@ public class AuthTokenServiceTests
         };
 
         // Act
-        var token1 = _tokenService.GenerateToken(user);
+        var token1 = _tokenTokenService.GenerateToken(user);
         Thread.Sleep(1000); // Wait 1 second to ensure different expiry
-        var token2 = _tokenService.GenerateToken(user);
+        var token2 = _tokenTokenService.GenerateToken(user);
 
         // Assert
         token1.Should().NotBe(token2);

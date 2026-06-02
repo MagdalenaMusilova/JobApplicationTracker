@@ -5,4 +5,6 @@ namespace JobApplicationTracker.Services;
 public interface IAuthTokenService
 {
     public string GenerateToken(User user);
+
+    public string GenerateRefreshToken();
 }

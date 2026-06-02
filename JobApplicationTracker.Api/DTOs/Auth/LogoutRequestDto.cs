@@ -1,7 +1,6 @@
 ﻿namespace JobApplicationTracker.DTOs;
 
-public class SignInResponseDto
+public class LogoutRequestDto
 {
-    public string Token { get; set; }
     public string RefreshToken { get; set; } = string.Empty;
 }

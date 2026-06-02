@@ -1,9 +1,8 @@
 ﻿using FluentAssertions;
 using JobApplicationTracker.Controllers;
 using JobApplicationTracker.DTOs;
-using JobApplicationTracker.Models;
 using JobApplicationTracker.Services;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -11,20 +10,15 @@ namespace Test.Controllers;
 
 public class AuthControllerTests
 {
-    private readonly Mock<UserManager<User>> _mockUserManager;
-    private readonly Mock<IAuthTokenService> _mockTokenService;
+    private readonly Mock<IAuthService> _mockAuthService;
     private readonly AuthController _controller;
 
     public AuthControllerTests()
     {
-        var userStoreMock = new Mock<IUserStore<User>>();
-        _mockUserManager = new Mock<UserManager<User>>(
-            userStoreMock.Object, null, null, null, null, null, null, null, null);
-        
-        _mockTokenService = new Mock<IAuthTokenService>();
-        _controller = new AuthController(_mockUserManager.Object, _mockTokenService.Object);
+        _mockAuthService = new Mock<IAuthService>();
+        _controller = new AuthController(_mockAuthService.Object);
     }
-    
+
     [Fact]
     public async Task SignIn_WithValidCredentials_ReturnsOkWithToken()
     {
@@ -35,64 +29,31 @@ public class AuthControllerTests
             Password = "Test123!"
         };
 
-        var user = new User
+        var expectedResponse = new SignInResponseDto
         {
-            Id = "user-id-123",
-            Email = "test@example.com"
+            Token = "jwt-token-here",
+            RefreshToken = "refresh-token-here"
         };
 
-        var expectedToken = "jwt-token-here";
-
-        _mockUserManager.Setup(x => x.FindByEmailAsync(signInDto.Email))
-            .ReturnsAsync(user);
-        _mockUserManager.Setup(x => x.CheckPasswordAsync(user, signInDto.Password))
-            .ReturnsAsync(true);
-        _mockTokenService.Setup(x => x.GenerateToken(user))
-            .Returns(expectedToken);
+        _mockAuthService
+            .Setup(service => service.SignInAsync(signInDto))
+            .ReturnsAsync(AuthServiceResultDto<SignInResponseDto>.Success(expectedResponse));
 
         // Act
         var result = await _controller.SignIn(signInDto);
 
         // Assert
-        result.Result.Should().BeOfType<OkObjectResult>();
-        var okResult = result.Result as OkObjectResult;
-        var response = okResult!.Value as SignInResponseDto;
-        response.Should().NotBeNull();
-        response!.Token.Should().Be(expectedToken);
+        var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<SignInResponseDto>().Subject;
 
-        _mockUserManager.Verify(x => x.FindByEmailAsync(signInDto.Email), Times.Once);
-        _mockUserManager.Verify(x => x.CheckPasswordAsync(user, signInDto.Password), Times.Once);
-        _mockTokenService.Verify(x => x.GenerateToken(user), Times.Once);
+        response.Token.Should().Be(expectedResponse.Token);
+        response.RefreshToken.Should().Be(expectedResponse.RefreshToken);
+
+        _mockAuthService.Verify(service => service.SignInAsync(signInDto), Times.Once);
     }
 
     [Fact]
-    public async Task SignIn_WithInvalidUsername_ReturnsUnauthorized()
-    {
-        // Arrange
-        var signInDto = new SignInDto
-        {
-            Email = "nonexistent@gmail.com",
-            Password = "Test123!"
-        };
-
-        _mockUserManager.Setup(x => x.FindByEmailAsync(signInDto.Email))
-            .ReturnsAsync((User?)null);
-
-        // Act
-        var result = await _controller.SignIn(signInDto);
-
-        // Assert
-        result.Result.Should().BeOfType<UnauthorizedObjectResult>();
-        var unauthorizedResult = result.Result as UnauthorizedObjectResult;
-        unauthorizedResult!.Value.Should().Be("Invalid username or password.");
-
-        _mockUserManager.Verify(x => x.FindByEmailAsync(signInDto.Email), Times.Once);
-        _mockUserManager.Verify(x => x.CheckPasswordAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
-        _mockTokenService.Verify(x => x.GenerateToken(It.IsAny<User>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task SignIn_WithInvalidPassword_ReturnsUnauthorized()
+    public async Task SignIn_WithInvalidCredentials_ReturnsUnauthorized()
     {
         // Arrange
         var signInDto = new SignInDto
@@ -101,28 +62,22 @@ public class AuthControllerTests
             Password = "WrongPassword!"
         };
 
-        var user = new User
-        {
-            Id = "user-id-123",
-            Email = "test@example.com"
-        };
-
-        _mockUserManager.Setup(x => x.FindByEmailAsync(signInDto.Email))
-            .ReturnsAsync(user);
-        _mockUserManager.Setup(x => x.CheckPasswordAsync(user, signInDto.Password))
-            .ReturnsAsync(false);
+        _mockAuthService
+            .Setup(service => service.SignInAsync(signInDto))
+            .ReturnsAsync(AuthServiceResultDto<SignInResponseDto>.Failure(
+                StatusCodes.Status401Unauthorized,
+                "Invalid username or password."));
 
         // Act
         var result = await _controller.SignIn(signInDto);
 
         // Assert
-        result.Result.Should().BeOfType<UnauthorizedObjectResult>();
-        var unauthorizedResult = result.Result as UnauthorizedObjectResult;
-        unauthorizedResult!.Value.Should().Be("Invalid username or password.");
+        var unauthorizedResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
 
-        _mockUserManager.Verify(x => x.FindByEmailAsync(signInDto.Email), Times.Once);
-        _mockUserManager.Verify(x => x.CheckPasswordAsync(user, signInDto.Password), Times.Once);
-        _mockTokenService.Verify(x => x.GenerateToken(It.IsAny<User>()), Times.Never);
+        unauthorizedResult.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
+        unauthorizedResult.Value.Should().Be("Invalid username or password.");
+
+        _mockAuthService.Verify(service => service.SignInAsync(signInDto), Times.Once);
     }
 
     [Fact]
@@ -135,30 +90,27 @@ public class AuthControllerTests
             Password = "NewPass123!"
         };
 
-        var expectedToken = "new-jwt-token";
+        var expectedResponse = new SignInResponseDto
+        {
+            Token = "new-jwt-token",
+            RefreshToken = "new-refresh-token"
+        };
 
-        _mockUserManager.Setup(x => x.FindByEmailAsync(signUpDto.Email))
-            .ReturnsAsync((User?)null);
-        _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), signUpDto.Password))
-            .ReturnsAsync(IdentityResult.Success);
-        _mockTokenService.Setup(x => x.GenerateToken(It.IsAny<User>()))
-            .Returns(expectedToken);
+        _mockAuthService
+            .Setup(service => service.SignUpAsync(signUpDto))
+            .ReturnsAsync(AuthServiceResultDto<SignInResponseDto>.Success(expectedResponse));
 
         // Act
         var result = await _controller.SignUp(signUpDto);
 
         // Assert
-        result.Result.Should().BeOfType<OkObjectResult>();
-        var okResult = result.Result as OkObjectResult;
-        var response = okResult!.Value as SignInResponseDto;
-        response.Should().NotBeNull();
-        response!.Token.Should().Be(expectedToken);
+        var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<SignInResponseDto>().Subject;
 
-        _mockUserManager.Verify(x => x.FindByEmailAsync(signUpDto.Email), Times.Once);
-        _mockUserManager.Verify(x => x.CreateAsync(
-            It.Is<User>(u =>  u.Email == signUpDto.Email),
-            signUpDto.Password), Times.Once);
-        _mockTokenService.Verify(x => x.GenerateToken(It.IsAny<User>()), Times.Once);
+        response.Token.Should().Be(expectedResponse.Token);
+        response.RefreshToken.Should().Be(expectedResponse.RefreshToken);
+
+        _mockAuthService.Verify(service => service.SignUpAsync(signUpDto), Times.Once);
     }
 
     [Fact]
@@ -167,66 +119,106 @@ public class AuthControllerTests
         // Arrange
         var signUpDto = new SignUpDto
         {
-            Email = "new@example.com",
+            Email = "existing@example.com",
             Password = "Pass123!"
         };
 
-        var existingUser = new User
-        {
-            Id = "existing-id",
-            Email = "existing@example.com"
-        };
-
-        _mockUserManager.Setup(x => x.FindByEmailAsync(signUpDto.Email))
-            .ReturnsAsync(existingUser);
+        _mockAuthService
+            .Setup(service => service.SignUpAsync(signUpDto))
+            .ReturnsAsync(AuthServiceResultDto<SignInResponseDto>.Failure(
+                StatusCodes.Status400BadRequest,
+                "Email is already being used."));
 
         // Act
         var result = await _controller.SignUp(signUpDto);
 
         // Assert
-        result.Result.Should().BeOfType<BadRequestObjectResult>();
-        var badRequestResult = result.Result as BadRequestObjectResult;
-        badRequestResult!.Value.Should().Be("Username already exists.");
+        var badRequestResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
 
-        _mockUserManager.Verify(x => x.FindByEmailAsync(signUpDto.Email), Times.Once);
-        _mockUserManager.Verify(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
-        _mockTokenService.Verify(x => x.GenerateToken(It.IsAny<User>()), Times.Never);
+        badRequestResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        badRequestResult.Value.Should().Be("Email is already being used.");
+
+        _mockAuthService.Verify(service => service.SignUpAsync(signUpDto), Times.Once);
     }
 
     [Fact]
-    public async Task SignUp_WithInvalidPassword_ReturnsBadRequest()
+    public async Task Refresh_WithValidRefreshToken_ReturnsOkWithNewTokens()
     {
         // Arrange
-        var signUpDto = new SignUpDto
+        var refreshDto = new RefreshTokenRequestDto
         {
-            Email = "newuser@example.com",
-            Password = "weak"
+            RefreshToken = "existing-refresh-token"
         };
 
-        var identityErrors = new[]
+        var expectedResponse = new SignInResponseDto
         {
-            new IdentityError { Code = "PasswordTooShort", Description = "Password must be at least 6 characters." },
-            new IdentityError { Code = "PasswordRequiresDigit", Description = "Password must have at least one digit." }
+            Token = "new-access-token",
+            RefreshToken = "new-refresh-token"
         };
 
-        _mockUserManager.Setup(x => x.FindByEmailAsync(signUpDto.Email))
-            .ReturnsAsync((User?)null);
-        _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), signUpDto.Password))
-            .ReturnsAsync(IdentityResult.Failed(identityErrors));
+        _mockAuthService
+            .Setup(service => service.RefreshAsync(refreshDto))
+            .ReturnsAsync(AuthServiceResultDto<SignInResponseDto>.Success(expectedResponse));
 
         // Act
-        var result = await _controller.SignUp(signUpDto);
+        var result = await _controller.Refresh(refreshDto);
 
         // Assert
-        result.Result.Should().BeOfType<BadRequestObjectResult>();
-        var badRequestResult = result.Result as BadRequestObjectResult;
-        var errorMessage = badRequestResult!.Value as string;
-        errorMessage.Should().Contain("Failed to create user");
-        errorMessage.Should().Contain("Password must be at least 6 characters");
-        errorMessage.Should().Contain("Password must have at least one digit");
+        var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<SignInResponseDto>().Subject;
 
-        _mockUserManager.Verify(x => x.FindByEmailAsync(signUpDto.Email), Times.Once);
-        _mockUserManager.Verify(x => x.CreateAsync(It.IsAny<User>(), signUpDto.Password), Times.Once);
-        _mockTokenService.Verify(x => x.GenerateToken(It.IsAny<User>()), Times.Never);
+        response.Token.Should().Be(expectedResponse.Token);
+        response.RefreshToken.Should().Be(expectedResponse.RefreshToken);
+
+        _mockAuthService.Verify(service => service.RefreshAsync(refreshDto), Times.Once);
+    }
+
+    [Fact]
+    public async Task Refresh_WithInvalidRefreshToken_ReturnsUnauthorized()
+    {
+        // Arrange
+        var refreshDto = new RefreshTokenRequestDto
+        {
+            RefreshToken = "invalid-refresh-token"
+        };
+
+        _mockAuthService
+            .Setup(service => service.RefreshAsync(refreshDto))
+            .ReturnsAsync(AuthServiceResultDto<SignInResponseDto>.Failure(
+                StatusCodes.Status401Unauthorized,
+                "Invalid refresh token."));
+
+        // Act
+        var result = await _controller.Refresh(refreshDto);
+
+        // Assert
+        var unauthorizedResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
+
+        unauthorizedResult.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
+        unauthorizedResult.Value.Should().Be("Invalid refresh token.");
+
+        _mockAuthService.Verify(service => service.RefreshAsync(refreshDto), Times.Once);
+    }
+
+    [Fact]
+    public async Task Logout_ReturnsNoContent()
+    {
+        // Arrange
+        var logoutDto = new LogoutRequestDto
+        {
+            RefreshToken = "refresh-token-to-logout"
+        };
+
+        _mockAuthService
+            .Setup(service => service.LogoutAsync(logoutDto))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.Logout(logoutDto);
+
+        // Assert
+        result.Should().BeOfType<NoContentResult>();
+
+        _mockAuthService.Verify(service => service.LogoutAsync(logoutDto), Times.Once);
     }
 }

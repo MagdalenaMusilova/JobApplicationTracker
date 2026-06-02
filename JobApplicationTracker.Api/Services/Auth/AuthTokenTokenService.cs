@@ -1,16 +1,17 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using JobApplicationTracker.Models;
 using Microsoft.IdentityModel.Tokens;
 
 namespace JobApplicationTracker.Services;
 
-public class AuthTokenService : IAuthTokenService
+public class AuthTokenTokenService : IAuthTokenService
 {
     private readonly IConfiguration _configuration;
 
-    public AuthTokenService(IConfiguration configuration)
+    public AuthTokenTokenService(IConfiguration configuration)
     {
         _configuration = configuration;
     }
@@ -24,13 +25,13 @@ public class AuthTokenService : IAuthTokenService
         {
             new(JwtRegisteredClaimNames.Sub, user.Id)
         };
-    
+
         // Only add claims if they have non-null and non-whitespace values
         if (!string.IsNullOrWhiteSpace(user.UserName))
         {
             claims.Add(new Claim("name", user.UserName));
         }
-    
+
         if (!string.IsNullOrWhiteSpace(user.Email))
         {
             claims.Add(new Claim("email", user.Email));
@@ -45,19 +46,15 @@ public class AuthTokenService : IAuthTokenService
             audience: jwt["Audience"],
             claims: claims,
             notBefore: now,
-            expires: now.AddHours(2),
+            expires: now.AddMinutes(15),
             signingCredentials: creds);
 
-        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-            
-        // Debug: verify claims are in the token before writing
-        System.Diagnostics.Debug.WriteLine($"Claims count: {claims.Count}");
-        foreach (var claim in claims)
-        {
-            System.Diagnostics.Debug.WriteLine($"  Claim: {claim.Type} = {claim.Value}");
-        }
-            
-        return tokenString;
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
-    
+
+    public string GenerateRefreshToken()
+    {
+        var randomBytes = RandomNumberGenerator.GetBytes(64);
+        return Convert.ToBase64String(randomBytes);
+    }
 }

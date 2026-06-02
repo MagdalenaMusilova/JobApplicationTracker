@@ -1,15 +1,6 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using JobApplicationTracker.Database;
-using JobApplicationTracker.DTOs;
-using JobApplicationTracker.Models;
+﻿using JobApplicationTracker.DTOs;
 using JobApplicationTracker.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace JobApplicationTracker.Controllers;
 
@@ -17,67 +8,52 @@ namespace JobApplicationTracker.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly UserManager<User> _userManager;
-    private readonly IAuthTokenService _tokenService;
+    private readonly IAuthService _authService;
 
-    public AuthController(UserManager<User> userManager, IAuthTokenService tokenService)
+    public AuthController(IAuthService authService)
     {
-        _userManager = userManager;
-        _tokenService = tokenService;
+        _authService = authService;
     }
 
-    [HttpPost("signin")]
+    [HttpPost("login")]
     public async Task<ActionResult<SignInResponseDto>> SignIn([FromBody] SignInDto dto)
     {
-        var user = await _userManager.FindByEmailAsync(dto.Email);
+        var result = await _authService.SignInAsync(dto);
 
-        if (user is null)
-        {
-            return Unauthorized("Invalid username or password.");
-        }
-
-        var isPasswordValid = await _userManager.CheckPasswordAsync(user, dto.Password);
-
-        if (!isPasswordValid)
-        {
-            return Unauthorized("Invalid username or password.");
-        }
-
-        var token = _tokenService.GenerateToken(user);
-
-        return Ok(new SignInResponseDto
-        {
-            Token = token
-        });
+        return ToActionResult(result);
     }
 
-    [HttpPost("signup")]
+    [HttpPost("register")]
     public async Task<ActionResult<SignInResponseDto>> SignUp([FromBody] SignUpDto dto)
     {
-        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
-        if (existingUser is not null)
+        var result = await _authService.SignUpAsync(dto);
+
+        return ToActionResult(result);
+    }
+
+    [HttpPost("refresh")]
+    public async Task<ActionResult<SignInResponseDto>> Refresh([FromBody] RefreshTokenRequestDto dto)
+    {
+        var result = await _authService.RefreshAsync(dto);
+
+        return ToActionResult(result);
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] LogoutRequestDto dto)
+    {
+        await _authService.LogoutAsync(dto);
+
+        return NoContent();
+    }
+
+    private ActionResult<SignInResponseDto> ToActionResult(AuthServiceResultDto<SignInResponseDto> result)
+    {
+        if (result.Succeeded)
         {
-            return BadRequest("Email is already being used.");
+            return Ok(result.Value);
         }
 
-        var user = new User
-        {
-            Email = dto.Email,
-        };
-
-        var result = await _userManager.CreateAsync(user, dto.Password);
-
-        if (!result.Succeeded)
-        {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            return BadRequest($"Failed to create user: {errors}");
-        }
-
-        var token = _tokenService.GenerateToken(user);
-
-        return Ok(new SignInResponseDto
-        {
-            Token = token
-        });
+        return StatusCode(result.StatusCode, result.ErrorMessage);
     }
 }
