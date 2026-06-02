@@ -29,7 +29,7 @@ public class AuthController : ControllerBase
     [HttpPost("signin")]
     public async Task<ActionResult<SignInResponseDto>> SignIn([FromBody] SignInDto dto)
     {
-        var user = await _userManager.FindByNameAsync(dto.Username);
+        var user = await _userManager.FindByEmailAsync(dto.Email);
 
         if (user is null)
         {
@@ -54,15 +54,14 @@ public class AuthController : ControllerBase
     [HttpPost("signup")]
     public async Task<ActionResult<SignInResponseDto>> SignUp([FromBody] SignUpDto dto)
     {
-        var existingUser = await _userManager.FindByNameAsync(dto.Username);
+        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
         if (existingUser is not null)
         {
-            return BadRequest("Username already exists.");
+            return BadRequest("Email is already being used.");
         }
 
         var user = new User
         {
-            UserName = dto.Username,
             Email = dto.Email,
         };
 

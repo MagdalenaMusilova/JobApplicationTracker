@@ -31,20 +31,19 @@ public class AuthControllerTests
         // Arrange
         var signInDto = new SignInDto
         {
-            Username = "testuser",
+            Email = "test@example.com",
             Password = "Test123!"
         };
 
         var user = new User
         {
             Id = "user-id-123",
-            UserName = "testuser",
             Email = "test@example.com"
         };
 
         var expectedToken = "jwt-token-here";
 
-        _mockUserManager.Setup(x => x.FindByNameAsync(signInDto.Username))
+        _mockUserManager.Setup(x => x.FindByEmailAsync(signInDto.Email))
             .ReturnsAsync(user);
         _mockUserManager.Setup(x => x.CheckPasswordAsync(user, signInDto.Password))
             .ReturnsAsync(true);
@@ -61,7 +60,7 @@ public class AuthControllerTests
         response.Should().NotBeNull();
         response!.Token.Should().Be(expectedToken);
 
-        _mockUserManager.Verify(x => x.FindByNameAsync(signInDto.Username), Times.Once);
+        _mockUserManager.Verify(x => x.FindByEmailAsync(signInDto.Email), Times.Once);
         _mockUserManager.Verify(x => x.CheckPasswordAsync(user, signInDto.Password), Times.Once);
         _mockTokenService.Verify(x => x.GenerateToken(user), Times.Once);
     }
@@ -72,11 +71,11 @@ public class AuthControllerTests
         // Arrange
         var signInDto = new SignInDto
         {
-            Username = "nonexistent",
+            Email = "nonexistent@gmail.com",
             Password = "Test123!"
         };
 
-        _mockUserManager.Setup(x => x.FindByNameAsync(signInDto.Username))
+        _mockUserManager.Setup(x => x.FindByEmailAsync(signInDto.Email))
             .ReturnsAsync((User?)null);
 
         // Act
@@ -87,7 +86,7 @@ public class AuthControllerTests
         var unauthorizedResult = result.Result as UnauthorizedObjectResult;
         unauthorizedResult!.Value.Should().Be("Invalid username or password.");
 
-        _mockUserManager.Verify(x => x.FindByNameAsync(signInDto.Username), Times.Once);
+        _mockUserManager.Verify(x => x.FindByEmailAsync(signInDto.Email), Times.Once);
         _mockUserManager.Verify(x => x.CheckPasswordAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
         _mockTokenService.Verify(x => x.GenerateToken(It.IsAny<User>()), Times.Never);
     }
@@ -98,18 +97,17 @@ public class AuthControllerTests
         // Arrange
         var signInDto = new SignInDto
         {
-            Username = "testuser",
+            Email = "test@example.com",
             Password = "WrongPassword!"
         };
 
         var user = new User
         {
             Id = "user-id-123",
-            UserName = "testuser",
             Email = "test@example.com"
         };
 
-        _mockUserManager.Setup(x => x.FindByNameAsync(signInDto.Username))
+        _mockUserManager.Setup(x => x.FindByEmailAsync(signInDto.Email))
             .ReturnsAsync(user);
         _mockUserManager.Setup(x => x.CheckPasswordAsync(user, signInDto.Password))
             .ReturnsAsync(false);
@@ -122,7 +120,7 @@ public class AuthControllerTests
         var unauthorizedResult = result.Result as UnauthorizedObjectResult;
         unauthorizedResult!.Value.Should().Be("Invalid username or password.");
 
-        _mockUserManager.Verify(x => x.FindByNameAsync(signInDto.Username), Times.Once);
+        _mockUserManager.Verify(x => x.FindByEmailAsync(signInDto.Email), Times.Once);
         _mockUserManager.Verify(x => x.CheckPasswordAsync(user, signInDto.Password), Times.Once);
         _mockTokenService.Verify(x => x.GenerateToken(It.IsAny<User>()), Times.Never);
     }
@@ -133,14 +131,13 @@ public class AuthControllerTests
         // Arrange
         var signUpDto = new SignUpDto
         {
-            Username = "newuser",
             Email = "newuser@example.com",
             Password = "NewPass123!"
         };
 
         var expectedToken = "new-jwt-token";
 
-        _mockUserManager.Setup(x => x.FindByNameAsync(signUpDto.Username))
+        _mockUserManager.Setup(x => x.FindByEmailAsync(signUpDto.Email))
             .ReturnsAsync((User?)null);
         _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), signUpDto.Password))
             .ReturnsAsync(IdentityResult.Success);
@@ -157,20 +154,19 @@ public class AuthControllerTests
         response.Should().NotBeNull();
         response!.Token.Should().Be(expectedToken);
 
-        _mockUserManager.Verify(x => x.FindByNameAsync(signUpDto.Username), Times.Once);
+        _mockUserManager.Verify(x => x.FindByEmailAsync(signUpDto.Email), Times.Once);
         _mockUserManager.Verify(x => x.CreateAsync(
-            It.Is<User>(u => u.UserName == signUpDto.Username && u.Email == signUpDto.Email),
+            It.Is<User>(u =>  u.Email == signUpDto.Email),
             signUpDto.Password), Times.Once);
         _mockTokenService.Verify(x => x.GenerateToken(It.IsAny<User>()), Times.Once);
     }
 
     [Fact]
-    public async Task SignUp_WithExistingUsername_ReturnsBadRequest()
+    public async Task SignUp_WithExistingEmail_ReturnsBadRequest()
     {
         // Arrange
         var signUpDto = new SignUpDto
         {
-            Username = "existinguser",
             Email = "new@example.com",
             Password = "Pass123!"
         };
@@ -178,11 +174,10 @@ public class AuthControllerTests
         var existingUser = new User
         {
             Id = "existing-id",
-            UserName = "existinguser",
             Email = "existing@example.com"
         };
 
-        _mockUserManager.Setup(x => x.FindByNameAsync(signUpDto.Username))
+        _mockUserManager.Setup(x => x.FindByEmailAsync(signUpDto.Email))
             .ReturnsAsync(existingUser);
 
         // Act
@@ -193,7 +188,7 @@ public class AuthControllerTests
         var badRequestResult = result.Result as BadRequestObjectResult;
         badRequestResult!.Value.Should().Be("Username already exists.");
 
-        _mockUserManager.Verify(x => x.FindByNameAsync(signUpDto.Username), Times.Once);
+        _mockUserManager.Verify(x => x.FindByEmailAsync(signUpDto.Email), Times.Once);
         _mockUserManager.Verify(x => x.CreateAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
         _mockTokenService.Verify(x => x.GenerateToken(It.IsAny<User>()), Times.Never);
     }
@@ -204,7 +199,6 @@ public class AuthControllerTests
         // Arrange
         var signUpDto = new SignUpDto
         {
-            Username = "newuser",
             Email = "newuser@example.com",
             Password = "weak"
         };
@@ -215,7 +209,7 @@ public class AuthControllerTests
             new IdentityError { Code = "PasswordRequiresDigit", Description = "Password must have at least one digit." }
         };
 
-        _mockUserManager.Setup(x => x.FindByNameAsync(signUpDto.Username))
+        _mockUserManager.Setup(x => x.FindByEmailAsync(signUpDto.Email))
             .ReturnsAsync((User?)null);
         _mockUserManager.Setup(x => x.CreateAsync(It.IsAny<User>(), signUpDto.Password))
             .ReturnsAsync(IdentityResult.Failed(identityErrors));
@@ -231,7 +225,7 @@ public class AuthControllerTests
         errorMessage.Should().Contain("Password must be at least 6 characters");
         errorMessage.Should().Contain("Password must have at least one digit");
 
-        _mockUserManager.Verify(x => x.FindByNameAsync(signUpDto.Username), Times.Once);
+        _mockUserManager.Verify(x => x.FindByEmailAsync(signUpDto.Email), Times.Once);
         _mockUserManager.Verify(x => x.CreateAsync(It.IsAny<User>(), signUpDto.Password), Times.Once);
         _mockTokenService.Verify(x => x.GenerateToken(It.IsAny<User>()), Times.Never);
     }

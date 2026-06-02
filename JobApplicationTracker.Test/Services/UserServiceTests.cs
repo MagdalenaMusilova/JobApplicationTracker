@@ -83,39 +83,6 @@ public class UserServiceTests
     }
 
     [Fact]
-    public async Task GetByUsernameAsync_ReturnsUser_WhenExists()
-    {
-        // Arrange
-        var user = new User { Id = "user1", UserName = "testuser", Email = "test@test.com" };
-        var userDto = new UserDto { Id = "user1", UserName = "testuser", Email = "test@test.com" };
-
-        _mockRepository.Setup(r => r.GetByUsernameAsync("testuser")).ReturnsAsync(user);
-        _mockMapper.Setup(m => m.Map<UserDto>(user)).Returns(userDto);
-
-        // Act
-        var result = await _service.GetByUsernameAsync("testuser");
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.UserName.Should().Be("testuser");
-        _mockRepository.Verify(r => r.GetByUsernameAsync("testuser"), Times.Once);
-    }
-
-    [Fact]
-    public async Task GetByUsernameAsync_ReturnsNull_WhenNotExists()
-    {
-        // Arrange
-        _mockRepository.Setup(r => r.GetByUsernameAsync("nonexistent")).ReturnsAsync((User?)null);
-
-        // Act
-        var result = await _service.GetByUsernameAsync("nonexistent");
-
-        // Assert
-        result.Should().BeNull();
-        _mockRepository.Verify(r => r.GetByUsernameAsync("nonexistent"), Times.Once);
-    }
-
-    [Fact]
     public async Task DeleteAsync_ReturnsTrue_WhenDeleteSucceeds()
     {
         // Arrange

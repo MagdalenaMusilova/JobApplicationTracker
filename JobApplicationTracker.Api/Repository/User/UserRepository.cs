@@ -31,15 +31,6 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<User?> GetByUsernameAsync(string username)
-    {
-        return await _context.Users
-            .AsNoTracking()
-            .Where(u => u.UserName == username)
-            .Include(e => e.UserResume)
-            .FirstOrDefaultAsync();
-    }
-
     public async Task<bool> DeleteAsync(string id)
     {
         var user = await _context.Users.FindAsync(id);

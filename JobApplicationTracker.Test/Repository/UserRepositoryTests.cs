@@ -75,43 +75,6 @@ public class UserRepositoryTests
     }
 
     [Fact]
-    public async Task GetByUsernameAsync_ReturnsUser_WhenExists()
-    {
-        // Arrange
-        await using var context = CreateInMemoryContext();
-        var repository = new UserRepository(context);
-        var user = new User
-        {
-            Id = "user1",
-            UserName = "testuser",
-            Email = "test@test.com"
-        };
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
-
-        // Act
-        var result = await repository.GetByUsernameAsync("testuser");
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.Id.Should().Be("user1");
-    }
-
-    [Fact]
-    public async Task GetByUsernameAsync_ReturnsNull_WhenNotExists()
-    {
-        // Arrange
-        await using var context = CreateInMemoryContext();
-        var repository = new UserRepository(context);
-
-        // Act
-        var result = await repository.GetByUsernameAsync("nonexistent");
-
-        // Assert
-        result.Should().BeNull();
-    }
-
-    [Fact]
     public async Task DeleteAsync_DeletesUserSuccessfully()
     {
         // Arrange

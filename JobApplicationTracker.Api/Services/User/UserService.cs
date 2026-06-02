@@ -39,18 +39,6 @@ public class UserService : IUserService
         return _mapper.Map<UserDto>(user);
     }
 
-    public async Task<UserDto?> GetByUsernameAsync(string username)
-    {
-        var user = await _userRepository.GetByUsernameAsync(username);
-
-        if (user is null)
-        {
-            return null;
-        }
-
-        return _mapper.Map<UserDto>(user);
-    }
-
     public async Task<bool> DeleteAsync(string id)
     {
         return await _userRepository.DeleteAsync(id);
