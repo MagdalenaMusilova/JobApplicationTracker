@@ -65,7 +65,7 @@ public class JobApplicationController : ControllerBase
     }
 
     [HttpGet("/minimal")]
-    public async Task<ActionResult<IEnumerable<JobApplicationDto>>> GetAllByUserMinimalAsync()
+    public async Task<ActionResult<IEnumerable<JobApplicationMinimalDto>>> GetAllByUserMinimalAsync()
     {
         if (!TryGetUserId(out var userId))
             return Unauthorized(new ErrorResponseDto("USER_ID_MISSING", "User ID was not found in the authentication token."));
@@ -75,7 +75,7 @@ public class JobApplicationController : ControllerBase
     }
 
     [HttpGet("/notFinished")]
-    public async Task<ActionResult<IEnumerable<JobApplicationDto>>> GetAllNotFinishedAsync()
+    public async Task<ActionResult<IEnumerable<JobApplicationMinimalDto>>> GetAllNotFinishedAsync()
     {
         if (!TryGetUserId(out var userId))
             return Unauthorized(new ErrorResponseDto("USER_ID_MISSING", "User ID was not found in the authentication token."));
@@ -264,92 +264,5 @@ public class JobApplicationController : ControllerBase
         {
             return Conflict(new ErrorResponseDto("STATUS_DELETE_FAILED", ex.Message));
         }
-    }
-
-    [HttpPost("event")]
-    public async Task<ActionResult<JAEventDto>> CreateEvent([FromBody] CreateJAEventDto jaEvent)
-    {
-        if (!TryGetUserId(out var userId))
-            return Unauthorized(new ErrorResponseDto("USER_ID_MISSING", "User ID was not found in the authentication token."));
-
-        var statusEntry = await _jaStatusEntryService.GetByIdAsync(jaEvent.JAStatusEntryId);
-
-        if (statusEntry is null)
-            return NotFound(new ErrorResponseDto("STATUS_ENTRY_NOT_FOUND", "Status entry was not found."));
-
-        if (!await UserOwnsApplicationAsync(statusEntry.JobApplicationId, userId))
-            return NotFound(new ErrorResponseDto("STATUS_ENTRY_NOT_FOUND", "Status entry was not found."));
-
-        try
-        {
-            var createdEvent = await _jaEventService.AddAsync(jaEvent);
-            return Ok(createdEvent);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new ErrorResponseDto("EVENT_CREATE_FAILED", ex.Message));
-        }
-    }
-
-    [HttpPut("event/{eventId:guid}")]
-    public async Task<ActionResult<JAEventDto>> UpdateEvent(Guid eventId, [FromBody] UpdateJAEventDto jaEvent)
-    {
-        if (!TryGetUserId(out var userId))
-            return Unauthorized(new ErrorResponseDto("USER_ID_MISSING", "User ID was not found in the authentication token."));
-
-        var existingEvent = await _jaEventService.GetByIdAsync(eventId);
-
-        if (existingEvent is null)
-            return NotFound(new ErrorResponseDto("EVENT_NOT_FOUND", "Event was not found."));
-
-        var statusEntry = await _jaStatusEntryService.GetByIdAsync(existingEvent.JAStatusEntryId);
-
-        if (statusEntry is null || !await UserOwnsApplicationAsync(statusEntry.JobApplicationId, userId))
-            return NotFound(new ErrorResponseDto("EVENT_NOT_FOUND", "Event was not found."));
-
-        var updatedEvent = await _jaEventService.UpdateAsync(eventId, jaEvent);
-
-        return updatedEvent is null
-            ? NotFound(new ErrorResponseDto("EVENT_NOT_FOUND", "Event was not found."))
-            : Ok(updatedEvent);
-    }
-
-    [HttpDelete("event/{eventId:guid}")]
-    public async Task<IActionResult> DeleteEvent(Guid eventId)
-    {
-        if (!TryGetUserId(out var userId))
-            return Unauthorized(new ErrorResponseDto("USER_ID_MISSING", "User ID was not found in the authentication token."));
-
-        var existingEvent = await _jaEventService.GetByIdAsync(eventId);
-
-        if (existingEvent is null)
-            return NotFound(new ErrorResponseDto("EVENT_NOT_FOUND", "Event was not found."));
-
-        var statusEntry = await _jaStatusEntryService.GetByIdAsync(existingEvent.JAStatusEntryId);
-
-        if (statusEntry is null || !await UserOwnsApplicationAsync(statusEntry.JobApplicationId, userId))
-            return NotFound(new ErrorResponseDto("EVENT_NOT_FOUND", "Event was not found."));
-
-        var deleted = await _jaEventService.DeleteBulkAsync([eventId]);
-
-        return deleted
-            ? NoContent()
-            : NotFound(new ErrorResponseDto("EVENT_NOT_FOUND", "Event was not found."));
-    }
-
-    [HttpGet("/{userId}/events")]
-    public async Task<ActionResult<IEnumerable<JAEventDto>>> GetAllUserEvents(string userId)
-    {
-        if (!TryGetUserId(out var currentUserId))
-            return Unauthorized(new ErrorResponseDto("USER_ID_MISSING", "User ID was not found in the authentication token."));
-
-        if (string.IsNullOrWhiteSpace(userId))
-            return BadRequest(new ErrorResponseDto("USER_ID_REQUIRED", "User ID is required."));
-
-        if (userId != currentUserId)
-            return NotFound(new ErrorResponseDto("EVENTS_NOT_FOUND", "Events were not found."));
-
-        var events = await _jaEventService.GetAllByUserId(userId);
-        return Ok(events);
     }
 }

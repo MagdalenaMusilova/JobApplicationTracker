@@ -39,10 +39,10 @@ public class JobApplicationService : IJobApplicationService
         return minApplications.Select(ja => _mapper.Map<JobApplicationMinimalDto>(ja));
     }
 
-    public async Task<IEnumerable<JobApplicationDto>> GetAllNotFinishedAsync(string userId)
+    public async Task<IEnumerable<JobApplicationMinimalDto>> GetAllNotFinishedAsync(string userId)
     {
         var applications = await _applicationRepository.GetAllNotFinishedAsync(userId);
-        return applications.Select(a => _mapper.Map<JobApplicationDto>(a));
+        return applications.Select(a => _mapper.Map<JobApplicationMinimalDto>(a));
     }
 
     public async Task<JobApplicationDto?> GetByIdAsync(Guid id)

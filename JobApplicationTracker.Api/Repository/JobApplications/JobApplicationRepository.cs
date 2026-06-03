@@ -26,16 +26,12 @@ public class JobApplicationRepository : IJobApplicationRepository
         return res;
     }
 
-    public async Task<IEnumerable<JobApplication>> GetAllNotFinishedAsync(string userId)
+    public async Task<IEnumerable<JobApplicationMinimal>> GetAllNotFinishedAsync(string userId)
     {
-        var res = await _context.JobApplications
+        var res = await _context.JaMinimalView
             .AsNoTracking()
             .Where(ja => ja.UserId == userId)
-            .Where(ja => !ja.StatusHistory.Any(
-                stat => (int)stat.JaStatusType >= (int)JAStatusType.Accepted))
-            .Include(ja => ja.StatusHistory)
-                .ThenInclude(ja => ja.JAEvent)
-            .Include(ja => ja.JobListing)
+            .Where(ja => (int)ja.JAStatus < (int)JAStatusType.Accepted)
             .ToListAsync();
         return res;
     }
