@@ -13,8 +13,6 @@ import { toast } from 'sonner';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -40,9 +38,9 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const { firstName, lastName, email, password, confirmPassword } = formData;
+    const { email, password, confirmPassword } = formData;
 
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword) {
       toast.error('Please fill in all fields');
       return;
     }
@@ -57,13 +55,27 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!/[a-zA-Z]/.test(password)) {
+      toast.error('Password must include at least one letter');
+      return;
+    }
+
+    if (!/\d/.test(password)) {
+      toast.error('Password must include at least one number');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await register(formData);
       toast.success('Account created successfully!');
       router.push('/dashboard');
     } catch (error) {
-      toast.error('Registration failed. Please try again.');
+      const message =
+          error?.response?.data ||
+          error?.message ||
+          'Registration failed. Please try again.';
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -89,32 +101,6 @@ export default function RegisterPage() {
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First name</Label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    placeholder="John"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    disabled={isSubmitting}
-                    className="bg-input"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last name</Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    placeholder="Doe"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    disabled={isSubmitting}
-                    className="bg-input"
-                  />
-                </div>
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input

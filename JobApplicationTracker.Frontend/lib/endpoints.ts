@@ -11,16 +11,18 @@ export const API_ENDPOINTS = {
   // Applications
   APPLICATIONS: {
     BASE: '/applications',
+    MINIMAL: '/applications/minimal',
+    MINIMAL_ARCHIVED: '/applications/minimal?archived',
     BY_ID: (id: string) => `/applications/${id}`,
-    UPDATE_STATUS: (id: string) => `/applications/${id}/status`,
+    PUSH_STATUS: '/applications/entry',
   },
   
   // Events
   EVENTS: {
     BASE: '/events',
-    BY_ID: (id: string) => `/events/${id}`,
-    BY_APPLICATION: (appId: string) => `/applications/${appId}/events`,
-    UPCOMING: '/events/upcoming',
+    BY_ID: (id: string) => `where-am-i-used`,
+    BY_APPLICATION: (appId: string) => `where-am-i-used`,
+    UPCOMING: `where-am-i-used`,
   },
   
   // Profile
@@ -34,6 +36,7 @@ export const API_ENDPOINTS = {
   MATCH: {
     BASE: '/match',
     FIND: '/match/find',
+    REFRESH: '/match/refresh'
   },
   
   // Dashboard

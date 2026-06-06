@@ -41,18 +41,23 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-import {
-  ApplicationStatus,
-  ApplicationEventType,
-  applicationStatusLabels,
-  applicationStatusColors,
-  eventTypeLabels,
-  eventTypeColors,
-} from '@/types';
 import type {
-  ApplicationStatusHistoryDto,
+  JAStatusEntryDto,
+} from '@/types/JAObjects/JAStatuses/JAStatusEntryDto';
+
+import type {
   UpdateJobApplicationDto,
-} from '@/types';
+} from '@/types/JAObjects/JobApplications/UpdateJobApplicationDto';
+
+import { JobApplicationMinimalDto } from '@/types/JAObjects/JobApplications/JobApplicationMinimalDto'
+import { JAStatusType, 
+  applicationStatusColors, 
+  jaStatusLabels  } from '@/types/Enums/JAStatusType'
+import {
+  JAEventType,
+  eventTypeLabels,
+  eventTypeColors
+} from '@/types/Enums/JAEventType'
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -71,14 +76,14 @@ export default function ApplicationDetailPage({ params }: PageProps) {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusModalMode, setStatusModalMode] = useState<'add' | 'edit'>('add');
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
-  const [statusForm, setStatusForm] = useState({ status: ApplicationStatus.Applied, notes: '' });
+  const [statusForm, setStatusForm] = useState({ status: JAStatusType.Applied, notes: '' });
   const [showDeleteStatusDialog, setShowDeleteStatusDialog] = useState(false);
 
   // Event modal state
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventModalMode, setEventModalMode] = useState<'add' | 'edit'>('add');
   const [eventForm, setEventForm] = useState({
-    eventType: ApplicationEventType.Interview,
+    eventType: JAEventType.Interview,
     scheduledAt: '',
     description: '',
     location: '',
@@ -96,8 +101,8 @@ export default function ApplicationDetailPage({ params }: PageProps) {
   useEffect(() => {
     if (application) {
       setEditForm({
-        companyName: application.companyName,
-        jobTitle: application.jobTitle,
+        company: application.company,
+        position: application.position,
         jobDescription: application.jobDescription || '',
         notes: application.notes || '',
       });
@@ -116,19 +121,19 @@ export default function ApplicationDetailPage({ params }: PageProps) {
 
   // Add status mutation
   const addStatusMutation = useMutation({
-    mutationFn: (data: { newStatus: ApplicationStatus; notes?: string }) =>
-      applicationService.updateStatus(applicationId, data),
+    mutationFn: (data: { newStatus: JAStatusType; notes?: string }) =>
+      applicationService.pushStatus(applicationId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
       queryClient.invalidateQueries({ queryKey: ['applications'] });
       setShowStatusModal(false);
-      setStatusForm({ status: ApplicationStatus.Applied, notes: '' });
+      setStatusForm({ status: JAStatusType.Applied, notes: '' });
     },
   });
 
   // Edit last status mutation
   const editStatusMutation = useMutation({
-    mutationFn: async (data: { id: string; status: ApplicationStatus; notes?: string }) => {
+    mutationFn: async (data: { id: string; status: JAStatusType; notes?: string }) => {
       // Simulated - in real app this would call API
       return Promise.resolve();
     },
@@ -197,7 +202,7 @@ export default function ApplicationDetailPage({ params }: PageProps) {
 
   const resetEventForm = () => {
     setEventForm({
-      eventType: ApplicationEventType.Interview,
+      eventType: JAEventType.Interview,
       scheduledAt: '',
       description: '',
       location: '',
@@ -212,8 +217,8 @@ export default function ApplicationDetailPage({ params }: PageProps) {
   const handleDiscardChanges = () => {
     if (application) {
       setEditForm({
-        companyName: application.companyName,
-        jobTitle: application.jobTitle,
+        company: application.company,
+        position: application.position,
         jobDescription: application.jobDescription || '',
         notes: application.notes || '',
       });
@@ -223,12 +228,12 @@ export default function ApplicationDetailPage({ params }: PageProps) {
 
   const openAddStatusModal = () => {
     setStatusModalMode('add');
-    const nextStatus = application ? application.currentStatus + 1 : ApplicationStatus.Applied;
-    setStatusForm({ status: Math.min(nextStatus, ApplicationStatus.Withdrawn), notes: '' });
+    const nextStatus = application ? application.currentStatus + 1 : JAStatusType.Applied;
+    setStatusForm({ status: Math.min(nextStatus, JAStatusType.Withdrawn), notes: '' });
     setShowStatusModal(true);
   };
 
-  const openEditStatusModal = (status: ApplicationStatusHistoryDto) => {
+  const openEditStatusModal = (status: JAStatusEntryDto) => {
     setStatusModalMode('edit');
     setEditingStatusId(status.id);
     setStatusForm({ status: status.status, notes: status.notes || '' });
@@ -312,10 +317,10 @@ export default function ApplicationDetailPage({ params }: PageProps) {
             </Button>
             <div>
               <h1 className="text-2xl font-bold">
-                {isEditing ? 'Edit Application' : application.companyName}
+                {isEditing ? 'Edit Application' : application.company}
               </h1>
               <p className="text-muted-foreground">
-                {isEditing ? 'Make changes and save or discard' : application.jobTitle}
+                {isEditing ? 'Make changes and save or discard' : application.position}
               </p>
             </div>
           </div>
@@ -346,7 +351,7 @@ export default function ApplicationDetailPage({ params }: PageProps) {
             <div className="flex items-center justify-between">
               <CardTitle>Application Details</CardTitle>
               <Badge className={applicationStatusColors[application.currentStatus]}>
-                {applicationStatusLabels[application.currentStatus]}
+                {jaStatusLabels[application.currentStatus]}
               </Badge>
             </div>
           </CardHeader>
@@ -357,22 +362,22 @@ export default function ApplicationDetailPage({ params }: PageProps) {
                 <Label>Company</Label>
                 {isEditing ? (
                   <Input
-                    value={editForm.companyName || ''}
-                    onChange={(e) => setEditForm({ ...editForm, companyName: e.target.value })}
+                    value={editForm.company || ''}
+                    onChange={(e) => setEditForm({ ...editForm, company: e.target.value })}
                   />
                 ) : (
-                  <p className="text-lg font-medium">{application.companyName}</p>
+                  <p className="text-lg font-medium">{application.company}</p>
                 )}
               </div>
               <div className="space-y-2">
                 <Label>Position</Label>
                 {isEditing ? (
                   <Input
-                    value={editForm.jobTitle || ''}
-                    onChange={(e) => setEditForm({ ...editForm, jobTitle: e.target.value })}
+                    value={editForm.position || ''}
+                    onChange={(e) => setEditForm({ ...editForm, position: e.target.value })}
                   />
                 ) : (
-                  <p className="text-lg font-medium">{application.jobTitle}</p>
+                  <p className="text-lg font-medium">{application.position}</p>
                 )}
               </div>
             </div>
@@ -382,18 +387,18 @@ export default function ApplicationDetailPage({ params }: PageProps) {
               <div className="space-y-2">
                 <Label className="text-muted-foreground">Created At</Label>
                 <p className="text-sm">
-                  {format(new Date(application.createdAt), 'PPP')}
+                  {format(new Date(application.statusHistory[0].createdAt), 'PPP')}
                   <span className="text-muted-foreground ml-2">
-                    ({formatDistanceToNow(new Date(application.createdAt), { addSuffix: true })})
+                    ({formatDistanceToNow(new Date(application.statusHistory[0].createdAt), { addSuffix: true })})
                   </span>
                 </p>
               </div>
               <div className="space-y-2">
                 <Label className="text-muted-foreground">Last Updated</Label>
                 <p className="text-sm">
-                  {format(new Date(application.updatedAt), 'PPP')}
+                  {format(new Date(application.statusHistory[application.statusHistory.length - 1].createdAt), 'PPP')}
                   <span className="text-muted-foreground ml-2">
-                    ({formatDistanceToNow(new Date(application.updatedAt), { addSuffix: true })})
+                    ({formatDistanceToNow(new Date(application.statusHistory[application.statusHistory.length - 1].createdAt), { addSuffix: true })})
                   </span>
                 </p>
               </div>
@@ -456,9 +461,9 @@ export default function ApplicationDetailPage({ params }: PageProps) {
                     <div className="flex items-start gap-4">
                       <div className="flex flex-col items-center">
                         <div className={`w-3 h-3 rounded-full ${
-                          status.status === ApplicationStatus.Rejected ? 'bg-red-500' :
-                          status.status === ApplicationStatus.Accepted ? 'bg-green-500' :
-                          status.status === ApplicationStatus.OfferReceived ? 'bg-emerald-500' :
+                          status.jaStatusType === JAStatusType.Rejected ? 'bg-red-500' :
+                          status.jaStatusType === JAStatusType.Accepted ? 'bg-green-500' :
+                          status.jaStatusType === JAStatusType.OfferReceived ? 'bg-emerald-500' :
                           'bg-primary'
                         }`} />
                         {index < application.statusHistory.length - 1 && (
@@ -466,13 +471,13 @@ export default function ApplicationDetailPage({ params }: PageProps) {
                         )}
                       </div>
                       <div>
-                        <Badge className={applicationStatusColors[status.status]}>
-                          {applicationStatusLabels[status.status]}
+                        <Badge className={applicationStatusColors[status.jaStatusType]}>
+                          {jaStatusLabels[status.jaStatusType]}
                         </Badge>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {format(new Date(status.changedAt), 'PPP p')}
+                          {format(new Date(status.createdAt), 'PPP p')}
                         </p>
-                        {status.notes && (
+                        {status.note && (
                           <p className="text-sm mt-2 text-foreground">{status.notes}</p>
                         )}
                       </div>
@@ -590,7 +595,7 @@ export default function ApplicationDetailPage({ params }: PageProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(applicationStatusLabels).map(([value, label]) => (
+                  {Object.entries(jaStatusLabels).map(([value, label]) => (
                     <SelectItem key={value} value={value}>
                       {label}
                     </SelectItem>

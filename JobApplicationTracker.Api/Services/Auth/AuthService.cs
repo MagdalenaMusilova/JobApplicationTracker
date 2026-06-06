@@ -54,7 +54,7 @@ public class AuthService : IAuthService
         {
             return AuthServiceResultDto<SignInResponseDto>.Failure(
                 StatusCodes.Status400BadRequest,
-                "Email is already being used.");
+                "Registration failed. Please use different email.");
         }
 
         var user = new User

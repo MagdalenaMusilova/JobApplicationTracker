@@ -5,9 +5,12 @@ namespace JobApplicationTracker.DTOs;
 
 public class JobApplicationMinimalDto
 {
-    public Guid Id { get; set; }
+    public Guid JAId { get; set; }
     public string Company { get; set; }
     public string Position { get; set; }
-    public JAEventType JAStatus { get; set; }
-    public JAEventMinimalDto? JAEvent { get; set; }
+    public JAStatusType JAStatus { get; set; }
+    public JAEventType? EventType { get; set; }
+    public DateTime? EventDate  { get; set; }
+    public bool? IsWholeDay { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }

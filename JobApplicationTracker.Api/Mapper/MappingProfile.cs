@@ -23,7 +23,8 @@ public class MappingProfile: Profile
         CreateMap<JobListingDto, JobListing>().ReverseMap();
         
         
-        CreateMap<JobApplication, JobApplicationMinimalDto>();
-
+        CreateMap<JobApplicationMinimal, JobApplicationMinimalDto>()
+            .ForSourceMember(src => src.UserId,
+                opt => opt.DoNotValidate());
     }
 }

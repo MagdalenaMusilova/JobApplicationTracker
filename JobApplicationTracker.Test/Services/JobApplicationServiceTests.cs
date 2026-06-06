@@ -115,7 +115,7 @@ public class JobApplicationServiceTests
         {
             Company = "New Company",
             Position = "Developer",
-            InitialStatus = new CreateJAStatusEntryDto
+            InitialStatus = new CreateInitJAStatusDto
             {
                 StatusType = (int)JAStatusType.Wishlist
             }

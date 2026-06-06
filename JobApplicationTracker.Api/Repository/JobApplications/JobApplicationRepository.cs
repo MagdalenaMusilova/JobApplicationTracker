@@ -48,12 +48,17 @@ public class JobApplicationRepository : IJobApplicationRepository
         return res;
     }
 
-    public async Task<IEnumerable<JobApplicationMinimal>> GetAllByUserMinimalAsync(string userId)
+    public async Task<IEnumerable<JobApplicationMinimal>> GetAllByUserMinimalAsync(string userId, bool archived)
     {
-        var res = await _context.JaMinimalView
+        var data = await _context.JaMinimalView.ToListAsync();
+        var queryable = _context.JaMinimalView
             .AsNoTracking()
-            .Where(ja => ja.UserId == userId)
-            .ToListAsync();
+            .Where(ja => ja.UserId == userId);
+        if (archived)
+        {
+            queryable.Where(ja => ja.JAStatus <= JAStatusType.Applied);
+        }
+        var res = await queryable.ToListAsync();
         return res;
     }
 

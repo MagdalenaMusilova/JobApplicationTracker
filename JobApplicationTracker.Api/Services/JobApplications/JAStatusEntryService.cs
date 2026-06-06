@@ -35,9 +35,9 @@ public class JAStatusEntryService : IJAStatusEntryService
         int statusEntriesCount = jobApplication.StatusHistory.Count();
         JAStatusEntryDto lastStatus = jobApplication.StatusHistory
             .OrderByDescending(x => x.OrderIndex)
-            .First();
+            .FirstOrDefault();
 
-        if ((int)lastStatus.JaStatusType >= (int)jaStatusEntry.StatusType)   // check that the next status is valid
+        if (lastStatus != null && (int)lastStatus.JaStatusType >= (int)jaStatusEntry.StatusType)   // check that the next status is valid
         {
             switch (lastStatus.JaStatusType)
             {

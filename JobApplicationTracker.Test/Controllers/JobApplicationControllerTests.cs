@@ -139,7 +139,7 @@ public class JobApplicationControllerTests
         {
             Company = "New Company",
             Position = "Developer",
-            InitialStatus = new CreateJAStatusEntryDto { StatusType = (int)JAStatusType.Wishlist }
+            InitialStatus = new CreateInitJAStatusDto() { StatusType = (int)JAStatusType.Wishlist }
         };
         var created = new JobApplicationDto { Id = Guid.NewGuid(), UserId = userId, Company = "New Company" };
 

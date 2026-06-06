@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using JobApplicationTracker.Database;
 using JobApplicationTracker.Mapper;
 using JobApplicationTracker.Models;
@@ -96,9 +97,6 @@ builder.Services.AddScoped<IResumeMergeService, ResumeMergeService>();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(
-            new System.Text.Json.Serialization.JsonStringEnumConverter());
-
         options.JsonSerializerOptions.PropertyNamingPolicy =
             System.Text.Json.JsonNamingPolicy.CamelCase;
     });
@@ -108,7 +106,6 @@ builder.Services.AddHttpClient<OpenAiAgentService>();
 builder.Services.AddAutoMapper(
     cfg => { },
     typeof(MappingProfile).Assembly);
-
 
 builder.Services.AddAuthentication(options =>
     {

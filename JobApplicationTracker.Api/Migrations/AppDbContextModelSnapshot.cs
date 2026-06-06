@@ -108,9 +108,11 @@ namespace JobApplicationTracker.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("JobApplications");
                 });
@@ -121,14 +123,17 @@ namespace JobApplicationTracker.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("EventDate")
+                    b.Property<DateTime?>("EventDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("EventType")
+                    b.Property<int?>("EventType")
                         .HasColumnType("int");
 
-                    b.Property<bool>("IsWholeDay")
+                    b.Property<bool?>("IsWholeDay")
                         .HasColumnType("bit");
+
+                    b.Property<Guid>("JAId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("JAStatus")
                         .HasColumnType("int");
@@ -137,14 +142,16 @@ namespace JobApplicationTracker.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("jaId")
-                        .HasColumnType("uniqueidentifier");
+                    b.ToTable((string)null);
 
-                    b.ToTable("JaMinimalView");
+                    b.ToView("View_MinimalJA", (string)null);
                 });
 
             modelBuilder.Entity("JobApplicationTracker.Models.JobListing", b =>
@@ -222,7 +229,8 @@ namespace JobApplicationTracker.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
@@ -234,10 +242,12 @@ namespace JobApplicationTracker.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("NormalizedEmail")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("NormalizedUserName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
@@ -255,7 +265,8 @@ namespace JobApplicationTracker.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("UserName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.HasKey("Id");
 
@@ -263,64 +274,27 @@ namespace JobApplicationTracker.Migrations
                         .IsUnique()
                         .HasFilter("[NormalizedEmail] IS NOT NULL");
 
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.Education", b =>
+            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.Experience", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Degree")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<bool>("IsFinished")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Major")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(5000)
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("School")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
 
                     b.Property<Guid>("UserResumeId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserResumeId");
+                    b.ToTable("Experience");
 
-                    b.ToTable("Education");
-                });
-
-            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.OtherExperience", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(5000)
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("UserResumeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserResumeId");
-
-                    b.ToTable("OtherExperience");
+                    b.UseTpcMappingStrategy();
                 });
 
             modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.ResumeSkill", b =>
@@ -359,47 +333,93 @@ namespace JobApplicationTracker.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<Guid?>("EducationId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("ExperienceId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OtherExperienceId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("ResumeSkillId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("SkillId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("TrainingId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("WorkExperienceId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("EducationId");
+                    b.HasIndex("ExperienceId");
 
-                    b.HasIndex("OtherExperienceId");
-
-                    b.HasIndex("ResumeSkillId");
-
-                    b.HasIndex("TrainingId");
-
-                    b.HasIndex("WorkExperienceId");
+                    b.HasIndex("SkillId");
 
                     b.ToTable("SkillUsage");
                 });
 
-            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.Training", b =>
+            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.UserResume", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AboutMe")
+                        .HasMaxLength(2500)
+                        .HasColumnType("nvarchar(2500)");
+
+                    b.Property<string>("UncategorizedInfo")
+                        .HasMaxLength(20000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
+
+                    b.ToTable("ResumeEntries");
+                });
+
+            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.Education", b =>
+                {
+                    b.HasBaseType("JobApplicationTracker.Models.UserProfile.Experience");
+
+                    b.Property<string>("Degree")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsFinished")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Major")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(5000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("School")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasIndex("UserResumeId");
+
+                    b.ToTable("Education");
+                });
+
+            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.OtherExperience", b =>
+                {
+                    b.HasBaseType("JobApplicationTracker.Models.UserProfile.Experience");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(5000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasIndex("UserResumeId");
+
+                    b.ToTable("OtherExperience");
+                });
+
+            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.Training", b =>
+                {
+                    b.HasBaseType("JobApplicationTracker.Models.UserProfile.Experience");
 
                     b.Property<string>("Certification")
                         .HasMaxLength(2500)
@@ -424,47 +444,14 @@ namespace JobApplicationTracker.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<Guid>("UserResumeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
                     b.HasIndex("UserResumeId");
 
                     b.ToTable("Training");
                 });
 
-            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.UserResume", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AboutMe")
-                        .HasMaxLength(2500)
-                        .HasColumnType("nvarchar(2500)");
-
-                    b.Property<string>("UncategorizedInfo")
-                        .HasMaxLength(20000)
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("ResumeEntries");
-                });
-
             modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.WorkExperience", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                    b.HasBaseType("JobApplicationTracker.Models.UserProfile.Experience");
 
                     b.Property<string>("Company")
                         .IsRequired()
@@ -490,11 +477,6 @@ namespace JobApplicationTracker.Migrations
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
 
-                    b.Property<Guid>("UserResumeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
                     b.HasIndex("UserResumeId");
 
                     b.ToTable("WorkExperience");
@@ -505,8 +487,7 @@ namespace JobApplicationTracker.Migrations
                     b.HasOne("JobApplicationTracker.Models.JAStatusEntry", "JAStatusEntry")
                         .WithOne("JAEvent")
                         .HasForeignKey("JobApplicationTracker.Models.JAEvent", "JAStatusEntryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("JAStatusEntry");
                 });
@@ -520,13 +501,21 @@ namespace JobApplicationTracker.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("JobApplicationTracker.Models.JobApplication", b =>
+                {
+                    b.HasOne("JobApplicationTracker.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("JobApplicationTracker.Models.JobListing", b =>
                 {
                     b.HasOne("JobApplicationTracker.Models.JobApplication", null)
                         .WithOne("JobListing")
                         .HasForeignKey("JobApplicationTracker.Models.JobListing", "JobApplicationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("JobApplicationTracker.Models.RefreshToken", b =>
@@ -540,63 +529,25 @@ namespace JobApplicationTracker.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.Education", b =>
-                {
-                    b.HasOne("JobApplicationTracker.Models.UserProfile.UserResume", null)
-                        .WithMany("Education")
-                        .HasForeignKey("UserResumeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.OtherExperience", b =>
-                {
-                    b.HasOne("JobApplicationTracker.Models.UserProfile.UserResume", null)
-                        .WithMany("UncategorizedExperiences")
-                        .HasForeignKey("UserResumeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.ResumeSkill", b =>
                 {
                     b.HasOne("JobApplicationTracker.Models.UserProfile.UserResume", null)
                         .WithMany("Skills")
                         .HasForeignKey("UserResumeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.SkillUsage", b =>
                 {
-                    b.HasOne("JobApplicationTracker.Models.UserProfile.Education", null)
+                    b.HasOne("JobApplicationTracker.Models.UserProfile.Experience", null)
                         .WithMany("Skills")
-                        .HasForeignKey("EducationId");
-
-                    b.HasOne("JobApplicationTracker.Models.UserProfile.OtherExperience", null)
-                        .WithMany("Skills")
-                        .HasForeignKey("OtherExperienceId");
+                        .HasForeignKey("ExperienceId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("JobApplicationTracker.Models.UserProfile.ResumeSkill", null)
                         .WithMany("Usages")
-                        .HasForeignKey("ResumeSkillId");
-
-                    b.HasOne("JobApplicationTracker.Models.UserProfile.Training", null)
-                        .WithMany("Skills")
-                        .HasForeignKey("TrainingId");
-
-                    b.HasOne("JobApplicationTracker.Models.UserProfile.WorkExperience", null)
-                        .WithMany("Skills")
-                        .HasForeignKey("WorkExperienceId");
-                });
-
-            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.Training", b =>
-                {
-                    b.HasOne("JobApplicationTracker.Models.UserProfile.UserResume", null)
-                        .WithMany("Trainings")
-                        .HasForeignKey("UserResumeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.UserResume", b =>
@@ -604,8 +555,31 @@ namespace JobApplicationTracker.Migrations
                     b.HasOne("JobApplicationTracker.Models.User", null)
                         .WithOne("UserResume")
                         .HasForeignKey("JobApplicationTracker.Models.UserProfile.UserResume", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.Education", b =>
+                {
+                    b.HasOne("JobApplicationTracker.Models.UserProfile.UserResume", null)
+                        .WithMany("Education")
+                        .HasForeignKey("UserResumeId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.OtherExperience", b =>
+                {
+                    b.HasOne("JobApplicationTracker.Models.UserProfile.UserResume", null)
+                        .WithMany("UncategorizedExperiences")
+                        .HasForeignKey("UserResumeId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.Training", b =>
+                {
+                    b.HasOne("JobApplicationTracker.Models.UserProfile.UserResume", null)
+                        .WithMany("Trainings")
+                        .HasForeignKey("UserResumeId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.WorkExperience", b =>
@@ -613,8 +587,7 @@ namespace JobApplicationTracker.Migrations
                     b.HasOne("JobApplicationTracker.Models.UserProfile.UserResume", null)
                         .WithMany("WorkExperiences")
                         .HasForeignKey("UserResumeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("JobApplicationTracker.Models.JAStatusEntry", b =>
@@ -634,12 +607,7 @@ namespace JobApplicationTracker.Migrations
                     b.Navigation("UserResume");
                 });
 
-            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.Education", b =>
-                {
-                    b.Navigation("Skills");
-                });
-
-            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.OtherExperience", b =>
+            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.Experience", b =>
                 {
                     b.Navigation("Skills");
                 });
@@ -647,11 +615,6 @@ namespace JobApplicationTracker.Migrations
             modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.ResumeSkill", b =>
                 {
                     b.Navigation("Usages");
-                });
-
-            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.Training", b =>
-                {
-                    b.Navigation("Skills");
                 });
 
             modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.UserResume", b =>
@@ -665,11 +628,6 @@ namespace JobApplicationTracker.Migrations
                     b.Navigation("UncategorizedExperiences");
 
                     b.Navigation("WorkExperiences");
-                });
-
-            modelBuilder.Entity("JobApplicationTracker.Models.UserProfile.WorkExperience", b =>
-                {
-                    b.Navigation("Skills");
                 });
 #pragma warning restore 612, 618
         }

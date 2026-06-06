@@ -47,7 +47,7 @@ public class JobApplicationController : ControllerBase
             : null;
     }
 
-    [HttpGet("/all")]
+    [HttpGet("all")]
     public async Task<ActionResult<IEnumerable<JobApplicationDto>>> GetAllByAsync()
     {
         var applications = await _jobApplicationService.GetAllAsync();
@@ -64,17 +64,19 @@ public class JobApplicationController : ControllerBase
         return Ok(applications);
     }
 
-    [HttpGet("/minimal")]
+    [HttpGet("minimal")]
     public async Task<ActionResult<IEnumerable<JobApplicationMinimalDto>>> GetAllByUserMinimalAsync()
     {
         if (!TryGetUserId(out var userId))
             return Unauthorized(new ErrorResponseDto("USER_ID_MISSING", "User ID was not found in the authentication token."));
 
-        var applications = await _jobApplicationService.GetAllByUserMinimalAsync(userId);
+        bool archived = Request.Query.ContainsKey("archived");
+        
+        var applications = await _jobApplicationService.GetAllByUserMinimalAsync(userId, archived);
         return Ok(applications);
     }
 
-    [HttpGet("/notFinished")]
+    [HttpGet("notFinished")]
     public async Task<ActionResult<IEnumerable<JobApplicationMinimalDto>>> GetAllNotFinishedAsync()
     {
         if (!TryGetUserId(out var userId))

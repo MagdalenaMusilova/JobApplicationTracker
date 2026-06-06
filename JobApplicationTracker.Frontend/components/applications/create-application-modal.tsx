@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { applicationService } from '@/services/application-service';
-import { CreateJobApplicationDto, WorkMode, workModeLabels } from '@/types';
+import { CreateJobApplicationDto } from '@/types/JAObjects/JobApplications';
+import { JAStatusType } from '@/types/Enums/JAStatusType';
+import { JAEventType } from '@/types/Enums/JAEventType';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -40,18 +44,34 @@ export function CreateApplicationModal({
   prefillData,
 }: CreateApplicationModalProps) {
   const [formData, setFormData] = useState<CreateJobApplicationDto>({
-    companyName: prefillData?.companyName || '',
-    jobTitle: prefillData?.jobTitle || '',
-    jobUrl: prefillData?.jobUrl || '',
-    location: prefillData?.location || '',
-    workMode: prefillData?.workMode ?? WorkMode.Hybrid,
-    salaryMin: prefillData?.salaryMin,
-    salaryMax: prefillData?.salaryMax,
-    notes: prefillData?.notes || '',
-    contactName: prefillData?.contactName || '',
-    contactEmail: prefillData?.contactEmail || '',
+    company: prefillData?.company || '',
+    position: prefillData?.position || '',
+    note: prefillData?.note || '',
+    jobDescription: prefillData?.jobDescription || '',
+    initialStatus: {
+      jobApplicationId: prefillData?.initialStatus?.jobApplicationId || '1',
+      statusType: prefillData?.initialStatus?.statusType ?? JAStatusType.Wishlist,
+      note: prefillData?.initialStatus?.note || '',
+    },
+    jaEvent: prefillData?.jaEvent || null,
   });
 
+  const emptyJAEvent: CreateJAEventDto = {
+    jaStatusEntryId: '1',
+    eventName: '',
+    eventType: 0,
+    eventDate: '',
+    isWholeDay: false,
+    note: '',
+  };
+  
+  const handleAddEventChange = (checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      jaEvent: checked ? emptyJAEvent : null,
+    }));
+  };
+  
   const createMutation = useMutation({
     mutationFn: (data: CreateJobApplicationDto) => applicationService.create(data),
     onSuccess: () => {
@@ -66,24 +86,24 @@ export function CreateApplicationModal({
 
   const resetForm = () => {
     setFormData({
-      companyName: '',
-      jobTitle: '',
-      jobUrl: '',
-      location: '',
-      workMode: WorkMode.Hybrid,
-      salaryMin: undefined,
-      salaryMax: undefined,
-      notes: '',
-      contactName: '',
-      contactEmail: '',
+      company: '',
+      position: '',
+      note: '',
+      jobDescription: '',
+      initialStatus: {
+        jobApplicationId: '',
+        statusType: JAStatusType.Wishlist,
+        note: '',
+      },
+      jaEvent: null,
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.companyName || !formData.jobTitle) {
-      toast.error('Company name and job title are required');
+    if (!formData.company || !formData.position) {
+      toast.error('Company name and position are required');
       return;
     }
 
@@ -98,176 +118,284 @@ export function CreateApplicationModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Add New Application</DialogTitle>
-            <DialogDescription>
-              Track a new job application. Fill in the details below.
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-y-auto">
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>Create Job Application</DialogTitle>
+              <DialogDescription>
+                Track a new opportunity and optionally schedule an event.
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="grid gap-4 py-4">
-            {/* Company & Job Title */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name *</Label>
-                <Input
-                  id="companyName"
-                  value={formData.companyName}
-                  onChange={(e) => handleChange('companyName', e.target.value)}
-                  placeholder="e.g., Stripe"
-                  className="bg-input"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="jobTitle">Job Title *</Label>
-                <Input
-                  id="jobTitle"
-                  value={formData.jobTitle}
-                  onChange={(e) => handleChange('jobTitle', e.target.value)}
-                  placeholder="e.g., Senior Frontend Engineer"
-                  className="bg-input"
-                />
-              </div>
+            <div className="space-y-6 py-4">
+              {/* Basic Information */}
+              <section className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Company *</Label>
+                    <Input
+                        id="company"
+                        value={formData.company}
+                        onChange={(e) => handleChange("company", e.target.value)}
+                        placeholder="Google"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="position">Position *</Label>
+                    <Input
+                        id="position"
+                        value={formData.position}
+                        onChange={(e) => handleChange("position", e.target.value)}
+                        placeholder="Software Engineer"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="note">Application Notes</Label>
+                  <Textarea
+                      id="note"
+                      value={formData.note ?? ""}
+                      onChange={(e) => handleChange("note", e.target.value)}
+                      placeholder="Referral, recruiter contact, salary expectations..."
+                      rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="jobDescription">Job Description</Label>
+                  <Textarea
+                      id="jobDescription"
+                      value={formData.jobDescription ?? ""}
+                      onChange={(e) =>
+                          handleChange("jobDescription", e.target.value)
+                      }
+                      placeholder="Paste the job description..."
+                      rows={6}
+                  />
+                </div>
+              </section>
+
+              <Separator />
+
+              {/* Status */}
+              <section className="space-y-4">
+                <div>
+                  <h3 className="font-semibold">Application Status</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Track the current stage of this application.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Status Type *</Label>
+                  <Select
+                      value={formData.initialStatus.statusType.toString()}
+                      onValueChange={(value) =>
+                          handleNestedChange(
+                              "initialStatus",
+                              "statusType",
+                              Number(value)
+                          )
+                      }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {Object.entries(JAStatusType)
+                          .filter(([key]) => isNaN(Number(key)))
+                          .map(([key, value]) => (
+                              <SelectItem
+                                  key={value}
+                                  value={value.toString()}
+                              >
+                                {key.replace(/([A-Z])/g, " $1").trim()}
+                              </SelectItem>
+                          ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="initialStatusNote">Status Notes</Label>
+                  <Textarea
+                      id="initialStatusNote"
+                      value={formData.initialStatus.note ?? ""}
+                      onChange={(e) =>
+                          handleNestedChange(
+                              "initialStatus",
+                              "note",
+                              e.target.value
+                          )
+                      }
+                      placeholder="Optional notes about this status..."
+                      rows={3}
+                  />
+                </div>
+              </section>
+
+              <Separator />
+
+              {/* Event Toggle */}
+              <section className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div>
+                    <p className="font-medium">Schedule an Event</p>
+                    <p className="text-sm text-muted-foreground">
+                      Add an interview, follow-up, reminder, or deadline.
+                    </p>
+                  </div>
+
+                  <Checkbox
+                      checked={formData.jaEvent !== null}
+                      onCheckedChange={(checked) =>
+                          handleAddEventChange(Boolean(checked))
+                      }
+                  />
+                </div>
+
+                {formData.jaEvent && (
+                    <div className="space-y-4 rounded-lg border p-4">
+                      <div>
+                        <h3 className="font-semibold">Event Details</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Information about the scheduled event.
+                        </p>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Event Type *</Label>
+
+                          <Select
+                              value={formData.jaEvent.eventType.toString()}
+                              onValueChange={(value) =>
+                                  handleNestedChange(
+                                      "jaEvent",
+                                      "eventType",
+                                      Number(value)
+                                  )
+                              }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select event type" />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                              {Object.entries(JAEventType)
+                                  .filter(([key]) => isNaN(Number(key)))
+                                  .map(([key, value]) => (
+                                      <SelectItem
+                                          key={value}
+                                          value={value.toString()}
+                                      >
+                                        {key.replace(/([A-Z])/g, " $1").trim()}
+                                      </SelectItem>
+                                  ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="eventDate">Date & Time *</Label>
+                          <Input
+                              id="eventDate"
+                              type="datetime-local"
+                              value={formData.jaEvent.eventDate}
+                              onChange={(e) =>
+                                  handleNestedChange(
+                                      "jaEvent",
+                                      "eventDate",
+                                      e.target.value
+                                  )
+                              }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="eventName">Event Name *</Label>
+                        <Input
+                            id="eventName"
+                            value={formData.jaEvent.eventName}
+                            onChange={(e) =>
+                                handleNestedChange(
+                                    "jaEvent",
+                                    "eventName",
+                                    e.target.value
+                                )
+                            }
+                            placeholder="Technical Interview"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="isWholeDay"
+                            checked={formData.jaEvent.isWholeDay}
+                            onCheckedChange={(checked) =>
+                                handleNestedChange(
+                                    "jaEvent",
+                                    "isWholeDay",
+                                    Boolean(checked)
+                                )
+                            }
+                        />
+                        <Label htmlFor="isWholeDay">
+                          All-day event
+                        </Label>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="eventNote">Event Notes</Label>
+                        <Textarea
+                            id="eventNote"
+                            value={formData.jaEvent.note ?? ""}
+                            onChange={(e) =>
+                                handleNestedChange(
+                                    "jaEvent",
+                                    "note",
+                                    e.target.value
+                                )
+                            }
+                            placeholder="Meeting link, interviewer names, preparation notes..."
+                            rows={3}
+                        />
+                      </div>
+                    </div>
+                )}
+              </section>
             </div>
 
-            {/* Job URL */}
-            <div className="space-y-2">
-              <Label htmlFor="jobUrl">Job URL</Label>
-              <Input
-                id="jobUrl"
-                type="url"
-                value={formData.jobUrl || ''}
-                onChange={(e) => handleChange('jobUrl', e.target.value)}
-                placeholder="https://..."
-                className="bg-input"
-              />
-            </div>
+            <DialogFooter>
+              <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
 
-            {/* Location & Work Mode */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={formData.location || ''}
-                  onChange={(e) => handleChange('location', e.target.value)}
-                  placeholder="e.g., San Francisco, CA"
-                  className="bg-input"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="workMode">Work Mode</Label>
-                <Select
-                  value={formData.workMode.toString()}
-                  onValueChange={(value) => handleChange('workMode', Number(value))}
-                >
-                  <SelectTrigger className="bg-input">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(workModeLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Salary Range */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="salaryMin">Min Salary</Label>
-                <Input
-                  id="salaryMin"
-                  type="number"
-                  value={formData.salaryMin || ''}
-                  onChange={(e) =>
-                    handleChange('salaryMin', e.target.value ? Number(e.target.value) : undefined)
-                  }
-                  placeholder="e.g., 150000"
-                  className="bg-input"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="salaryMax">Max Salary</Label>
-                <Input
-                  id="salaryMax"
-                  type="number"
-                  value={formData.salaryMax || ''}
-                  onChange={(e) =>
-                    handleChange('salaryMax', e.target.value ? Number(e.target.value) : undefined)
-                  }
-                  placeholder="e.g., 200000"
-                  className="bg-input"
-                />
-              </div>
-            </div>
-
-            {/* Contact Info */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="contactName">Contact Name</Label>
-                <Input
-                  id="contactName"
-                  value={formData.contactName || ''}
-                  onChange={(e) => handleChange('contactName', e.target.value)}
-                  placeholder="e.g., John Smith"
-                  className="bg-input"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contactEmail">Contact Email</Label>
-                <Input
-                  id="contactEmail"
-                  type="email"
-                  value={formData.contactEmail || ''}
-                  onChange={(e) => handleChange('contactEmail', e.target.value)}
-                  placeholder="e.g., recruiter@company.com"
-                  className="bg-input"
-                />
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes || ''}
-                onChange={(e) => handleChange('notes', e.target.value)}
-                placeholder="Any additional notes about this application..."
-                rows={3}
-                className="bg-input"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Adding...
-                </>
-              ) : (
-                'Add Application'
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              <Button
+                  type="submit"
+                  disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                ) : (
+                    "Create Application"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog> 
   );
 }
