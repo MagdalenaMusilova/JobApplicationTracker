@@ -24,9 +24,9 @@ public class JAStatusEntryService : IJAStatusEntryService
         return _mapper.Map<JAStatusEntryDto>(entry);   
     }
 
-    public async Task<List<JAStatusEntryDto>> GetByJobApplicationIdsAsync(IEnumerable<Guid> jobApplicationId)
+    public async Task<List<JAStatusEntryDto>> GetByJobApplicationIdsAsync(IEnumerable<Guid> jobApplicationIds)
     {
-        var res = await _jaStatusEntryRepository.GetByJobApplicationIdsAsync(jobApplicationId);
+        var res = await _jaStatusEntryRepository.GetByJobApplicationIdsAsync(jobApplicationIds);
         return res.Select(e => _mapper.Map<JAStatusEntryDto>(e)).ToList();  
     }
 

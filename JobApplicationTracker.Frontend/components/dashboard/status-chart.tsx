@@ -1,10 +1,7 @@
 'use client';
 
-import {
-  DashboardStatsDto,
-  ApplicationStatus,
-  applicationStatusLabels,
-} from '@/types';
+import { DashboardStatsDto } from '@/types/Dashboard/DashboardStatsDto';
+import { JAStatusType, jaStatusLabels } from '@/types/Enums/JAStatusType';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   BarChart,
@@ -20,24 +17,22 @@ interface StatusChartProps {
   stats: DashboardStatsDto;
 }
 
-const statusColors: Record<ApplicationStatus, string> = {
-  [ApplicationStatus.Applied]: '#3b82f6',
-  [ApplicationStatus.PhoneScreen]: '#06b6d4',
-  [ApplicationStatus.Interview]: '#6366f1',
-  [ApplicationStatus.TechnicalAssessment]: '#a855f7',
-  [ApplicationStatus.FinalRound]: '#f59e0b',
-  [ApplicationStatus.OfferReceived]: '#10b981',
-  [ApplicationStatus.Accepted]: '#22c55e',
-  [ApplicationStatus.Rejected]: '#ef4444',
-  [ApplicationStatus.Withdrawn]: '#6b7280',
+const statusColors: Record<JAStatusType, string> = {
+  [JAStatusType.Wishlist]: '#6b7280',
+  [JAStatusType.Applied]: '#3b82f6',
+  [JAStatusType.Task]: '#06b6d4',
+  [JAStatusType.Interview]: '#6366f1',
+  [JAStatusType.Offer]: '#f59e0b',
+  [JAStatusType.Accepted]: '#22c55e',
+  [JAStatusType.Rejected]: '#ef4444',
 };
 
 export function StatusChart({ stats }: StatusChartProps) {
   const data = Object.entries(stats.applicationsByStatus)
     .map(([status, count]) => ({
-      status: applicationStatusLabels[Number(status) as ApplicationStatus],
+      status: jaStatusLabels[Number(status) as JAStatusType],
       count,
-      statusKey: Number(status) as ApplicationStatus,
+      statusKey: Number(status) as JAStatusType,
     }))
     .filter(item => item.count > 0);
 

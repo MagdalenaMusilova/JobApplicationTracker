@@ -3,11 +3,8 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { applicationService } from '@/services/application-service';
-import {
-  ApplicationStatus,
-  applicationStatusLabels,
-  UpdateStatusDto,
-} from '@/types';
+import { CreateJAStatusEntryDto } from '@/types/JAObjects/JAStatuses/CreateJAStatusEntryDto';
+import { JAStatusType, jaStatusLabels } from '@/types/Enums/JAStatusType';
 import {
   Dialog,
   DialogContent,
@@ -33,7 +30,7 @@ interface UpdateStatusModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   applicationId: string;
-  currentStatus: ApplicationStatus;
+  currentStatus: JAStatusType;
 }
 
 export function UpdateStatusModal({
@@ -42,13 +39,13 @@ export function UpdateStatusModal({
   applicationId,
   currentStatus,
 }: UpdateStatusModalProps) {
-  const [newStatus, setNewStatus] = useState<ApplicationStatus>(currentStatus);
+  const [newStatus, setNewStatus] = useState<JAStatusType>(currentStatus);
   const [notes, setNotes] = useState('');
   const queryClient = useQueryClient();
 
   const updateMutation = useMutation({
-    mutationFn: (data: UpdateStatusDto) =>
-      applicationService.updateStatus(applicationId, data),
+    mutationFn: (data: CreateJAStatusEntryDto) =>
+      applicationService.updateStatus(data),
     onSuccess: () => {
       toast.success('Status updated successfully');
       queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
@@ -71,8 +68,9 @@ export function UpdateStatusModal({
     }
 
     updateMutation.mutate({
-      newStatus,
-      notes: notes || undefined,
+      jobApplicationId: applicationId,
+      statusType: newStatus,
+      note: notes || undefined,
     });
   };
 
@@ -98,7 +96,7 @@ export function UpdateStatusModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(applicationStatusLabels).map(([value, label]) => (
+                  {Object.entries(jaStatusLabels).map(([value, label]) => (
                     <SelectItem key={value} value={value}>
                       {label}
                     </SelectItem>

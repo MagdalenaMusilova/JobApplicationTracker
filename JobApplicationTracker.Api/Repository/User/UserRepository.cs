@@ -31,6 +31,13 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync();
     }
 
+    public async Task<User?> UpdateAsync(User user)
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+        return user;
+    }
+
     public async Task<bool> DeleteAsync(string id)
     {
         var user = await _context.Users.FindAsync(id);

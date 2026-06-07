@@ -5,10 +5,12 @@ import { format } from 'date-fns';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { eventService } from '@/services/event-service';
 import {
-  ApplicationEventDto,
+  JAEventDto,
   eventTypeLabels,
   eventTypeColors,
-} from '@/types';
+} from '@/types/JAObjects/JAEvents/JAEventDto';
+import { JAEventType } from '@/types/Enums/JAEventType';
+import { eventTypeLabels as eventTypeLabelsEnum, eventTypeColors as eventTypeColorsEnum } from '@/types/Enums/JAEventType';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +22,7 @@ import { toast } from 'sonner';
 
 interface ApplicationEventsProps {
   applicationId: string;
-  events: ApplicationEventDto[];
+  events: JAEventDto[];
 }
 
 export function ApplicationEvents({ applicationId, events }: ApplicationEventsProps) {
@@ -39,11 +41,11 @@ export function ApplicationEvents({ applicationId, events }: ApplicationEventsPr
   });
 
   const sortedEvents = [...events].sort(
-    (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+    (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
   );
 
-  const upcomingEvents = sortedEvents.filter(e => !e.isCompleted);
-  const completedEvents = sortedEvents.filter(e => e.isCompleted);
+  const upcomingEvents = sortedEvents.filter(e => new Date(e.eventDate) >= new Date());
+  const completedEvents = sortedEvents.filter(e => new Date(e.eventDate) < new Date());
 
   return (
     <Card className="bg-card border-border">
@@ -119,57 +121,47 @@ export function ApplicationEvents({ applicationId, events }: ApplicationEventsPr
 }
 
 interface EventItemProps {
-  event: ApplicationEventDto;
+  event: JAEventDto;
   onToggleComplete: (completed: boolean) => void;
 }
 
 function EventItem({ event, onToggleComplete }: EventItemProps) {
+  const isCompleted = new Date(event.eventDate) < new Date();
   return (
     <div
       className={cn(
         'flex items-start gap-3 p-3 rounded-lg border border-border',
-        event.isCompleted && 'opacity-60'
+        isCompleted && 'opacity-60'
       )}
     >
-      <Checkbox
-        checked={event.isCompleted}
-        onCheckedChange={(checked) => onToggleComplete(checked as boolean)}
-        className="mt-1"
-      />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <Badge
             variant="outline"
-            className={cn('text-xs', eventTypeColors[event.eventType])}
+            className={cn('text-xs', eventTypeColorsEnum[event.eventType])}
           >
-            {eventTypeLabels[event.eventType]}
+            {eventTypeLabelsEnum[event.eventType]}
           </Badge>
         </div>
-        {event.description && (
+        {event.eventName && (
           <p
             className={cn(
               'text-sm mt-1',
-              event.isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'
+              isCompleted ? 'line-through text-muted-foreground' : 'text-foreground'
             )}
           >
-            {event.description}
+            {event.eventName}
           </p>
         )}
         <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {format(new Date(event.scheduledAt), 'MMM d, yyyy h:mm a')}
+            {format(new Date(event.eventDate), 'MMM d, yyyy h:mm a')}
           </span>
-          {event.location && (
-            <span className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              {event.location}
-            </span>
-          )}
         </div>
-        {event.notes && (
+        {event.note && (
           <p className="text-xs text-muted-foreground mt-2 italic">
-            {event.notes}
+            {event.note}
           </p>
         )}
       </div>

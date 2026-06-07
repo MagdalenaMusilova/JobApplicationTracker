@@ -26,83 +26,20 @@ import {
 } from '@/components/ui/select';
 import {
   Sparkles,
-  CheckCircle2,
-  XCircle,
-  Lightbulb,
   Target,
-  AlertCircle,
   Loader2,
 } from 'lucide-react';
 import { applicationService } from '@/services/application-service';
-import { WorkMode, workModeLabels } from '@/types';
-import type { CreateJobApplicationDto, JobMatchResultDto } from '@/types';
+import { matchService } from '@/services/match-service';
+import { WorkMode, workModeLabels } from '@/types/Enums/WorkMode';
+import type { CreateJobApplicationDto } from '@/types/JAObjects/JobApplications/CreateJobApplicationDto';
 import { useRouter } from 'next/navigation';
-
-// Mock match analysis function (would be backend API call)
-async function analyzeJobMatch(jobDescription: string): Promise<JobMatchResultDto> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Mock analysis result based on job description content
-  const hasReact = jobDescription.toLowerCase().includes('react');
-  const hasTypeScript = jobDescription.toLowerCase().includes('typescript');
-  const hasNext = jobDescription.toLowerCase().includes('next');
-  const hasNode = jobDescription.toLowerCase().includes('node');
-  const hasPython = jobDescription.toLowerCase().includes('python');
-  const hasAWS = jobDescription.toLowerCase().includes('aws');
-  const hasDocker = jobDescription.toLowerCase().includes('docker');
-  const hasGraphQL = jobDescription.toLowerCase().includes('graphql');
-  
-  let score = 60; // Base score
-  const matchReasons: string[] = [];
-  const missingSkills: string[] = [];
-  const recommendations: string[] = [];
-  
-  if (hasReact) { score += 10; matchReasons.push('Strong React experience matches requirement'); }
-  if (hasTypeScript) { score += 10; matchReasons.push('TypeScript proficiency aligns well'); }
-  if (hasNext) { score += 8; matchReasons.push('Next.js expertise is a strong match'); }
-  if (hasNode) { score += 5; matchReasons.push('Node.js backend experience is relevant'); }
-  if (hasGraphQL) { score += 5; matchReasons.push('GraphQL knowledge matches requirements'); }
-  
-  if (hasPython && !hasNode) { missingSkills.push('Python'); recommendations.push('Consider taking a Python course to expand backend skills'); }
-  if (hasAWS) { missingSkills.push('AWS'); recommendations.push('AWS certifications could strengthen your application'); }
-  if (hasDocker) { missingSkills.push('Docker/Kubernetes'); recommendations.push('Container experience would be beneficial'); }
-  
-  if (matchReasons.length === 0) {
-    matchReasons.push('Your frontend skills provide a foundation for this role');
-  }
-  
-  if (missingSkills.length === 0) {
-    missingSkills.push('No major gaps identified');
-  }
-  
-  score = Math.min(98, Math.max(40, score));
-  
-  let overallAssessment = '';
-  if (score >= 85) {
-    overallAssessment = 'Excellent match! Your skills and experience align very well with this role. You should strongly consider applying.';
-  } else if (score >= 70) {
-    overallAssessment = 'Good match. You have many of the required skills. Consider highlighting your relevant experience in your application.';
-  } else if (score >= 55) {
-    overallAssessment = 'Moderate match. While you have some relevant skills, there are areas for growth. This could be a stretch role.';
-  } else {
-    overallAssessment = 'This role may require skills outside your current expertise. Consider if this aligns with your career goals.';
-  }
-  
-  return {
-    matchScore: score,
-    matchReasons,
-    missingSkills,
-    recommendations,
-    overallAssessment,
-  };
-}
 
 export default function MatchPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [jobDescription, setJobDescription] = useState('');
-  const [matchResult, setMatchResult] = useState<JobMatchResultDto | null>(null);
+  const [matchResult, setMatchResult] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -111,8 +48,10 @@ export default function MatchPage() {
     
     setIsAnalyzing(true);
     try {
-      const result = await analyzeJobMatch(jobDescription);
+      const result = await matchService.analyzeMatch(jobDescription);
       setMatchResult(result);
+    } catch (error) {
+      console.error('Failed to analyze match:', error);
     } finally {
       setIsAnalyzing(false);
     }
@@ -121,18 +60,6 @@ export default function MatchPage() {
   const handleClear = () => {
     setJobDescription('');
     setMatchResult(null);
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-500';
-    if (score >= 60) return 'text-yellow-500';
-    return 'text-orange-500';
-  };
-
-  const getScoreBgColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-yellow-500';
-    return 'bg-orange-500';
   };
 
   return (
@@ -159,15 +86,7 @@ export default function MatchPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="Paste job description here...
-
-Example:
-We're looking for a Senior Frontend Engineer with experience in:
-- React and TypeScript
-- Next.js or similar frameworks
-- RESTful APIs and GraphQL
-- Modern CSS (Tailwind, CSS-in-JS)
-- Testing frameworks (Jest, Playwright)"
+                placeholder="Paste job description here..."
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
                 rows={16}
@@ -229,71 +148,10 @@ We're looking for a Senior Frontend Engineer with experience in:
 
               {matchResult && !isAnalyzing && (
                 <div className="space-y-6">
-                  {/* Score */}
-                  <div className="text-center">
-                    <div className={`text-5xl font-bold ${getScoreColor(matchResult.matchScore)}`}>
-                      {matchResult.matchScore}%
-                    </div>
-                    <p className="text-muted-foreground mt-1">Match Score</p>
-                    <Progress 
-                      value={matchResult.matchScore} 
-                      className={`mt-3 h-2 ${getScoreBgColor(matchResult.matchScore)}`} 
-                    />
+                  {/* AI Plaintext Result */}
+                  <div className="p-4 rounded-lg bg-muted/30 border whitespace-pre-wrap font-sans text-sm leading-relaxed overflow-auto max-h-[500px]">
+                    {matchResult}
                   </div>
-
-                  {/* Overall Assessment */}
-                  <div className="p-4 rounded-lg bg-muted/50 border">
-                    <p className="text-sm">{matchResult.overallAssessment}</p>
-                  </div>
-
-                  {/* Matching Skills */}
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Why You Match
-                    </h4>
-                    <ul className="space-y-1">
-                      {matchResult.matchReasons.map((reason, i) => (
-                        <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                          <span className="text-green-500 mt-1">+</span>
-                          {reason}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Missing Skills */}
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-yellow-500" />
-                      Areas to Develop
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {matchResult.missingSkills.map((skill, i) => (
-                        <Badge key={i} variant="outline" className="text-yellow-600 border-yellow-500/30">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Recommendations */}
-                  {matchResult.recommendations.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium flex items-center gap-2">
-                        <Lightbulb className="h-4 w-4 text-blue-500" />
-                        Recommendations
-                      </h4>
-                      <ul className="space-y-1">
-                        {matchResult.recommendations.map((rec, i) => (
-                          <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                            <span className="text-blue-500 mt-1">*</span>
-                            {rec}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
 
                   {/* Create Application Button */}
                   <Button 
@@ -313,7 +171,6 @@ We're looking for a Senior Frontend Engineer with experience in:
       <CreateApplicationModal
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}
-        matchScore={matchResult?.matchScore}
       />
     </ProtectedLayout>
   );
@@ -322,21 +179,19 @@ We're looking for a Senior Frontend Engineer with experience in:
 function CreateApplicationModal({
   open,
   onOpenChange,
-  matchScore,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  matchScore?: number;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<CreateJobApplicationDto>({
-    companyName: '',
-    jobTitle: '',
+    company: '',
+    position: '',
     jobUrl: '',
     location: '',
     workMode: WorkMode.Remote,
-    notes: matchScore ? `AI Match Score: ${matchScore}%` : '',
+    notes: '',
   });
 
   const createMutation = useMutation({
@@ -365,22 +220,22 @@ function CreateApplicationModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="companyName">Company Name *</Label>
+            <Label htmlFor="company">Company Name *</Label>
             <Input
-              id="companyName"
-              value={formData.companyName}
-              onChange={e => setFormData(prev => ({ ...prev, companyName: e.target.value }))}
+              id="company"
+              value={formData.company}
+              onChange={e => setFormData(prev => ({ ...prev, company: e.target.value }))}
               placeholder="e.g., Acme Inc."
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="jobTitle">Position *</Label>
+            <Label htmlFor="position">Position *</Label>
             <Input
-              id="jobTitle"
-              value={formData.jobTitle}
-              onChange={e => setFormData(prev => ({ ...prev, jobTitle: e.target.value }))}
+              id="position"
+              value={formData.position}
+              onChange={e => setFormData(prev => ({ ...prev, position: e.target.value }))}
               placeholder="e.g., Senior Frontend Engineer"
               required
             />

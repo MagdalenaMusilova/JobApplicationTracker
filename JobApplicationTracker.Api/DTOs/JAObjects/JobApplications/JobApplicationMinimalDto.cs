@@ -1,5 +1,4 @@
-﻿using JobApplicationTracker.DTOs.JAEvent;
-using JobApplicationTracker.Enums;
+﻿using JobApplicationTracker.Enums;
 
 namespace JobApplicationTracker.DTOs;
 

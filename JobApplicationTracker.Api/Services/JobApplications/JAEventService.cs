@@ -30,11 +30,9 @@ public class JAEventService : IJAEventService
 
     public async Task<List<JAEventDto>> GetAllByUserId(string userId)
     {
-        var applications = await _jobApplicationService.GetAllByUserAsync(userId);
-        var applicationIds = applications.Select(a => a.Id);
-        var jaStatuses = await _jaStatusEntryService.GetByJobApplicationIdsAsync(applicationIds);
+        var res = await _jaEventRepository.GetByUserIdAsync(userId);
         
-        return jaStatuses.Select(s => _mapper.Map<JAEventDto>(s)).ToList();
+        return res.Select(e => _mapper.Map<JAEventDto>(e)).ToList();
     }
 
     public async Task<List<JAEventDto>> GetByStatusIdsAsync(IEnumerable<Guid> statusIds)
@@ -47,7 +45,7 @@ public class JAEventService : IJAEventService
     public async Task<JAEventDto> AddAsync(CreateJAEventDto jaEvent)
     {
         var existingEvent = await _jaEventRepository.GetByStatusIdsAsync([jaEvent.JAStatusEntryId]);
-        if (existingEvent != null) throw new InvalidOperationException("Event already exists for this status entry");
+        if (existingEvent.Any()) throw new InvalidOperationException("Event already exists for this status entry");
         
         var entity = new JAEvent()
         {

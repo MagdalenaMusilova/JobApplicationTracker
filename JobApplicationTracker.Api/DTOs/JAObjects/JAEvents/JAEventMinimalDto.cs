@@ -1,6 +1,6 @@
 ﻿using JobApplicationTracker.Enums;
 
-namespace JobApplicationTracker.DTOs.JAEvent;
+namespace JobApplicationTracker.DTOs;
 
 public class JAEventMinimalDto
 {

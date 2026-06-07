@@ -32,6 +32,22 @@ public class JAEventRepository : IJAEventRepository
             .ToListAsync();
     }
 
+    public async Task<List<JAEvent>> GetByUserIdAsync(string userId)
+    {
+        var shortcutEventIds = await _context.JaShortcutView
+            .AsNoTracking()
+            .Where(s => s.UserId == userId)
+            .Select(s => s.EventId)
+            .ToListAsync();
+
+        var result = await _context.JAEventEntries
+            .AsNoTracking()
+            .Where(e => shortcutEventIds.Contains(e.Id))
+            .ToListAsync();
+
+        return result;
+    }
+
     public async Task<JAEvent> AddAsync(JAEvent jaEvent)
     {
         _context.JAEventEntries.Add(jaEvent);

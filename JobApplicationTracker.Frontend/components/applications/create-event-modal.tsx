@@ -3,11 +3,9 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { eventService } from '@/services/event-service';
-import {
-  ApplicationEventType,
-  CreateApplicationEventDto,
-  eventTypeLabels,
-} from '@/types';
+import { JAEventType } from '@/types/Enums/JAEventType';
+import { CreateJAEventDto } from '@/types/JAObjects/JAEvents/CreateJAEventDto';
+import { eventTypeLabels } from '@/types/Enums/JAEventType';
 import {
   Dialog,
   DialogContent,
@@ -37,21 +35,22 @@ interface CreateEventModalProps {
 }
 
 export function CreateEventModal({
-  open,
-  onOpenChange,
-  applicationId,
-}: CreateEventModalProps) {
+                                   open,
+                                   onOpenChange,
+                                   applicationId,
+                                 }: CreateEventModalProps) {
   const [formData, setFormData] = useState({
-    eventType: ApplicationEventType.Interview,
-    scheduledAt: '',
-    description: '',
-    location: '',
-    notes: '',
+    eventType: JAEventType.Interview,
+    eventDate: '',
+    eventName: '',
+    note: '',
+    isWholeDay: false,
   });
+
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateApplicationEventDto) => eventService.create(data),
+    mutationFn: (data: CreateJAEventDto) => eventService.create(data),
     onSuccess: () => {
       toast.success('Event created successfully');
       queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
@@ -66,140 +65,154 @@ export function CreateEventModal({
 
   const resetForm = () => {
     setFormData({
-      eventType: ApplicationEventType.Interview,
-      scheduledAt: '',
-      description: '',
-      location: '',
-      notes: '',
+      eventType: JAEventType.Interview,
+      eventDate: '',
+      eventName: '',
+      note: '',
+      isWholeDay: false,
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.scheduledAt) {
+
+    if (!formData.eventDate) {
       toast.error('Please select a date and time');
       return;
     }
 
     createMutation.mutate({
-      applicationId,
+      jaStatusEntryId: '',
+      eventName: formData.eventName || 'Event',
       eventType: formData.eventType,
-      scheduledAt: new Date(formData.scheduledAt).toISOString(),
-      description: formData.description || undefined,
-      location: formData.location || undefined,
-      notes: formData.notes || undefined,
+      eventDate: new Date(formData.eventDate).toISOString(),
+      isWholeDay: formData.isWholeDay,
+      note: formData.note || undefined,
     });
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Add Event</DialogTitle>
-            <DialogDescription>
-              Schedule an interview, call, or follow-up for this application.
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>Add Event</DialogTitle>
+              <DialogDescription>
+                Schedule an interview, call, or follow-up for this application.
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="eventType">Event Type</Label>
-              <Select
-                value={formData.eventType.toString()}
-                onValueChange={(value) =>
-                  setFormData(prev => ({ ...prev, eventType: Number(value) }))
-                }
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="eventType">Event Type</Label>
+                <Select
+                    value={formData.eventType.toString()}
+                    onValueChange={(value) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          eventType: Number(value),
+                        }))
+                    }
+                >
+                  <SelectTrigger className="bg-input">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(eventTypeLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="eventDate">Date & Time *</Label>
+                <Input
+                    id="eventDate"
+                    type="datetime-local"
+                    value={formData.eventDate}
+                    onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          eventDate: e.target.value,
+                        }))
+                    }
+                    className="bg-input"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                    id="isWholeDay"
+                    type="checkbox"
+                    checked={formData.isWholeDay}
+                    onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          isWholeDay: e.target.checked,
+                        }))
+                    }
+                />
+                <Label htmlFor="isWholeDay">Whole day event</Label>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="eventName">Event Name</Label>
+                <Input
+                    id="eventName"
+                    value={formData.eventName}
+                    onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          eventName: e.target.value,
+                        }))
+                    }
+                    placeholder="e.g., Technical interview with engineering team"
+                    className="bg-input"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="note">Notes</Label>
+                <Textarea
+                    id="note"
+                    value={formData.note}
+                    onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          note: e.target.value,
+                        }))
+                    }
+                    placeholder="Any additional notes..."
+                    rows={2}
+                    className="bg-input"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
               >
-                <SelectTrigger className="bg-input">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(eventTypeLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="scheduledAt">Date & Time *</Label>
-              <Input
-                id="scheduledAt"
-                type="datetime-local"
-                value={formData.scheduledAt}
-                onChange={(e) =>
-                  setFormData(prev => ({ ...prev, scheduledAt: e.target.value }))
-                }
-                className="bg-input"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData(prev => ({ ...prev, description: e.target.value }))
-                }
-                placeholder="e.g., Technical interview with engineering team"
-                className="bg-input"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) =>
-                  setFormData(prev => ({ ...prev, location: e.target.value }))
-                }
-                placeholder="e.g., Zoom, Google Meet, Office"
-                className="bg-input"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) =>
-                  setFormData(prev => ({ ...prev, notes: e.target.value }))
-                }
-                placeholder="Any additional notes..."
-                rows={2}
-                className="bg-input"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                'Create Event'
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                ) : (
+                    'Create Event'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
   );
 }

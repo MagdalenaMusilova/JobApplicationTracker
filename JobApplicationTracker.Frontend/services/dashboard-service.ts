@@ -1,9 +1,7 @@
 import httpClient from '@/lib/http-client';
 import { API_ENDPOINTS } from '@/lib/endpoints';
-import {
-  DashboardStatsDto,
-  JobApplicationListDto,
-} from '@/types';
+import { DashboardStatsDto } from '@/types/Dashboard/DashboardStatsDto';
+import { JobApplicationMinimalDto } from '@/types/JAObjects/JobApplications/JobApplicationMinimalDto';
 
 export const dashboardService = {
   async getStats(): Promise<DashboardStatsDto> {
@@ -13,8 +11,8 @@ export const dashboardService = {
     return response.data;
   },
 
-  async getRecent(): Promise<JobApplicationListDto[]> {
-    const response = await httpClient.get<JobApplicationListDto[]>(
+  async getRecent(): Promise<JobApplicationMinimalDto[]> {
+    const response = await httpClient.get<JobApplicationMinimalDto[]>(
         API_ENDPOINTS.DASHBOARD.RECENT
     );
     return response.data;

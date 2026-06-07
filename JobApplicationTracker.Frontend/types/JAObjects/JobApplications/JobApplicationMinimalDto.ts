@@ -1,12 +1,13 @@
-﻿import type { JAEventMinimalDto } from '../JAEvents/JAEventMinimalDto';
+﻿import type { JAStatusType } from '../../Enums/JAStatusType';
+import type { JAEventType } from '../../Enums/JAEventType';
 
 export interface JobApplicationMinimalDto {
-  jAId: string;
+  jaId: string;
   company: string;
   position: string;
   jaStatus: JAStatusType;
-  eventType: JAEventType;
-  eventDate: Date;
-  isWholeDay: boolean;
-  updatedAt: Date;
+  eventType: JAEventType | null;
+  eventDate: string | null;
+  isWholeDay: boolean | null;
+  updatedAt: string;
 }

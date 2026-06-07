@@ -1,6 +1,7 @@
 'use client';
 
-import { JobApplicationDto, workModeLabels } from '@/types';
+import { JobApplicationDto } from '@/types/JAObjects/JobApplications/JobApplicationDto';
+import { workModeLabels } from '@/types/Enums/WorkMode';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DollarSign,

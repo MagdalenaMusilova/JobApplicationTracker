@@ -2,7 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { authService } from '@/services/auth-service';
-import { LoginDto, RegisterDto, AuthResponseDto } from '@/types';
+import { LoginDto } from '@/types/Auth/SignInDto';
+import { RegisterDto } from '@/types/Auth/SignUpDto';
+import { AuthResponseDto } from '@/types/Auth/SignInResponseDto';
 
 interface User {
   email: string;

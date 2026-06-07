@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ArrowLeft, Pencil, X, Check, Plus, Trash2, Calendar, Clock } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
 import { applicationService } from '@/services/application-service';
 import { eventService } from '@/services/event-service';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
@@ -41,23 +42,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-import type {
-  JAStatusEntryDto,
-} from '@/types/JAObjects/JAStatuses/JAStatusEntryDto';
-
-import type {
-  UpdateJobApplicationDto,
-} from '@/types/JAObjects/JobApplications/UpdateJobApplicationDto';
-
-import { JobApplicationMinimalDto } from '@/types/JAObjects/JobApplications/JobApplicationMinimalDto'
-import { JAStatusType, 
-  applicationStatusColors, 
-  jaStatusLabels  } from '@/types/Enums/JAStatusType'
-import {
-  JAEventType,
-  eventTypeLabels,
-  eventTypeColors
-} from '@/types/Enums/JAEventType'
+import { JobApplicationDto } from '@/types/JAObjects/JobApplications/JobApplicationDto';
+import { JAStatusEntryDto } from '@/types/JAObjects/JAStatuses/JAStatusEntryDto';
+import { UpdateJobApplicationDto } from '@/types/JAObjects/JobApplications/UpdateJobApplicationDto';
+import { JobApplicationMinimalDto } from '@/types/JAObjects/JobApplications/JobApplicationMinimalDto';
+import { JAStatusType, applicationStatusColors, jaStatusLabels } from '@/types/Enums/JAStatusType';
+import { JAEventType, eventTypeLabels, eventTypeColors } from '@/types/Enums/JAEventType';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -67,7 +57,7 @@ export default function ApplicationDetailPage({ params }: PageProps) {
   const { id: applicationId } = use(params);
   const router = useRouter();
   const queryClient = useQueryClient();
-
+  
   // Edit mode state for batch editing
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<UpdateJobApplicationDto>({});
@@ -76,7 +66,7 @@ export default function ApplicationDetailPage({ params }: PageProps) {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusModalMode, setStatusModalMode] = useState<'add' | 'edit'>('add');
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
-  const [statusForm, setStatusForm] = useState({ status: JAStatusType.Applied, notes: '' });
+  const [statusForm, setStatusForm] = useState({ jaStatusType: JAStatusType.Applied, note: '' });
   const [showDeleteStatusDialog, setShowDeleteStatusDialog] = useState(false);
 
   // Event modal state
@@ -84,10 +74,9 @@ export default function ApplicationDetailPage({ params }: PageProps) {
   const [eventModalMode, setEventModalMode] = useState<'add' | 'edit'>('add');
   const [eventForm, setEventForm] = useState({
     eventType: JAEventType.Interview,
-    scheduledAt: '',
-    description: '',
-    location: '',
-    notes: '',
+    eventDate: '',
+    eventName: '',
+    note: '',
   });
   const [showDeleteEventDialog, setShowDeleteEventDialog] = useState(false);
 
@@ -103,8 +92,8 @@ export default function ApplicationDetailPage({ params }: PageProps) {
       setEditForm({
         company: application.company,
         position: application.position,
-        jobDescription: application.jobDescription || '',
-        notes: application.notes || '',
+        jobDescription: application.jobListing?.jobDescription || '',
+        note: application.note || '',
       });
     }
   }, [application]);
@@ -121,19 +110,23 @@ export default function ApplicationDetailPage({ params }: PageProps) {
 
   // Add status mutation
   const addStatusMutation = useMutation({
-    mutationFn: (data: { newStatus: JAStatusType; notes?: string }) =>
-      applicationService.pushStatus(applicationId, data),
+    mutationFn: (data: { statusType: JAStatusType; note?: string }) =>
+      applicationService.updateStatus({
+        jobApplicationId: applicationId,
+        statusType: data.statusType,
+        note: data.note,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
       queryClient.invalidateQueries({ queryKey: ['applications'] });
       setShowStatusModal(false);
-      setStatusForm({ status: JAStatusType.Applied, notes: '' });
+      setStatusForm({ jaStatusType: JAStatusType.Applied, note: '' });
     },
   });
 
   // Edit last status mutation
   const editStatusMutation = useMutation({
-    mutationFn: async (data: { id: string; status: JAStatusType; notes?: string }) => {
+    mutationFn: async (data: { id: string; jaStatusType: JAStatusType; note?: string }) => {
       // Simulated - in real app this would call API
       return Promise.resolve();
     },
@@ -159,12 +152,12 @@ export default function ApplicationDetailPage({ params }: PageProps) {
   const addEventMutation = useMutation({
     mutationFn: (data: typeof eventForm) =>
       eventService.create({
-        applicationId,
+        jaStatusEntryId: application?.statusHistory[application.statusHistory.length - 1]?.id || '',
         eventType: data.eventType,
-        scheduledAt: new Date(data.scheduledAt).toISOString(),
-        description: data.description || undefined,
-        location: data.location || undefined,
-        notes: data.notes || undefined,
+        eventDate: new Date(data.eventDate).toISOString(),
+        eventName: data.eventName || 'Event',
+        isWholeDay: false,
+        note: data.note || undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
@@ -176,12 +169,12 @@ export default function ApplicationDetailPage({ params }: PageProps) {
 
   const updateEventMutation = useMutation({
     mutationFn: (data: typeof eventForm) =>
-      eventService.update(application?.event?.id || '', {
+      eventService.update(lastStatus?.jaEvent?.id || '', {
         eventType: data.eventType,
-        scheduledAt: new Date(data.scheduledAt).toISOString(),
-        description: data.description || undefined,
-        location: data.location || undefined,
-        notes: data.notes || undefined,
+        eventDate: new Date(data.eventDate).toISOString(),
+        eventName: data.eventName || 'Event',
+        isWholeDay: false,
+        note: data.note || undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
@@ -192,7 +185,7 @@ export default function ApplicationDetailPage({ params }: PageProps) {
   });
 
   const deleteEventMutation = useMutation({
-    mutationFn: () => eventService.delete(application?.event?.id || ''),
+    mutationFn: () => eventService.delete(lastStatus?.jaEvent?.id || ''),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
@@ -203,10 +196,9 @@ export default function ApplicationDetailPage({ params }: PageProps) {
   const resetEventForm = () => {
     setEventForm({
       eventType: JAEventType.Interview,
-      scheduledAt: '',
-      description: '',
-      location: '',
-      notes: '',
+      eventDate: '',
+      eventName: '',
+      note: '',
     });
   };
 
@@ -219,8 +211,8 @@ export default function ApplicationDetailPage({ params }: PageProps) {
       setEditForm({
         company: application.company,
         position: application.position,
-        jobDescription: application.jobDescription || '',
-        notes: application.notes || '',
+        jobDescription: application.jobListing?.jobDescription || '',
+        note: application.note || '',
       });
     }
     setIsEditing(false);
@@ -228,15 +220,16 @@ export default function ApplicationDetailPage({ params }: PageProps) {
 
   const openAddStatusModal = () => {
     setStatusModalMode('add');
-    const nextStatus = application ? application.currentStatus + 1 : JAStatusType.Applied;
-    setStatusForm({ status: Math.min(nextStatus, JAStatusType.Withdrawn), notes: '' });
+    const currentStatus = application?.statusHistory[application.statusHistory.length - 1]?.jaStatusType ?? JAStatusType.Applied;
+    const nextStatus = currentStatus + 1;
+    setStatusForm({ jaStatusType: Math.min(nextStatus, JAStatusType.Withdrawn), note: '' });
     setShowStatusModal(true);
   };
 
   const openEditStatusModal = (status: JAStatusEntryDto) => {
     setStatusModalMode('edit');
     setEditingStatusId(status.id);
-    setStatusForm({ status: status.status, notes: status.notes || '' });
+    setStatusForm({ jaStatusType: status.jaStatusType, note: status.note || '' });
     setShowStatusModal(true);
   };
 
@@ -247,15 +240,14 @@ export default function ApplicationDetailPage({ params }: PageProps) {
   };
 
   const openEditEventModal = () => {
-    if (application?.event) {
+    const event = lastStatus?.jaEvent;
+    if (event) {
       setEventModalMode('edit');
-      const eventDate = new Date(application.event.scheduledAt);
       setEventForm({
-        eventType: application.event.eventType,
-        scheduledAt: eventDate.toISOString().slice(0, 16),
-        description: application.event.description || '',
-        location: application.event.location || '',
-        notes: application.event.notes || '',
+        eventType: event.eventType,
+        eventDate: new Date(event.eventDate).toISOString().slice(0, 16),
+        eventName: event.eventName || '',
+        note: event.note || '',
       });
       setShowEventModal(true);
     }
@@ -263,9 +255,9 @@ export default function ApplicationDetailPage({ params }: PageProps) {
 
   const handleSaveStatus = () => {
     if (statusModalMode === 'add') {
-      addStatusMutation.mutate({ newStatus: statusForm.status, notes: statusForm.notes || undefined });
+      addStatusMutation.mutate({ statusType: statusForm.jaStatusType, note: statusForm.note || undefined });
     } else {
-      editStatusMutation.mutate({ id: editingStatusId!, status: statusForm.status, notes: statusForm.notes || undefined });
+      editStatusMutation.mutate({ id: editingStatusId!, jaStatusType: statusForm.jaStatusType, note: statusForm.note || undefined });
     }
   };
 
@@ -303,6 +295,9 @@ export default function ApplicationDetailPage({ params }: PageProps) {
     );
   }
 
+  const sortedStatusHistory = [...application.statusHistory].sort(
+      (a, b) => b.orderIndex - a.orderIndex
+  );
   const lastStatus = application.statusHistory[application.statusHistory.length - 1];
   const canDeleteStatus = application.statusHistory.length > 1;
 
@@ -350,9 +345,9 @@ export default function ApplicationDetailPage({ params }: PageProps) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Application Details</CardTitle>
-              <Badge className={applicationStatusColors[application.currentStatus]}>
-                {jaStatusLabels[application.currentStatus]}
-              </Badge>
+              <Badge className={applicationStatusColors[lastStatus.jaStatusType] as unknown as JAStatusType}>
+            {jaStatusLabels[lastStatus.jaStatusType as unknown as JAStatusType]}
+          </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -387,19 +382,27 @@ export default function ApplicationDetailPage({ params }: PageProps) {
               <div className="space-y-2">
                 <Label className="text-muted-foreground">Created At</Label>
                 <p className="text-sm">
-                  {format(new Date(application.statusHistory[0].createdAt), 'PPP')}
-                  <span className="text-muted-foreground ml-2">
-                    ({formatDistanceToNow(new Date(application.statusHistory[0].createdAt), { addSuffix: true })})
-                  </span>
+                  {application.statusHistory.length > 0 ? (
+                    <>
+                      {format(new Date(application.statusHistory[0].createdAt), 'PPP')}
+                      <span className="text-muted-foreground ml-2">
+                        ({formatDistanceToNow(new Date(application.statusHistory[0].createdAt), { addSuffix: true })})
+                      </span>
+                    </>
+                  ) : 'N/A'}
                 </p>
               </div>
               <div className="space-y-2">
                 <Label className="text-muted-foreground">Last Updated</Label>
                 <p className="text-sm">
-                  {format(new Date(application.statusHistory[application.statusHistory.length - 1].createdAt), 'PPP')}
-                  <span className="text-muted-foreground ml-2">
-                    ({formatDistanceToNow(new Date(application.statusHistory[application.statusHistory.length - 1].createdAt), { addSuffix: true })})
-                  </span>
+                  {application.statusHistory.length > 0 ? (
+                    <>
+                      {format(new Date(lastStatus.createdAt), 'PPP')}
+                      <span className="text-muted-foreground ml-2">
+                        ({formatDistanceToNow(new Date(lastStatus.createdAt), { addSuffix: true })})
+                      </span>
+                    </>
+                  ) : 'N/A'}
                 </p>
               </div>
             </div>
@@ -410,13 +413,13 @@ export default function ApplicationDetailPage({ params }: PageProps) {
               {isEditing ? (
                 <Textarea
                   rows={3}
-                  value={editForm.notes || ''}
-                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                  value={editForm.note || ''}
+                  onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
                   placeholder="Add notes about this application..."
                 />
               ) : (
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {application.notes || 'No notes'}
+                  {application.note || 'No notes'}
                 </p>
               )}
             </div>
@@ -433,7 +436,7 @@ export default function ApplicationDetailPage({ params }: PageProps) {
                 />
               ) : (
                 <div className="text-sm text-muted-foreground whitespace-pre-wrap max-h-64 overflow-y-auto p-3 bg-muted/50 rounded-md">
-                  {application.jobDescription || 'No job description'}
+                  {application.jobListing?.jobDescription || 'No job description'}
                 </div>
               )}
             </div>
@@ -450,59 +453,82 @@ export default function ApplicationDetailPage({ params }: PageProps) {
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <ol className="relative">
               {application.statusHistory.map((status, index) => {
                 const isLast = index === application.statusHistory.length - 1;
+                const isCurrent = index === application.statusHistory.length - 1;
                 return (
-                  <div
-                    key={status.id}
-                    className="flex items-start justify-between p-4 border border-border rounded-lg"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className={`w-3 h-3 rounded-full ${
-                          status.jaStatusType === JAStatusType.Rejected ? 'bg-red-500' :
-                          status.jaStatusType === JAStatusType.Accepted ? 'bg-green-500' :
-                          status.jaStatusType === JAStatusType.OfferReceived ? 'bg-emerald-500' :
-                          'bg-primary'
-                        }`} />
-                        {index < application.statusHistory.length - 1 && (
-                          <div className="w-px h-full min-h-[24px] bg-border mt-1" />
+                    <li
+                        key={status.id}
+                        className="relative flex gap-4 pb-6 last:pb-0 group"
+                    >
+                      {/* Connecting line */}
+                      {index < application.statusHistory.length - 1 && (
+                          <span
+                              className="absolute left-[11px] top-7 bottom-0 w-px bg-border"
+                              aria-hidden="true"
+                          />
+                      )}
+
+                      {/* Timeline marker */}
+                      <div className="relative z-10 flex-shrink-0">
+                      <span
+                          className={`flex h-6 w-6 items-center justify-center rounded-full ring-4 ring-background ${
+                              isCurrent
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted text-muted-foreground'
+                          }`}
+                      >
+                        {isCurrent ? (
+                            <Check className="h-3.5 w-3.5" />
+                        ) : (
+                            <span className="h-2 w-2 rounded-full bg-current" />
                         )}
+                      </span>
                       </div>
-                      <div>
-                        <Badge className={applicationStatusColors[status.jaStatusType]}>
-                          {jaStatusLabels[status.jaStatusType]}
-                        </Badge>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {format(new Date(status.createdAt), 'PPP p')}
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0 -mt-0.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge className={applicationStatusColors[status.jaStatusType]}>
+                              {jaStatusLabels[status.jaStatusType]}
+                            </Badge>
+                            {isCurrent && (
+                                <span className="text-xs font-medium text-primary">Current</span>
+                            )}
+                          </div>
+                          {isLast && (
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditStatusModal(status)}>
+                                  <Pencil className="h-3.5 w-3.5" />
+                                  <span className="sr-only">Edit status</span>
+                                </Button>
+                                {canDeleteStatus && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-destructive hover:text-destructive"
+                                        onClick={() => setShowDeleteStatusDialog(true)}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                      <span className="sr-only">Delete status</span>
+                                    </Button>
+                                )}
+                              </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1.5">
+                          {format(new Date(status.createdAt), 'PPP')} at {format(new Date(status.createdAt), 'p')}
                         </p>
                         {status.note && (
-                          <p className="text-sm mt-2 text-foreground">{status.notes}</p>
+                            <p className="text-sm mt-2 text-foreground leading-relaxed">{status.note}</p>
                         )}
                       </div>
-                    </div>
-                    {isLast && (
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openEditStatusModal(status)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        {canDeleteStatus && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => setShowDeleteStatusDialog(true)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                    </li>
                 );
               })}
-            </div>
+            </ol>
           </CardContent>
         </Card>
 
@@ -510,7 +536,7 @@ export default function ApplicationDetailPage({ params }: PageProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Scheduled Event</CardTitle>
-            {!application.event && (
+            {!lastStatus.jaEvent && (
               <Button size="sm" onClick={openAddEventModal}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Event
@@ -518,38 +544,37 @@ export default function ApplicationDetailPage({ params }: PageProps) {
             )}
           </CardHeader>
           <CardContent>
-            {application.event ? (
+            {lastStatus.jaEvent ? (
               <div className="p-4 border border-border rounded-lg">
                 <div className="flex items-start justify-between">
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <Badge className={eventTypeColors[application.event.eventType]}>
-                        {eventTypeLabels[application.event.eventType]}
+                      <Badge className={eventTypeColors[lastStatus.jaEvent.eventType]}>
+                        {eventTypeLabels[lastStatus.jaEvent.eventType]}
                       </Badge>
-                      {application.event.isCompleted && (
+                      {/*{lastStatus.jaEvent.isCompleted && (
                         <Badge variant="outline" className="text-green-600 border-green-600">
                           Completed
                         </Badge>
-                      )}
+                      )}*/}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        {format(new Date(application.event.scheduledAt), 'PPP')}
+                        {format(new Date(lastStatus.jaEvent.eventDate), 'PPP')}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {format(new Date(application.event.scheduledAt), 'p')}
-                      </span>
+                      {!lastStatus.jaEvent.isWholeDay && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {format(new Date(lastStatus.jaEvent.eventDate), 'p')}
+                        </span>
+                      )}
                     </div>
-                    {application.event.description && (
-                      <p className="text-sm">{application.event.description}</p>
+                    {lastStatus.jaEvent.eventName && (
+                      <p className="text-sm">{lastStatus.jaEvent.eventName}</p>
                     )}
-                    {application.event.location && (
-                      <p className="text-sm text-muted-foreground">Location: {application.event.location}</p>
-                    )}
-                    {application.event.notes && (
-                      <p className="text-sm text-muted-foreground italic">{application.event.notes}</p>
+                    {lastStatus.jaEvent.note && (
+                      <p className="text-sm text-muted-foreground italic">{lastStatus.jaEvent.note}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1">
@@ -588,8 +613,8 @@ export default function ApplicationDetailPage({ params }: PageProps) {
             <div className="space-y-2">
               <Label>Status</Label>
               <Select
-                value={statusForm.status.toString()}
-                onValueChange={(value) => setStatusForm({ ...statusForm, status: parseInt(value) })}
+                value={statusForm.jaStatusType.toString()}
+                onValueChange={(value) => setStatusForm({ ...statusForm, jaStatusType: parseInt(value) })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -607,8 +632,8 @@ export default function ApplicationDetailPage({ params }: PageProps) {
               <Label>Notes (optional)</Label>
               <Textarea
                 rows={3}
-                value={statusForm.notes}
-                onChange={(e) => setStatusForm({ ...statusForm, notes: e.target.value })}
+                value={statusForm.note}
+                onChange={(e) => setStatusForm({ ...statusForm, note: e.target.value })}
                 placeholder="Add notes about this status change..."
               />
             </div>
@@ -676,32 +701,24 @@ export default function ApplicationDetailPage({ params }: PageProps) {
               <Label>Date & Time</Label>
               <Input
                 type="datetime-local"
-                value={eventForm.scheduledAt}
-                onChange={(e) => setEventForm({ ...eventForm, scheduledAt: e.target.value })}
+                value={eventForm.eventDate}
+                onChange={(e) => setEventForm({ ...eventForm, eventDate: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label>Description (optional)</Label>
+              <Label>Event Name</Label>
               <Input
-                value={eventForm.description}
-                onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
+                value={eventForm.eventName}
+                onChange={(e) => setEventForm({ ...eventForm, eventName: e.target.value })}
                 placeholder="e.g., Technical interview with engineering team"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Location (optional)</Label>
-              <Input
-                value={eventForm.location}
-                onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })}
-                placeholder="e.g., Zoom, Google Meet, Office Address"
               />
             </div>
             <div className="space-y-2">
               <Label>Notes (optional)</Label>
               <Textarea
                 rows={2}
-                value={eventForm.notes}
-                onChange={(e) => setEventForm({ ...eventForm, notes: e.target.value })}
+                value={eventForm.note}
+                onChange={(e) => setEventForm({ ...eventForm, note: e.target.value })}
                 placeholder="Any additional notes..."
               />
             </div>
@@ -712,7 +729,7 @@ export default function ApplicationDetailPage({ params }: PageProps) {
             </Button>
             <Button
               onClick={handleSaveEvent}
-              disabled={!eventForm.scheduledAt || addEventMutation.isPending || updateEventMutation.isPending}
+              disabled={!eventForm.eventDate || addEventMutation.isPending || updateEventMutation.isPending}
             >
               {eventModalMode === 'add' ? 'Add Event' : 'Save Changes'}
             </Button>

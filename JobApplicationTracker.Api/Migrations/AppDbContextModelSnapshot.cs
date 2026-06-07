@@ -57,6 +57,26 @@ namespace JobApplicationTracker.Migrations
                     b.ToTable("JAEventEntries");
                 });
 
+            modelBuilder.Entity("JobApplicationTracker.Models.JAShortcut", b =>
+                {
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("JAId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("StatusId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("View_ShortcutJA", (string)null);
+                });
+
             modelBuilder.Entity("JobApplicationTracker.Models.JAStatusEntry", b =>
                 {
                     b.Property<Guid>("Id")

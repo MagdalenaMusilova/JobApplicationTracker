@@ -11,12 +11,13 @@ namespace JobApplicationTracker.Services;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
-    private readonly PasswordHasher<object> _passwordHasher = new();
+    private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
 
-    public UserService(IUserRepository userRepository, IMapper mapper)
+    public UserService(IUserRepository userRepository, UserManager<User> userManager, IMapper mapper)
     {
         _userRepository = userRepository;
+        _userManager = userManager;
         _mapper = mapper;
     }
 
@@ -37,6 +38,59 @@ public class UserService : IUserService
         }
 
         return _mapper.Map<UserDto>(user);
+    }
+
+    public async Task<UserAccountDto?> GetAccountByIdAsync(string id)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+
+        if (user is null)
+        {
+            return null;
+        }
+
+        return new UserAccountDto
+        {
+            Id = user.Id,
+            Email = user.Email!,
+            Username = user.UserName!,
+            CreatedAt = user.CreatedAt,
+            Resume = user.UserResume is not null ? _mapper.Map<UserResumeDto>(user.UserResume) : null
+        };
+    }
+
+    public async Task<bool> UpdateEmailAsync(string userId, string newEmail)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) return false;
+
+        user.Email = newEmail;
+        user.UserName = newEmail; // In this app, Username seems to be Email by default in SignUp
+        
+        var result = await _userManager.UpdateAsync(user);
+        return result.Succeeded;
+    }
+
+    public async Task<bool> UpdateUsernameAsync(string userId, string newUsername)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) return false;
+
+        user.UserName = newUsername;
+        
+        var result = await _userManager.UpdateAsync(user);
+        return result.Succeeded;
+    }
+
+    public async Task<IdentityResult> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return IdentityResult.Failed(new IdentityError { Description = "User not found." });
+        }
+
+        return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
     }
 
     public async Task<bool> DeleteAsync(string id)

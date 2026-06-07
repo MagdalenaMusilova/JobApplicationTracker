@@ -1,11 +1,9 @@
 import httpClient from '@/lib/http-client';
 import { API_ENDPOINTS } from '@/lib/endpoints';
-import {
-  LoginDto,
-  RegisterDto,
-  AuthResponseDto,
-  RefreshTokenDto,
-} from '@/types';
+import { LoginDto } from '@/types/Auth/SignInDto';
+import { RegisterDto } from '@/types/Auth/SignUpDto';
+import { AuthResponseDto } from '@/types/Auth/SignInResponseDto';
+import { RefreshTokenDto } from '@/types/Auth/RefreshTokenRequestDto';
 
 export const authService = {
   async login(data: LoginDto): Promise<AuthResponseDto> {

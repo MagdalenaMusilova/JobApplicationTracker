@@ -1,12 +1,10 @@
 'use client';
 
 import { format } from 'date-fns';
-import {
-  JobApplicationDto,
-  applicationStatusLabels,
-  applicationStatusColors,
-  workModeLabels,
-} from '@/types';
+import { JobApplicationDto } from '@/types/JAObjects/JobApplications/JobApplicationDto';
+import { jaStatusLabels, applicationStatusColors } from '@/types/Enums/JAStatusType';
+import { JAStatusType } from '@/types/Enums/JAStatusType';
+import { workModeLabels } from '@/types/Enums/WorkMode';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,23 +43,23 @@ export function ApplicationHeader({
         <div className="flex items-start gap-4">
           <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
             <span className="text-xl font-bold text-primary">
-              {application.companyName.charAt(0).toUpperCase()}
+              {application.company.charAt(0).toUpperCase()}
             </span>
           </div>
           <div>
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-bold text-foreground">
-                {application.companyName}
+                {application.company}
               </h1>
               <Badge
                 variant="outline"
-                className={cn('text-sm', applicationStatusColors[application.currentStatus])}
+                className={cn('text-sm', applicationStatusColors[application.statusHistory[application.statusHistory.length - 1]?.jaStatusType as unknown as JAStatusType])}
               >
-                {applicationStatusLabels[application.currentStatus]}
+                {jaStatusLabels[application.statusHistory[application.statusHistory.length - 1]?.jaStatusType as unknown as JAStatusType]}
               </Badge>
             </div>
             <p className="text-lg text-muted-foreground mt-1">
-              {application.jobTitle}
+              {application.position}
             </p>
             <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
               {application.location && <span>{application.location}</span>}

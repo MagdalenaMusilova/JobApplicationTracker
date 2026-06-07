@@ -5,7 +5,7 @@ namespace JobApplicationTracker.Services;
 public class JobMatchingService : IJobMatchingService
 {
     private readonly IAiAgentService _aiAgentService;
-    
+
     public JobMatchingService(IAiAgentService aiAgentService)
     {
         _aiAgentService = aiAgentService;
@@ -13,114 +13,62 @@ public class JobMatchingService : IJobMatchingService
 
     public async Task<string> EvaluateMatch(UserResumeDto resume, string jobListing)
     {
-      string userResumeString = resume.ToString();
-      string jobListingString = jobListing;
-      string prompt = """
-                      You are an expert technical recruiter and hiring analyst.
+        string userResumeString = resume.ToString();
+        string jobListingString = jobListing;
+        string prompt = @"
+You are an expert recruiting assistant evaluating how well a candidate matches a job description.
 
-                      Your task is to evaluate how well a candidate matches a job description.
+You will be given:
+1) A candidate profile (plaintext)
+2) A job description (plaintext)
 
-                      You must:
-                      - Be strict and realistic (do NOT overestimate candidates)
-                      - Base your evaluation ONLY on provided data
-                      - Do NOT assume missing skills
-                      - Prefer underestimation over overestimation when uncertain
+Your task:
+- Assess overall fit between the candidate and the job
+- Identify strengths, gaps, and actionable improvements
+- Be honest, specific, and recruiter-like
+- Do NOT use percentages or numeric scores
 
-                      You MUST return ONLY valid JSON.
-                      No explanations outside JSON.
+OUTPUT FORMAT (strictly follow this structure):
 
-                      Evaluate the candidate against the job description.
+## Verdict: <Strong Match | Good Match | Mixed Match | Limited Match>
 
-                      Use the following 5-level scale EXACTLY:
-                      1 = No Match
-                      2 = Weak Fit
-                      3 = Potential Fit
-                      4 = Strong Fit
-                      5 = Excellent Fit
+**Key strengths**
+- List all relevant strong matching areas. Use as many bullets as needed, but keep each bullet concise and meaningful.
 
-                      Evaluation rules:
-                      - Focus primarily on required skills and responsibilities
-                      - Penalize missing critical skills heavily
-                      - Consider transferable skills as partial matches
-                      - Experience relevance matters more than years alone
-                      - Be conservative in assigning level 4 and 5
+**Main gaps**
+- List all important missing or weak areas. Use as many bullets as needed, but focus only on meaningful gaps.
 
-                      Return JSON in this exact structure:
+**Recommended focus**
+- List actionable suggestions for improving the application. Use as many bullets as needed, but keep them practical and specific.
 
-                      {
-                        "overall_match": {
-                          "level": number,
-                          "label": string,
-                          "reasoning": string
-                        },
-                        "section_scores": {
-                          "skills": {
-                            "level": number,
-                            "label": string,
-                            "matched": [string],
-                            "missing": [string],
-                            "partial": [string],
-                            "reasoning": string
-                          },
-                          "experience": {
-                            "level": number,
-                            "label": string,
-                            "years_required": number,
-                            "years_candidate": number,
-                            "relevant_experience": [string],
-                            "reasoning": string
-                          },
-                          "education": {
-                            "level": number,
-                            "label": string,
-                            "required": string,
-                            "candidate": string,
-                            "reasoning": string
-                          },
-                          "responsibilities": {
-                            "level": number,
-                            "label": string,
-                            "aligned": [string],
-                            "gaps": [string],
-                            "reasoning": string
-                          }
-                        },
-                        "strengths": [string],
-                        "gaps": [string],
-                        "recommendations": [string],
-                        "confidence": number
-                      }
+Then write exactly 3 paragraphs:
 
-                      Label mapping:
-                      1 → "No Match"
-                      2 → "Weak Fit"
-                      3 → "Potential Fit"
-                      4 → "Strong Fit"
-                      5 → "Excellent Fit"
+Paragraph 1:
+Provide an overall assessment of fit. Be direct and recruiter-like. Do not repeat bullet points.
 
-                      IMPORTANT:
-                      - "confidence" must be between 0 and 1
-                      - Keep reasoning concise (1–2 sentences per section)
-                      - Do NOT invent experience or skills
-                      - If information is missing, reflect that in confidence
+Paragraph 2:
+Explain key strengths in more detail, adding context where helpful. Focus on why the candidate matches the role.
 
-                      ---
+Paragraph 3:
+Explain main gaps and their impact on hiring decision. Include clear, constructive guidance on how to improve alignment.
 
-                      CANDIDATE CV:
+Rules:
+- Keep language natural and professional (like a recruiter summary)
+- Do not repeat job description text verbatim
+- Do not include scores or percentages
+- Do not add extra sections beyond the required format
+- Prioritize clarity, usefulness, and specificity over length
+
+CANDIDATE PROFILE:"
+                        +
+                        userResumeString
+                        +
+                        "JOB DESCRIPTION: "
+                        +
+                        jobListingString;
 
 
-                      """
-                      +
-                      userResumeString
-                      +
-                      """
-                      ---
-
-                      JOB DESCRIPTION:
-                      """
-                      +
-                      jobListingString;
-      var res = await _aiAgentService.MakeRequestAsync(prompt);
-      return res;
+        var res = await _aiAgentService.MakeRequestAsync(prompt);
+        return res;
     }
 }

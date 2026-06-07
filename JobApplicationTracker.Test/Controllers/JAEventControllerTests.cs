@@ -497,7 +497,7 @@ public class JAEventControllerTests
             .ReturnsAsync(events);
 
         // Act
-        var result = await _controller.GetAllUserEvents(userId);
+        var result = await _controller.GetAllUserEvents();
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -505,37 +505,5 @@ public class JAEventControllerTests
         returnedEvents.Should().HaveCount(1);
 
         _mockEventService.Verify(s => s.GetAllByUserId(userId), Times.Once);
-    }
-
-    [Fact]
-    public async Task GetAllUserEvents_ReturnsNotFound_WhenRequestedUserIsNotCurrentUser()
-    {
-        // Arrange
-        SetupUser("user123");
-
-        // Act
-        var result = await _controller.GetAllUserEvents("otherUser");
-
-        // Assert
-        var notFoundResult = result.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
-        AssertError(notFoundResult.Value, "EVENTS_NOT_FOUND", "Events were not found.");
-
-        _mockEventService.Verify(s => s.GetAllByUserId(It.IsAny<string>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task GetAllUserEvents_ReturnsBadRequest_WhenUserIdIsEmpty()
-    {
-        // Arrange
-        SetupUser("user123");
-
-        // Act
-        var result = await _controller.GetAllUserEvents("");
-
-        // Assert
-        var badRequestResult = result.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        AssertError(badRequestResult.Value, "USER_ID_REQUIRED", "User ID is required.");
-
-        _mockEventService.Verify(s => s.GetAllByUserId(It.IsAny<string>()), Times.Never);
     }
 }

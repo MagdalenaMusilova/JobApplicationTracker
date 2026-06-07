@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     public DbSet<JobApplicationMinimal> JaMinimalView { get; set; }
+    public DbSet<JAShortcut> JaShortcutView { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -115,6 +116,14 @@ public class AppDbContext : DbContext
         {
             entity.HasNoKey();
             entity.ToView("View_MinimalJA");
+            entity.Property(jaMin => jaMin.JAId);
+        });
+        
+        // shortcut JA view
+        modelBuilder.Entity<JAShortcut>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("View_ShortcutJA");
             entity.Property(jaMin => jaMin.JAId);
         });
         

@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import type { ChangePasswordDto } from '@/types';
+import type { ChangePasswordDto } from '@/types/User/ChangePasswordDto';
 
 export default function ProfilePage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -135,6 +135,7 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Username */}
+{/*
                 <div className="flex items-center justify-between py-3 border-b border-border">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-muted">
@@ -182,6 +183,7 @@ export default function ProfilePage() {
                     </Button>
                   )}
                 </div>
+*/}
 
                 {/* Email */}
                 <div className="flex items-center justify-between py-3 border-b border-border">

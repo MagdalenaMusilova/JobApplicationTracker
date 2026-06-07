@@ -32,7 +32,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface ApplicationsTableProps {
-  applications: JobApplicationListDto[];
+  applications: JobApplicationMinimalDto[];
   onRefresh: () => void;
 }
 
@@ -60,7 +60,11 @@ export function ApplicationsTable({
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: JAStatusType }) =>
-        applicationService.updateStatus(id, { newStatus: status }),
+        applicationService.updateStatus({
+          jobApplicationId: id,
+          statusType: status,
+          note: ''
+        }),
     onSuccess: () => {
       toast.success('Application marked as rejected');
       onRefresh();

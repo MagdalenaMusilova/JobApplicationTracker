@@ -16,10 +16,12 @@ import { Plus } from 'lucide-react';
 
 const ARCHIVE_TAGS = ['Rejected', 'Withdrawn', 'Ghosted'];
 
+import { JAStatusType } from '@/types/Enums/JAStatusType';
+
 export interface ApplicationFilterParams {
   search?: string;
-  statuses?: ApplicationStatus[];
-  sortBy?: 'appliedDate' | 'company' | 'role' | 'status' | 'updatedAt';
+  statuses?: JAStatusType[];
+  sortBy?: 'appliedDate' | 'company' | 'position' | 'status' | 'updatedAt';
   sortDirection?: 'asc' | 'desc';
 }
 
@@ -65,8 +67,8 @@ export default function ApplicationsPage() {
    * React Query caches the result.
    */
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['applications'],
-    queryFn: () => applicationService.getAllMinimal(),
+    queryKey: ['applications', showArchived],
+    queryFn: () => applicationService.getAllMinimal(showArchived),
     staleTime: 1000 * 60 * 10,
   });
 
@@ -94,14 +96,14 @@ export default function ApplicationsPage() {
 
       items = items.filter(app => {
         const company =
-            app.companyName?.toLowerCase() ?? '';
+            app.company?.toLowerCase() ?? '';
 
-        const role =
-            app.roleTitle?.toLowerCase() ?? '';
+        const position =
+            app.position?.toLowerCase() ?? '';
 
         return (
             company.includes(search) ||
-            role.includes(search)
+            position.includes(search)
         );
       });
     }

@@ -2,12 +2,8 @@
 
 import Link from 'next/link';
 import { format } from 'date-fns';
-import {
-  JobApplicationListDto,
-  applicationStatusLabels,
-  applicationStatusColors,
-  workModeLabels,
-} from '@/types';
+import { JobApplicationMinimalDto } from '@/types/JAObjects/JobApplications/JobApplicationMinimalDto';
+import { jaStatusLabels, applicationStatusColors } from '@/types/Enums/JAStatusType';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,7 +11,7 @@ import { ArrowRight, Building2, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface RecentApplicationsProps {
-  applications: JobApplicationListDto[];
+  applications: JobApplicationMinimalDto[];
 }
 
 export function RecentApplications({ applications }: RecentApplicationsProps) {
@@ -43,15 +39,15 @@ export function RecentApplications({ applications }: RecentApplicationsProps) {
           <div className="space-y-1">
             {applications.map((app) => (
               <Link
-                key={app.id}
-                href={`/applications/${app.id}`}
+                key={app.jaId}
+                href={`/applications/${app.jaId}`}
                 className="block"
               >
                 <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-accent/50 transition-colors">
                   {/* Company Initial */}
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-semibold text-primary">
-                      {app.companyName.charAt(0).toUpperCase()}
+                      {app.company.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   
@@ -59,33 +55,27 @@ export function RecentApplications({ applications }: RecentApplicationsProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-foreground truncate">
-                        {app.companyName}
+                        {app.company}
                       </p>
                       <Badge
                         variant="outline"
-                        className={cn('text-xs', applicationStatusColors[app.currentStatus])}
+                        className={cn('text-xs', applicationStatusColors[app.jaStatus])}
                       >
-                        {applicationStatusLabels[app.currentStatus]}
+                        {jaStatusLabels[app.jaStatus]}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground truncate">
-                      {app.jobTitle}
+                      {app.position}
                     </p>
                     <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      {app.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {app.location}
-                        </span>
-                      )}
-                      <span>{workModeLabels[app.workMode]}</span>
+                      <span>Applied {format(new Date(app.updatedAt), 'MMM d')}</span>
                     </div>
                   </div>
                   
                   {/* Date */}
                   <div className="text-right flex-shrink-0">
                     <p className="text-xs text-muted-foreground">
-                      {format(new Date(app.appliedDate), 'MMM d')}
+                      {format(new Date(app.updatedAt), 'MMM d')}
                     </p>
                   </div>
                 </div>

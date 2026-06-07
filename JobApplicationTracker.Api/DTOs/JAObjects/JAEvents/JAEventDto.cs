@@ -1,6 +1,6 @@
 ﻿using JobApplicationTracker.Enums;
 
-namespace JobApplicationTracker.Models;
+namespace JobApplicationTracker.DTOs;
 
 public class JAEventDto
 {

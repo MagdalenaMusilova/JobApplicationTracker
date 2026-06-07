@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
-import { ApplicationEventDto, eventTypeLabels, eventTypeColors } from '@/types';
+import { JobApplicationMinimalDto } from '@/types/JAObjects/JobApplications/JobApplicationMinimalDto';
+import { eventTypeLabels, eventTypeColors } from '@/types/Enums/JAEventType';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,23 +11,25 @@ import { Calendar, Clock, MapPin, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface UpcomingEventsProps {
-  events: ApplicationEventDto[];
+  events: JobApplicationMinimalDto[];
 }
 
-function formatEventDate(dateString: string): string {
+function formatEventDate(dateString: string | null): string {
+  if (!dateString) return '-';
   const date = new Date(dateString);
   if (isToday(date)) return 'Today';
   if (isTomorrow(date)) return 'Tomorrow';
   return format(date, 'MMM d');
 }
 
-function formatEventTime(dateString: string): string {
+function formatEventTime(dateString: string | null): string {
+  if (!dateString) return '-';
   return format(new Date(dateString), 'h:mm a');
 }
 
 export function UpcomingEvents({ events }: UpcomingEventsProps) {
   const upcomingEvents = events
-    .filter(e => !e.isCompleted && !isPast(new Date(e.scheduledAt)))
+    .filter(e => e.eventDate && (!isPast(new Date(e.eventDate)) || isToday(new Date(e.eventDate))))
     .slice(0, 5);
 
   return (
@@ -52,17 +55,17 @@ export function UpcomingEvents({ events }: UpcomingEventsProps) {
         ) : (
           upcomingEvents.map((event) => (
             <Link
-              key={event.id}
-              href={`/applications/${event.applicationId}`}
+              key={event.jaId}
+              href={`/applications/${event.jaId}`}
               className="block"
             >
               <div className="flex items-start gap-4 p-3 rounded-lg hover:bg-accent/50 transition-colors">
                 <div className="flex flex-col items-center min-w-[50px]">
                   <span className="text-xs font-medium text-muted-foreground">
-                    {formatEventDate(event.scheduledAt)}
+                    {formatEventDate(event.eventDate)}
                   </span>
                   <span className="text-lg font-bold text-foreground">
-                    {format(new Date(event.scheduledAt), 'd')}
+                    {event.eventDate ? format(new Date(event.eventDate), 'd') : '-'}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -75,22 +78,16 @@ export function UpcomingEvents({ events }: UpcomingEventsProps) {
                     </Badge>
                   </div>
                   <p className="font-medium text-foreground truncate">
-                    {event.companyName}
+                    {event.company}
                   </p>
                   <p className="text-sm text-muted-foreground truncate">
-                    {event.jobTitle}
+                    {event.position}
                   </p>
                   <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {formatEventTime(event.scheduledAt)}
+                      {formatEventTime(event.eventDate)}
                     </span>
-                    {event.location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {event.location}
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>

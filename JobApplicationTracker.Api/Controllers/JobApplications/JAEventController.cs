@@ -38,7 +38,7 @@ public class JAEventController : ControllerBase
         return application is not null && application.UserId == userId;
     }
     
-    [HttpPost("event")]
+    [HttpPost]
     public async Task<ActionResult<JAEventDto>> CreateEvent([FromBody] CreateJAEventDto jaEvent)
     {
         if (!TryGetUserId(out var userId))
@@ -63,7 +63,7 @@ public class JAEventController : ControllerBase
         }
     }
 
-    [HttpPut("event/{eventId:guid}")]
+    [HttpPut("{eventId:guid}")]
     public async Task<ActionResult<JAEventDto>> UpdateEvent(Guid eventId, [FromBody] UpdateJAEventDto jaEvent)
     {
         if (!TryGetUserId(out var userId))
@@ -86,7 +86,7 @@ public class JAEventController : ControllerBase
             : Ok(updatedEvent);
     }
 
-    [HttpDelete("event/{eventId:guid}")]
+    [HttpDelete("{eventId:guid}")]
     public async Task<IActionResult> DeleteEvent(Guid eventId)
     {
         if (!TryGetUserId(out var userId))
@@ -109,19 +109,16 @@ public class JAEventController : ControllerBase
             : NotFound(new ErrorResponseDto("EVENT_NOT_FOUND", "Event was not found."));
     }
 
-    [HttpGet("/{userId}/events")]
-    public async Task<ActionResult<IEnumerable<JAEventDto>>> GetAllUserEvents(string userId)
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<JAEventDto>>> GetAllUserEvents()
     {
         if (!TryGetUserId(out var currentUserId))
             return Unauthorized(new ErrorResponseDto("USER_ID_MISSING", "User ID was not found in the authentication token."));
 
-        if (string.IsNullOrWhiteSpace(userId))
+        if (string.IsNullOrWhiteSpace(currentUserId))
             return BadRequest(new ErrorResponseDto("USER_ID_REQUIRED", "User ID is required."));
 
-        if (userId != currentUserId)
-            return NotFound(new ErrorResponseDto("EVENTS_NOT_FOUND", "Events were not found."));
-
-        var events = await _jaEventService.GetAllByUserId(userId);
+        var events = await _jaEventService.GetAllByUserId(currentUserId);
         return Ok(events);
     }
 }

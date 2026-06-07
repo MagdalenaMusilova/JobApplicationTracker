@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace JobApplicationTracker.Controllers;
 
 [ApiController]
-[Route("api/resume")]
+[Route("api/profile/resume")]
 [Authorize]
 public class ResumeController : ControllerBase
 {

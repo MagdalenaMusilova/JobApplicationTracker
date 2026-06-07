@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { applicationService } from '@/services/application-service';
-import { CreateJobApplicationDto } from '@/types/JAObjects/JobApplications';
+import { CreateJobApplicationDto } from '@/types/JAObjects/JobApplications/CreateJobApplicationDto';
+import { CreateJAEventDto } from '@/types/JAObjects/JAEvents/CreateJAEventDto';
 import { JAStatusType } from '@/types/Enums/JAStatusType';
 import { JAEventType } from '@/types/Enums/JAEventType';
 import {

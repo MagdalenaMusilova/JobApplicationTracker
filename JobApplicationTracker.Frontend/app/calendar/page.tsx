@@ -19,33 +19,33 @@ import {
   MapPin
 } from 'lucide-react';
 import { eventService } from '@/services/event-service';
-import { ApplicationEventType, eventTypeLabels, eventTypeColors } from '@/types';
-import type { ApplicationEventDto } from '@/types';
+import { JAEventType, eventTypeLabels, eventTypeColors } from '@/types/Enums/JAEventType';
+import type { JAEventDto } from '@/types/JAObjects/JAEvents/JAEventDto';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday } from 'date-fns';
 import Link from 'next/link';
 
-const eventTypeIcons: Record<ApplicationEventType, React.ElementType> = {
-  [ApplicationEventType.Interview]: Users,
-  [ApplicationEventType.PhoneScreen]: Phone,
-  [ApplicationEventType.TechnicalAssessment]: FileText,
-  [ApplicationEventType.FollowUp]: Clock,
-  [ApplicationEventType.Other]: CalendarIcon,
+const eventTypeIcons: Record<JAEventType, React.ElementType> = {
+  [JAEventType.Interview]: Users,
+  [JAEventType.PhoneScreen]: Phone,
+  [JAEventType.TechnicalAssessment]: FileText,
+  [JAEventType.FollowUp]: Clock,
+  [JAEventType.Other]: CalendarIcon,
 };
 
-const eventTypeBgColors: Record<ApplicationEventType, string> = {
-  [ApplicationEventType.Interview]: 'bg-indigo-500',
-  [ApplicationEventType.PhoneScreen]: 'bg-cyan-500',
-  [ApplicationEventType.TechnicalAssessment]: 'bg-purple-500',
-  [ApplicationEventType.FollowUp]: 'bg-amber-500',
-  [ApplicationEventType.Other]: 'bg-gray-500',
+const eventTypeBgColors: Record<JAEventType, string> = {
+  [JAEventType.Interview]: 'bg-indigo-500',
+  [JAEventType.PhoneScreen]: 'bg-cyan-500',
+  [JAEventType.TechnicalAssessment]: 'bg-purple-500',
+  [JAEventType.FollowUp]: 'bg-amber-500',
+  [JAEventType.Other]: 'bg-gray-500',
 };
 
 // Group events by date
-function groupEventsByDate(events: ApplicationEventDto[]): Map<string, ApplicationEventDto[]> {
-  const grouped = new Map<string, ApplicationEventDto[]>();
+function groupEventsByDate(events: JAEventDto[]): Map<string, JAEventDto[]> {
+  const grouped = new Map<string, JAEventDto[]>();
   
   events.forEach(event => {
-    const dateKey = format(new Date(event.scheduledAt), 'yyyy-MM-dd');
+    const dateKey = format(new Date(event.eventDate), 'yyyy-MM-dd');
     const existing = grouped.get(dateKey) || [];
     grouped.set(dateKey, [...existing, event]);
   });
@@ -72,15 +72,15 @@ export default function CalendarPage() {
 
   const getEventsForDay = (date: Date) => {
     if (!events) return [];
-    return events.filter(event => isSameDay(new Date(event.scheduledAt), date));
+    return events.filter(event => event && event.eventDate && isSameDay(new Date(event.eventDate), date));
   };
 
   const selectedDayEvents = selectedDate ? getEventsForDay(selectedDate) : [];
 
   // Get upcoming events (not completed, in the future) grouped by date
-  const upcomingEvents = events
-    ?.filter(e => !e.isCompleted && new Date(e.scheduledAt) >= new Date())
-    .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()) || [];
+  const upcomingEvents = (events || [])
+    .filter(e => e && e.eventDate && new Date(e.eventDate) >= new Date())
+    .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
   
   const groupedUpcomingEvents = groupEventsByDate(upcomingEvents);
 
@@ -133,6 +133,7 @@ export default function CalendarPage() {
                     const dayEvents = getEventsForDay(day);
                     const isSelected = selectedDate && isSameDay(day, selectedDate);
                     const isCurrentDay = isToday(day);
+                    const dayEventsCount = dayEvents.length;
                     
                     return (
                       <button
@@ -159,13 +160,13 @@ export default function CalendarPage() {
                                 key={event.id}
                                 className={`text-xs px-1.5 py-0.5 rounded truncate text-white ${bgColor}`}
                               >
-                                {event.companyName}
+                                {event.eventName}
                               </div>
                             );
                           })}
-                          {dayEvents.length > 2 && (
+                          {dayEventsCount > 2 && (
                             <div className="text-xs text-muted-foreground px-1">
-                              +{dayEvents.length - 2} more
+                              +{dayEventsCount - 2} more
                             </div>
                           )}
                         </div>
@@ -242,42 +243,33 @@ export default function CalendarPage() {
   );
 }
 
-function EventCard({ event }: { event: ApplicationEventDto }) {
+function EventCard({ event }: { event: JAEventDto }) {
   const Icon = eventTypeIcons[event.eventType];
   const bgColor = eventTypeBgColors[event.eventType];
   const label = eventTypeLabels[event.eventType];
 
   return (
-    <Link 
-      href={`/applications/${event.applicationId}`}
-      className="block p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors"
-    >
+    <div className="block p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
       <div className="flex items-start gap-3">
         <div className={`p-2 rounded-lg ${bgColor}`}>
           <Icon className="h-4 w-4 text-white" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-medium truncate">{event.companyName || 'Unknown Company'}</h4>
+            <h4 className="font-medium truncate">{event.eventName || 'Unnamed Event'}</h4>
             <Badge variant="secondary" className="text-xs">
               {label}
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground truncate">{event.jobTitle || event.description}</p>
+          {event.note && <p className="text-sm text-muted-foreground truncate">{event.note}</p>}
           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {format(new Date(event.scheduledAt), 'h:mm a')}
+              {format(new Date(event.eventDate), 'h:mm a')}
             </span>
-            {event.location && (
-              <span className="flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                {event.location}
-              </span>
-            )}
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

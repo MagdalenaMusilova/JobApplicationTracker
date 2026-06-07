@@ -4,6 +4,7 @@ using JobApplicationTracker.DTOs;
 using JobApplicationTracker.Models;
 using JobApplicationTracker.Repository;
 using JobApplicationTracker.Services;
+using Microsoft.AspNetCore.Identity;
 using Moq;
 
 namespace Test.Services;
@@ -11,14 +12,17 @@ namespace Test.Services;
 public class UserServiceTests
 {
     private readonly Mock<IUserRepository> _mockRepository;
+    private readonly Mock<UserManager<User>> _mockUserManager;
     private readonly Mock<IMapper> _mockMapper;
     private readonly UserService _service;
 
     public UserServiceTests()
     {
         _mockRepository = new Mock<IUserRepository>();
+        var store = new Mock<IUserStore<User>>();
+        _mockUserManager = new Mock<UserManager<User>>(store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
         _mockMapper = new Mock<IMapper>();
-        _service = new UserService(_mockRepository.Object, _mockMapper.Object);
+        _service = new UserService(_mockRepository.Object, _mockUserManager.Object, _mockMapper.Object);
     }
 
     [Fact]

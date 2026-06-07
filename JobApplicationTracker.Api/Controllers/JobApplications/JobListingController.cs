@@ -22,7 +22,7 @@ public class JobListingController : ControllerBase
     
 
     [HttpPost("match")]
-    public async Task<ActionResult<string>> Create([FromForm] MatchRequestDto data)
+    public async Task<ActionResult<string>> Create([FromBody] MatchRequestDto data)
     {
         if (string.IsNullOrWhiteSpace(data.JobListing))
             return BadRequest(new ErrorResponseDto("JOB_LISTING_REQUIRED", "Job listing text is required."));

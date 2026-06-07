@@ -1,6 +1,6 @@
 'use client';
 
-import { DashboardStatsDto } from '@/types';
+import { DashboardStatsDto } from '@/types/Dashboard/DashboardStatsDto';
 import { Card, CardContent } from '@/components/ui/card';
 import { Briefcase, Calendar, Trophy, TrendingUp } from 'lucide-react';
 

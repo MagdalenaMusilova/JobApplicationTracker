@@ -1,10 +1,8 @@
 import httpClient from '@/lib/http-client';
 import { API_ENDPOINTS } from '@/lib/endpoints';
-import {
-  UserAccountDto,
-  UserResumeDto,
-  ChangePasswordDto,
-} from '@/types';
+import { UserAccountDto } from '@/types/User/UserAccountDto';
+import { UserResumeDto } from '@/types/User/UserResumeDto';
+import { ChangePasswordDto } from '@/types/User/ChangePasswordDto';
 
 export const profileService = {
   // Get user account with resume

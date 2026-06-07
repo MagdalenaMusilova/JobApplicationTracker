@@ -9,15 +9,15 @@ using System.Security.Claims;
 
 namespace Test.Controllers;
 
-public class UserControllerTests
+public class ProfileControllerTests
 {
     private readonly Mock<IUserService> _mockUserService;
-    private readonly UserController _controller;
+    private readonly ProfileController _controller;
 
-    public UserControllerTests()
+    public ProfileControllerTests()
     {
         _mockUserService = new Mock<IUserService>();
-        _controller = new UserController(_mockUserService.Object);
+        _controller = new ProfileController(_mockUserService.Object);
     }
 
     private void SetupUser(string userId)
@@ -40,19 +40,19 @@ public class UserControllerTests
     {
         // Arrange
         var userId = "user123";
-        var userDto = new UserDto { Id = userId, UserName = "testuser", Email = "test@test.com" };
+        var userAccountDto = new UserAccountDto { Id = userId, Username = "testuser", Email = "test@test.com" };
         
         SetupUser(userId);
-        _mockUserService.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync(userDto);
+        _mockUserService.Setup(s => s.GetAccountByIdAsync(userId)).ReturnsAsync(userAccountDto);
 
         // Act
         var result = await _controller.GetMe();
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-        var returnedUser = okResult.Value.Should().BeOfType<UserDto>().Subject;
+        var returnedUser = okResult.Value.Should().BeOfType<UserAccountDto>().Subject;
         returnedUser.Id.Should().Be(userId);
-        returnedUser.UserName.Should().Be("testuser");
+        returnedUser.Username.Should().Be("testuser");
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class UserControllerTests
         var userId = "user123";
         
         SetupUser(userId);
-        _mockUserService.Setup(s => s.GetByIdAsync(userId)).ReturnsAsync((UserDto?)null);
+        _mockUserService.Setup(s => s.GetAccountByIdAsync(userId)).ReturnsAsync((UserAccountDto?)null);
 
         // Act
         var result = await _controller.GetMe();

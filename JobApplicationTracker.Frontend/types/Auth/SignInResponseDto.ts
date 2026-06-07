@@ -1,4 +1,5 @@
-﻿export interface SignInResponseDto {
-    token: string;
-    refreshToken: string;
+﻿export interface AuthResponseDto {
+  token: string;
+  refreshToken: string;
+  expiresAt: string;
 }

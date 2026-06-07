@@ -10,4 +10,5 @@ public class JAStatusEntryDto
     public JAStatusType JaStatusType { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string? Note { get; set; }
+    public JAEventDto? JAEvent { get; set; }
 }

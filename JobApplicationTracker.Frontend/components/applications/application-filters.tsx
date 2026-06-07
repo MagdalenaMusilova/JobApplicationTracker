@@ -10,12 +10,8 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Search, X } from 'lucide-react';
-import {
-  ApplicationFilterParams,
-  ApplicationStatus,
-  applicationStatusLabels,
-  applicationStatusColors,
-} from '@/types';
+import { ApplicationFilterParams } from '@/types/JAObjects/JobApplications/ApplicationFilterParams';
+import { JAStatusType, jaStatusLabels, applicationStatusColors } from '@/types/Enums/JAStatusType';
 import { cn } from '@/lib/utils';
 
 interface ApplicationFiltersProps {
@@ -25,7 +21,7 @@ interface ApplicationFiltersProps {
 
 export function ApplicationFilters({ filters, onFilterChange }: ApplicationFiltersProps) {
   // Track multiple selected statuses
-  const selectedStatuses: ApplicationStatus[] = filters.statuses || [];
+  const selectedStatuses: JAStatusType[] = filters.statuses || [];
   
   const hasActiveFilters = filters.search || selectedStatuses.length > 0;
 
@@ -36,7 +32,7 @@ export function ApplicationFilters({ filters, onFilterChange }: ApplicationFilte
     });
   };
 
-  const toggleStatus = (status: ApplicationStatus) => {
+  const toggleStatus = (status: JAStatusType) => {
     const current = selectedStatuses;
     const isSelected = current.includes(status);
     
@@ -78,7 +74,7 @@ export function ApplicationFilters({ filters, onFilterChange }: ApplicationFilte
           <SelectContent>
             <SelectItem value="updatedAt">Last Updated</SelectItem>
             <SelectItem value="appliedDate">Date Applied</SelectItem>
-            <SelectItem value="companyName">Company</SelectItem>
+            <SelectItem value="company">Company</SelectItem>
             <SelectItem value="status">Status</SelectItem>
           </SelectContent>
         </Select>
@@ -95,8 +91,8 @@ export function ApplicationFilters({ filters, onFilterChange }: ApplicationFilte
       {/* Status Filter Buttons */}
       <div className="flex flex-wrap gap-2">
         <span className="text-sm text-muted-foreground py-1 pr-2">Filter by status:</span>
-        {Object.entries(applicationStatusLabels).map(([value, label]) => {
-          const status = Number(value) as ApplicationStatus;
+        {Object.entries(jaStatusLabels).map(([value, label]) => {
+          const status = Number(value) as JAStatusType;
           const isSelected = selectedStatuses.includes(status);
           
           return (
