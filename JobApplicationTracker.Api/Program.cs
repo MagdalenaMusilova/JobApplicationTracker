@@ -93,6 +93,7 @@ builder.Services.AddScoped<IJAEventService, JAEventService>();
 builder.Services.AddScoped<IJAEventRepository, JAEventRepository>();
 builder.Services.AddScoped<IUserResumeRepository, UserResumeRepository>();
 builder.Services.AddScoped<IResumeMergeService, ResumeMergeService>();
+builder.Services.AddScoped<IMockDataService, MockDataService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

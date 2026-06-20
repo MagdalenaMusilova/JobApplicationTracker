@@ -13,31 +13,27 @@ export function StatsCards({ stats }: StatsCardsProps) {
     {
       title: 'Total Applications',
       value: stats.totalApplications,
-      description: `${stats.applicationsThisMonth} this month`,
       icon: Briefcase,
       color: 'text-blue-400',
       bgColor: 'bg-blue-500/10',
     },
     {
-      title: 'Active',
+      title: 'Active Applications',
       value: stats.activeApplications,
-      description: 'In progress',
       icon: TrendingUp,
       color: 'text-emerald-400',
       bgColor: 'bg-emerald-500/10',
     },
     {
-      title: 'Interviews',
-      value: stats.interviewsScheduled,
-      description: 'Scheduled',
+      title: 'This Week',
+      value: stats.applicationsThisWeek,
       icon: Calendar,
       color: 'text-amber-400',
       bgColor: 'bg-amber-500/10',
     },
     {
-      title: 'Offers',
-      value: stats.offersReceived,
-      description: 'Received',
+      title: 'This Month',
+      value: stats.applicationsThisMonth,
       icon: Trophy,
       color: 'text-purple-400',
       bgColor: 'bg-purple-500/10',
@@ -45,24 +41,21 @@ export function StatsCards({ stats }: StatsCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {cards.map((card) => (
         <Card key={card.title} className="bg-card border-border">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   {card.title}
                 </p>
-                <p className="text-3xl font-bold text-foreground mt-1">
+                <p className="text-2xl font-bold text-foreground mt-2">
                   {card.value}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {card.description}
-                </p>
               </div>
-              <div className={`p-3 rounded-lg ${card.bgColor}`}>
-                <card.icon className={`h-6 w-6 ${card.color}`} />
+              <div className={`p-2 rounded-lg ${card.bgColor}`}>
+                <card.icon className={`h-5 w-5 ${card.color}`} />
               </div>
             </div>
           </CardContent>

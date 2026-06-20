@@ -48,10 +48,10 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(ja => ja.UserId)
             .OnDelete(DeleteBehavior.Cascade);
-        
+
         // user resume
-        modelBuilder.Entity<User>()
-            .HasOne(user => user.UserResume)
+        modelBuilder.Entity<UserResume>()
+            .HasOne<User>()
             .WithOne()
             .HasForeignKey<UserResume>(ur => ur.UserId)
             .OnDelete(DeleteBehavior.Cascade)

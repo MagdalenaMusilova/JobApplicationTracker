@@ -53,7 +53,7 @@ public class AuthService : IAuthService
         if (existingUser is not null)
         {
             return AuthServiceResultDto<SignInResponseDto>.Failure(
-                StatusCodes.Status400BadRequest,
+                StatusCodes.Status422UnprocessableEntity,
                 "Registration failed. Please use different email.");
         }
 

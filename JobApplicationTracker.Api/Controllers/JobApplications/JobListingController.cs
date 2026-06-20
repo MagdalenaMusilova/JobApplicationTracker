@@ -27,7 +27,12 @@ public class JobListingController : ControllerBase
         if (string.IsNullOrWhiteSpace(data.JobListing))
             return BadRequest(new ErrorResponseDto("JOB_LISTING_REQUIRED", "Job listing text is required."));
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(new ErrorResponseDto("USER_ID_MISSING", "User ID was not found in the authentication token."));
+        }
+
         var resume = await _resumeService.GetByUserAsync(userId);
 
         var res = await _jobMatchingService.EvaluateMatch(resume, data.JobListing);

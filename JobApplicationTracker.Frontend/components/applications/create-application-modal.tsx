@@ -60,7 +60,7 @@ export function CreateApplicationModal({
   const emptyJAEvent: CreateJAEventDto = {
     jaStatusEntryId: '1',
     eventName: '',
-    eventType: 0,
+    eventType: JAEventType.Call,
     eventDate: '',
     isWholeDay: false,
     note: '',
@@ -80,8 +80,9 @@ export function CreateApplicationModal({
       onSuccess();
       resetForm();
     },
-    onError: () => {
-      toast.error('Failed to create application');
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.error || 'Failed to create application';
+      toast.error(errorMessage);
     },
   });
 
@@ -118,6 +119,17 @@ export function CreateApplicationModal({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleNestedChange = (
+    parent: 'initialStatus' | 'jaEvent',
+    field: string,
+    value: string | number | boolean
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      [parent]: prev[parent] ? { ...prev[parent], [field]: value } : null,
+    }));
+  };
+
   return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-y-auto">
@@ -139,7 +151,7 @@ export function CreateApplicationModal({
                         id="company"
                         value={formData.company}
                         onChange={(e) => handleChange("company", e.target.value)}
-                        placeholder="Google"
+                        placeholder="Company name"
                     />
                   </div>
 
@@ -149,7 +161,7 @@ export function CreateApplicationModal({
                         id="position"
                         value={formData.position}
                         onChange={(e) => handleChange("position", e.target.value)}
-                        placeholder="Software Engineer"
+                        placeholder="Position title"
                     />
                   </div>
                 </div>
@@ -160,7 +172,7 @@ export function CreateApplicationModal({
                       id="note"
                       value={formData.note ?? ""}
                       onChange={(e) => handleChange("note", e.target.value)}
-                      placeholder="Referral, recruiter contact, salary expectations..."
+                      placeholder="Recruiter contact, special expectations, salary expectations..."
                       rows={3}
                   />
                 </div>
@@ -208,7 +220,7 @@ export function CreateApplicationModal({
 
                     <SelectContent>
                       {Object.entries(JAStatusType)
-                          .filter(([key]) => isNaN(Number(key)))
+                          .filter(([key, value]) => isNaN(Number(key)) && (value as number) < JAStatusType.Accepted)
                           .map(([key, value]) => (
                               <SelectItem
                                   key={value}
@@ -271,7 +283,6 @@ export function CreateApplicationModal({
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
                           <Label>Event Type *</Label>
-
                           <Select
                               value={formData.jaEvent.eventType.toString()}
                               onValueChange={(value) =>
@@ -302,36 +313,20 @@ export function CreateApplicationModal({
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="eventDate">Date & Time *</Label>
+                          <Label htmlFor="eventName">Event Name *</Label>
                           <Input
-                              id="eventDate"
-                              type="datetime-local"
-                              value={formData.jaEvent.eventDate}
+                              id="eventName"
+                              value={formData.jaEvent.eventName}
                               onChange={(e) =>
                                   handleNestedChange(
                                       "jaEvent",
-                                      "eventDate",
+                                      "eventName",
                                       e.target.value
                                   )
                               }
+                              placeholder="e.g., In-person interview"
                           />
                         </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="eventName">Event Name *</Label>
-                        <Input
-                            id="eventName"
-                            value={formData.jaEvent.eventName}
-                            onChange={(e) =>
-                                handleNestedChange(
-                                    "jaEvent",
-                                    "eventName",
-                                    e.target.value
-                                )
-                            }
-                            placeholder="Technical Interview"
-                        />
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -346,9 +341,47 @@ export function CreateApplicationModal({
                                 )
                             }
                         />
-                        <Label htmlFor="isWholeDay">
+                        <Label htmlFor="isWholeDay" className="cursor-pointer">
                           All-day event
                         </Label>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="eventDateOnly">Date *</Label>
+                          <Input
+                              id="eventDateOnly"
+                              type="date"
+                              value={formData.jaEvent.eventDate ? formData.jaEvent.eventDate.split('T')[0] : ''}
+                              onChange={(e) => {
+                                const time = formData.jaEvent.eventDate ? formData.jaEvent.eventDate.split('T')[1] || '00:00' : '00:00';
+                                handleNestedChange(
+                                    "jaEvent",
+                                    "eventDate",
+                                    `${e.target.value}T${time}`
+                                );
+                              }}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="eventTime">Time {!formData.jaEvent.isWholeDay && '*'}</Label>
+                          <Input
+                              id="eventTime"
+                              type="time"
+                              step="60"
+                              disabled={formData.jaEvent.isWholeDay}
+                              value={formData.jaEvent.eventDate ? formData.jaEvent.eventDate.split('T')[1] || '' : ''}
+                              onChange={(e) => {
+                                const date = formData.jaEvent.eventDate ? formData.jaEvent.eventDate.split('T')[0] : '';
+                                handleNestedChange(
+                                    "jaEvent",
+                                    "eventDate",
+                                    `${date}T${e.target.value}`
+                                );
+                              }}
+                          />
+                        </div>
                       </div>
 
                       <div className="space-y-2">

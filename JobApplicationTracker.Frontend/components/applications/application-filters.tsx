@@ -19,23 +19,30 @@ interface ApplicationFiltersProps {
   onFilterChange: (filters: Partial<ApplicationFilterParams>) => void;
 }
 
+// Special filter tags
+const ALL_STATUSES = Object.keys(jaStatusLabels).map(k => Number(k) as JAStatusType);
+const IN_PROGRESS_STATUSES = [JAStatusType.Applied, JAStatusType.Task, JAStatusType.Interview, JAStatusType.Offer];
+const OPENED_STATUSES = [JAStatusType.Wishlist, JAStatusType.Applied, JAStatusType.Task, JAStatusType.Interview, JAStatusType.Offer];
+const CLOSED_STATUSES = [JAStatusType.Accepted, JAStatusType.Rejected];
+
 export function ApplicationFilters({ filters, onFilterChange }: ApplicationFiltersProps) {
   // Track multiple selected statuses
   const selectedStatuses: JAStatusType[] = filters.statuses || [];
-  
+
   const hasActiveFilters = filters.search || selectedStatuses.length > 0;
 
   const clearFilters = () => {
+    // Reset to "Opened" default
     onFilterChange({
       search: undefined,
-      statuses: undefined,
+      statuses: OPENED_STATUSES,
     });
   };
 
   const toggleStatus = (status: JAStatusType) => {
     const current = selectedStatuses;
     const isSelected = current.includes(status);
-    
+
     if (isSelected) {
       // Remove status
       const newStatuses = current.filter(s => s !== status);
@@ -44,6 +51,28 @@ export function ApplicationFilters({ filters, onFilterChange }: ApplicationFilte
       // Add status
       onFilterChange({ statuses: [...current, status] });
     }
+  };
+
+  const handleSpecialTag = (tag: 'all' | 'inProgress' | 'opened' | 'closed') => {
+    let statuses: JAStatusType[];
+
+    switch (tag) {
+      case 'all':
+        statuses = ALL_STATUSES;
+        break;
+      case 'inProgress':
+        statuses = IN_PROGRESS_STATUSES;
+        break;
+      case 'opened':
+        statuses = OPENED_STATUSES;
+        break;
+      case 'closed':
+        statuses = CLOSED_STATUSES;
+        break;
+    }
+
+    // Replace current selection with this tag's statuses
+    onFilterChange({ statuses: statuses });
   };
 
   return (
@@ -88,13 +117,74 @@ export function ApplicationFilters({ filters, onFilterChange }: ApplicationFilte
         )}
       </div>
 
+      {/* Special Tag Filters */}
+      <div className="flex flex-wrap gap-2">
+        <span className="text-sm text-muted-foreground py-1 pr-2">Quick filters:</span>
+
+        <Button
+          variant={
+            ALL_STATUSES.every(s => selectedStatuses.includes(s)) &&
+            selectedStatuses.every(s => ALL_STATUSES.includes(s))
+              ? "default"
+              : "outline"
+          }
+          size="sm"
+          onClick={() => handleSpecialTag('all')}
+          className="h-7 text-xs"
+        >
+          All
+        </Button>
+
+        <Button
+          variant={
+            OPENED_STATUSES.every(s => selectedStatuses.includes(s)) &&
+            selectedStatuses.every(s => OPENED_STATUSES.includes(s))
+              ? "default"
+              : "outline"
+          }
+          size="sm"
+          onClick={() => handleSpecialTag('opened')}
+          className="h-7 text-xs"
+        >
+          Opened
+        </Button>
+
+        <Button
+          variant={
+            IN_PROGRESS_STATUSES.every(s => selectedStatuses.includes(s)) &&
+            selectedStatuses.every(s => IN_PROGRESS_STATUSES.includes(s))
+              ? "default"
+              : "outline"
+          }
+          size="sm"
+          onClick={() => handleSpecialTag('inProgress')}
+          className="h-7 text-xs"
+        >
+          In Progress
+        </Button>
+
+        <Button
+          variant={
+            CLOSED_STATUSES.every(s => selectedStatuses.includes(s)) &&
+            selectedStatuses.every(s => CLOSED_STATUSES.includes(s))
+              ? "default"
+              : "outline"
+          }
+          size="sm"
+          onClick={() => handleSpecialTag('closed')}
+          className="h-7 text-xs"
+        >
+          Closed
+        </Button>
+      </div>
+
       {/* Status Filter Buttons */}
       <div className="flex flex-wrap gap-2">
         <span className="text-sm text-muted-foreground py-1 pr-2">Filter by status:</span>
         {Object.entries(jaStatusLabels).map(([value, label]) => {
           const status = Number(value) as JAStatusType;
           const isSelected = selectedStatuses.includes(status);
-          
+
           return (
             <Button
               key={value}

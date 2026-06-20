@@ -6,6 +6,7 @@ import { useMutation } from '@tanstack/react-query';
 import { applicationService } from '@/services/application-service';
 import { JobApplicationMinimalDto } from '@/types/JAObjects/JobApplications/JobApplicationMinimalDto'
 import { JAStatusType, applicationStatusColors, jaStatusLabels  } from '@/types/Enums/JAStatusType'
+import { eventTypeLabels } from '@/types/Enums/JAEventType'
 import {
   Table,
   TableBody,
@@ -53,8 +54,9 @@ export function ApplicationsTable({
       toast.success('Application deleted');
       onRefresh();
     },
-    onError: () => {
-      toast.error('Failed to delete application');
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.error || 'Failed to delete application';
+      toast.error(errorMessage);
     },
   });
 
@@ -69,8 +71,9 @@ export function ApplicationsTable({
       toast.success('Application marked as rejected');
       onRefresh();
     },
-    onError: () => {
-      toast.error('Failed to update application status');
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.error || 'Failed to update application status';
+      toast.error(errorMessage);
     },
   });
 

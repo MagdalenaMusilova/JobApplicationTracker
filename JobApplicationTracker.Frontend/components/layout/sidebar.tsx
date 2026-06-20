@@ -17,12 +17,20 @@ import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from './theme-toggle';
 import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { mockDataService } from '@/services/mock-data-service';
+import { toast } from 'sonner';
 
 const navItems = [
   {
     label: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
+  },
+  {
+    label: 'Profile',
+    href: '/profile',
+    icon: User,
   },
   {
     label: 'Applications',
@@ -39,21 +47,34 @@ const navItems = [
     href: '/match',
     icon: Target,
   },
-  {
-    label: 'Profile',
-    href: '/profile',
-    icon: User,
-  },
+
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const queryClient = useQueryClient();
+
+  const fillAccountMutation = useMutation({
+    mutationFn: () => mockDataService.fillAccount(),
+    onSuccess: () => {
+      toast.success('Account populated with mock data successfully');
+      queryClient.invalidateQueries({ queryKey: ['account'] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to fill account with mock data');
+    },
+  });
 
   const handleLogout = async () => {
     await logout();
     window.location.href = '/login';
+  };
+
+  const handleBriefcaseClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    fillAccountMutation.mutate();
   };
 
   return (
@@ -83,26 +104,50 @@ export function Sidebar() {
           collapsed ? 'justify-center' : 'justify-between'
         )}>
           {!collapsed && (
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <Briefcase className="w-4 h-4 text-primary-foreground" />
+            <>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleBriefcaseClick}
+                  disabled={fillAccountMutation.isPending}
+                  className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                  title="Fill with Mock Data"
+                >
+                  <Briefcase className="w-4 h-4 text-primary-foreground" />
+                </button>
+                <Link href="/dashboard" className="font-semibold text-lg text-sidebar-foreground hover:text-sidebar-foreground/80">
+                  JA Tracker
+                </Link>
               </div>
-              <span className="font-semibold text-lg text-sidebar-foreground">JobTrack</span>
-            </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hidden md:flex"
+                onClick={() => setCollapsed(!collapsed)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </>
           )}
           {collapsed && (
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Briefcase className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <>
+              <button
+                onClick={handleBriefcaseClick}
+                disabled={fillAccountMutation.isPending}
+                className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer"
+                title="Fill with Mock Data"
+              >
+                <Briefcase className="w-4 h-4 text-primary-foreground" />
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hidden md:flex rotate-180"
+                onClick={() => setCollapsed(!collapsed)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn('h-8 w-8 hidden md:flex', collapsed && 'rotate-180')}
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
         </div>
 
         {/* Navigation */}
@@ -131,11 +176,11 @@ export function Sidebar() {
 
         {/* User section */}
         <div className={cn(
-          'p-3 border-t border-sidebar-border',
+          'p-3 border-t border-sidebar-border space-y-2',
           collapsed && 'flex flex-col items-center'
         )}>
           {!collapsed && user && (
-            <div className="px-3 py-2 mb-2 flex items-center justify-between">
+            <div className="px-3 py-2 flex items-center justify-between">
               <p className="text-sm font-medium text-sidebar-foreground truncate">
                 {user.email}
               </p>

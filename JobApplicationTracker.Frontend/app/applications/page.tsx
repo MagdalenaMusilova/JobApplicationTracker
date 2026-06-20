@@ -13,135 +13,126 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { Plus } from 'lucide-react';
-
-const ARCHIVE_TAGS = ['Rejected', 'Withdrawn', 'Ghosted'];
-
+import { ApplicationFilterParams } from '@/types/JAObjects/JobApplications/ApplicationFilterParams';
 import { JAStatusType } from '@/types/Enums/JAStatusType';
 
-export interface ApplicationFilterParams {
-  search?: string;
-  statuses?: JAStatusType[];
-  sortBy?: 'appliedDate' | 'company' | 'position' | 'status' | 'updatedAt';
-  sortDirection?: 'asc' | 'desc';
-}
-
-/**
- * Hardcoded custom filters.
- * Add whatever business logic you want here.
- */
-const CUSTOM_TAG_FILTERS: Record<
-    string,
-    (application: any) => boolean
-> = {
-  activeProcess: app =>
-      app.tags?.includes('Interview') ||
-      app.tags?.includes('Assessment'),
-
-  offer: app =>
-      app.tags?.includes('Offer'),
-
-  waiting: app =>
-      !app.tags?.includes('Offer') &&
-      !app.tags?.includes('Rejected'),
-};
+// "Opened" statuses (default filter)
+const OPENED_STATUSES = [
+  JAStatusType.Wishlist,
+  JAStatusType.Applied,
+  JAStatusType.Task,
+  JAStatusType.Interview,
+  JAStatusType.Offer
+];
 
 export default function ApplicationsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const [showArchived, setShowArchived] = useState(false);
-
-  const [filters, setFilters] = useState<
-      ApplicationFilterParams & {
-    customTags?: string[];
-  }
-  >({
-    searchWord: '',
-    tags: [],
-    customTags: [],
-    sortBy: 'appliedDate',
+  const [filters, setFilters] = useState<ApplicationFilterParams>({
+    search: '',
+    statuses: OPENED_STATUSES,
+    sortBy: 'updatedAt',
     sortDirection: 'desc',
   });
 
   /**
-   * Single fetch.
-   * React Query caches the result.
+   * Always fetch active applications
+   * Fetch archived only when needed (when Accepted/Rejected statuses are selected)
    */
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['applications', showArchived],
-    queryFn: () => applicationService.getAllMinimal(showArchived),
+  const activeQuery = useQuery({
+    queryKey: ['applications', 'active'],
+    queryFn: () => applicationService.getAllMinimal('active'),
     staleTime: 1000 * 60 * 10,
   });
 
-  const activeApplications = useMemo(() => {
-    return (
-        data ?? []
-    );
-  }, [data]);
+  // Check if we need archived data (if Accepted or Rejected are selected)
+  const needsArchivedData = filters.statuses?.some(
+    status => status === JAStatusType.Accepted || status === JAStatusType.Rejected
+  ) ?? false;
 
-  const archivedApplications = useMemo(() => {
-    return (
-        data ?? []
-    );
-  }, [data]);
+  const archivedQuery = useQuery({
+    queryKey: ['applications', 'archived'],
+    queryFn: () => applicationService.getAllMinimal('archived'),
+    staleTime: 1000 * 60 * 10,
+    enabled: needsArchivedData, // Only fetch when we need archived statuses
+  });
 
-  const sourceApplications = showArchived
-      ? archivedApplications
-      : activeApplications;
+  // Combine data from both sources
+  const sourceApplications = useMemo(() => {
+    const active = activeQuery.data ?? [];
+    const archived = archivedQuery.data ?? [];
+    return [...active, ...archived];
+  }, [activeQuery.data, archivedQuery.data]);
+
+  const isLoading = activeQuery.isLoading || (needsArchivedData && archivedQuery.isLoading);
+
+  const refetch = () => {
+    activeQuery.refetch();
+    if (needsArchivedData) {
+      archivedQuery.refetch();
+    }
+  };
 
   const filteredApplications = useMemo(() => {
     let items = [...sourceApplications];
 
-    if (filters.searchWord?.trim()) {
-      const search = filters.searchWord.toLowerCase();
+    // Filter by search word (company or position)
+    if (filters.search?.trim()) {
+      const search = filters.search.toLowerCase();
 
       items = items.filter(app => {
-        const company =
-            app.company?.toLowerCase() ?? '';
+        const company = app.company?.toLowerCase() ?? '';
+        const position = app.position?.toLowerCase() ?? '';
 
-        const position =
-            app.position?.toLowerCase() ?? '';
-
-        return (
-            company.includes(search) ||
-            position.includes(search)
-        );
+        return company.includes(search) || position.includes(search);
       });
     }
 
-    if (filters.tags?.length) {
+    // Filter by statuses (multiselect)
+    if (filters.statuses?.length) {
       items = items.filter(app =>
-          filters.tags.every(tag =>
-              app.tags?.includes(tag)
-          )
+          filters.statuses!.includes(app.jaStatus)
       );
     }
 
-    if (filters.customTags?.length) {
-      items = items.filter(app =>
-          filters.customTags!.every(customTag => {
-            const filterFn =
-                CUSTOM_TAG_FILTERS[customTag];
-
-            return filterFn ? filterFn(app) : true;
-          })
-      );
-    }
-
+    // Multi-level sorting
     items.sort((a, b) => {
-      const sortBy = filters.sortBy ?? 'appliedDate';
-      const direction =
-          filters.sortDirection === 'asc' ? 1 : -1;
+      // 1. Sort by UpdatedAt (most recent first)
+      const aUpdatedAt = new Date(a.updatedAt).getTime();
+      const bUpdatedAt = new Date(b.updatedAt).getTime();
+      if (aUpdatedAt !== bUpdatedAt) {
+        return bUpdatedAt - aUpdatedAt; // descending (most recent first)
+      }
 
-      const aValue = a[sortBy];
-      const bValue = b[sortBy];
+      // 2. Sort by event type (no event JAs at the bottom)
+      const aHasEvent = a.eventType !== null && a.eventType !== undefined;
+      const bHasEvent = b.eventType !== null && b.eventType !== undefined;
+      if (aHasEvent !== bHasEvent) {
+        return aHasEvent ? -1 : 1; // items with events first
+      }
 
-      if (aValue == null) return 1;
-      if (bValue == null) return -1;
+      // 3. Sort by event date (if both have events, no event JAs at the bottom)
+      if (aHasEvent && bHasEvent) {
+        const aEventDate = a.eventDate ? new Date(a.eventDate).getTime() : Number.MAX_SAFE_INTEGER;
+        const bEventDate = b.eventDate ? new Date(b.eventDate).getTime() : Number.MAX_SAFE_INTEGER;
+        if (aEventDate !== bEventDate) {
+          return aEventDate - bEventDate; // ascending (soonest first)
+        }
+      }
 
-      if (aValue < bValue) return -1 * direction;
-      if (aValue > bValue) return 1 * direction;
+      // 4. Sort by status
+      if (a.jaStatus !== b.jaStatus) {
+        return a.jaStatus - b.jaStatus;
+      }
 
-      return 0;
+      // 5. Sort by position
+      const positionCompare = a.position.localeCompare(b.position);
+      if (positionCompare !== 0) {
+        return positionCompare;
+      }
+
+      // 6. Sort by company
+      return a.company.localeCompare(b.company);
     });
 
     return items;

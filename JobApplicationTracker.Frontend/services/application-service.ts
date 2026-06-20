@@ -23,10 +23,20 @@ export const applicationService = {
     return response.data;
   },
 
-  async getAllMinimal(archived: boolean): Promise<JobApplicationMinimalDto[]> {
-    const response = await httpClient.get<JobApplicationMinimalDto[]>(
-        archived ? API_ENDPOINTS.APPLICATIONS.MINIMAL_ARCHIVED : API_ENDPOINTS.APPLICATIONS.MINIMAL,
-    );
+  async getAllMinimal(mode: 'active' | 'archived' | 'all' = 'active'): Promise<JobApplicationMinimalDto[]> {
+    let endpoint: string;
+    switch (mode) {
+      case 'archived':
+        endpoint = API_ENDPOINTS.APPLICATIONS.MINIMAL_ARCHIVED;
+        break;
+      case 'all':
+        endpoint = API_ENDPOINTS.APPLICATIONS.MINIMAL_ALL;
+        break;
+      default:
+        endpoint = API_ENDPOINTS.APPLICATIONS.MINIMAL;
+    }
+
+    const response = await httpClient.get<JobApplicationMinimalDto[]>(endpoint);
     return response.data;
   },
   

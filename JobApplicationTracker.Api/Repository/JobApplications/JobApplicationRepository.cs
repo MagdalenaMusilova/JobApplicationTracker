@@ -19,8 +19,9 @@ public class JobApplicationRepository : IJobApplicationRepository
     {
         var res = await _context.JobApplications
             .AsNoTracking()
-            .Include(ja => ja.StatusHistory)
-                .ThenInclude(ja => ja.JAEvent)
+            .Include(ja => ja.StatusHistory
+                .OrderBy(stat => stat.OrderIndex))
+            .ThenInclude(ja => ja.JAEvent)
             .Include(ja => ja.JobListing)
             .ToListAsync();
         return res;
@@ -28,12 +29,26 @@ public class JobApplicationRepository : IJobApplicationRepository
 
     public async Task<IEnumerable<JobApplicationMinimal>> GetAllNotFinishedAsync(string userId)
     {
-        var res = await _context.JaMinimalView
+        var res = await _context.JobApplications
             .AsNoTracking()
             .Where(ja => ja.UserId == userId)
-            .Where(ja => (int)ja.JAStatus < (int)JAStatusType.Accepted)
+            .Include(ja => ja.StatusHistory.OrderBy(stat => stat.OrderIndex))
             .ToListAsync();
-        return res;
+        
+        var notFinished = res
+            .Where(ja => ja.StatusHistory.Any() && 
+                         (int)ja.StatusHistory.OrderByDescending(s => s.OrderIndex).First().JaStatusType < (int)JAStatusType.Accepted)
+            .Select(ja => new JobApplicationMinimal
+            {
+                JAId = ja.Id,
+                Company = ja.Company,
+                Position = ja.Position,
+                UserId = ja.UserId,
+                JAStatus = ja.StatusHistory.OrderByDescending(s => s.OrderIndex).First().JaStatusType
+            })
+            .ToList();
+        
+        return notFinished;
     }
 
     public async Task<IEnumerable<JobApplication>> GetAllByUserAsync(string userId)
@@ -41,23 +56,35 @@ public class JobApplicationRepository : IJobApplicationRepository
         var res = await _context.JobApplications
             .AsNoTracking()
             .Where(ja => ja.UserId == userId)
-            .Include(ja => ja.StatusHistory)
+            .Include(ja => ja.StatusHistory
+                .OrderBy(stat => stat.OrderIndex))
             .ThenInclude(ja => ja.JAEvent)
             .Include(ja => ja.JobListing)
             .ToListAsync();
         return res;
     }
 
-    public async Task<IEnumerable<JobApplicationMinimal>> GetAllByUserMinimalAsync(string userId, bool archived)
+    public async Task<IEnumerable<JobApplicationMinimal>> GetAllByUserMinimalAsync(string userId, bool? archived)
     {
-        var data = await _context.JaMinimalView.ToListAsync();
         var queryable = _context.JaMinimalView
             .AsNoTracking()
             .Where(ja => ja.UserId == userId);
-        if (archived)
+
+        if (archived.HasValue)
         {
-            queryable.Where(ja => ja.JAStatus <= JAStatusType.Applied);
+            if (archived.Value)
+            {
+                // Archived: status >= Accepted (1000)
+                queryable = queryable.Where(ja => ja.JAStatus >= JAStatusType.Accepted);
+            }
+            else
+            {
+                // Non-archived: status < Accepted (1000)
+                queryable = queryable.Where(ja => ja.JAStatus < JAStatusType.Accepted);
+            }
         }
+        // If archived is null, don't filter (fetch all)
+
         var res = await queryable.ToListAsync();
         return res;
     }
@@ -67,7 +94,8 @@ public class JobApplicationRepository : IJobApplicationRepository
         var res = await _context.JobApplications
             .AsNoTracking()
             .Where(ja => ja.Id == id)
-            .Include(ja => ja.StatusHistory)
+            .Include(ja => ja.StatusHistory
+                .OrderBy(stat => stat.OrderIndex))
             .ThenInclude(ja => ja.JAEvent)
             .Include(ja => ja.JobListing)
             .FirstOrDefaultAsync();    
@@ -93,7 +121,7 @@ public class JobApplicationRepository : IJobApplicationRepository
         
         existingApplication.Company = application.Company;
         existingApplication.Position = application.Position;
-        existingApplication.StatusHistory = application.StatusHistory;
+        existingApplication.StatusHistory = application.StatusHistory.OrderBy(stat => stat.OrderIndex).ToList();
         existingApplication.Note = application.Note;
 
         await _context.SaveChangesAsync();

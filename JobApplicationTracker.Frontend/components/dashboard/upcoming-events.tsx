@@ -7,7 +7,7 @@ import { eventTypeLabels, eventTypeColors } from '@/types/Enums/JAEventType';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, ArrowRight } from 'lucide-react';
+import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface UpcomingEventsProps {
@@ -53,9 +53,9 @@ export function UpcomingEvents({ events }: UpcomingEventsProps) {
             </p>
           </div>
         ) : (
-          upcomingEvents.map((event) => (
+          upcomingEvents.map((event, index) => (
             <Link
-              key={event.jaId}
+              key={`${event.jaId}-${event.eventDate}-${index}`}
               href={`/applications/${event.jaId}`}
               className="block"
             >

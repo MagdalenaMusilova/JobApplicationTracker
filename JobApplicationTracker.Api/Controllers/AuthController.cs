@@ -42,9 +42,15 @@ public class AuthController : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] LogoutRequestDto dto)
     {
-        await _authService.LogoutAsync(dto);
-
-        return NoContent();
+        try
+        {
+            await _authService.LogoutAsync(dto);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ErrorResponseDto("LOGOUT_FAILED", ex.Message));
+        }
     }
 
     private ActionResult<SignInResponseDto> ToActionResult(AuthServiceResultDto<SignInResponseDto> result)
@@ -54,6 +60,10 @@ public class AuthController : ControllerBase
             return Ok(result.Value);
         }
 
-        return StatusCode(result.StatusCode, result.ErrorMessage);
+        var errorResponse = new ErrorResponseDto(
+            result.StatusCode.ToString(),
+            result.ErrorMessage
+        );
+        return StatusCode(result.StatusCode, errorResponse);
     }
 }

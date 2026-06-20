@@ -33,7 +33,7 @@ public class JobApplicationService : IJobApplicationService
         return applications.Select(a => _mapper.Map<JobApplicationDto>(a));
     }
 
-    public async Task<IEnumerable<JobApplicationMinimalDto>> GetAllByUserMinimalAsync(string userId, bool archived)
+    public async Task<IEnumerable<JobApplicationMinimalDto>> GetAllByUserMinimalAsync(string userId, bool? archived)
     {
         var minApplications = await _applicationRepository.GetAllByUserMinimalAsync(userId, archived);
         return minApplications.Select(ja => _mapper.Map<JobApplicationMinimalDto>(ja));

@@ -7,7 +7,7 @@ import { jaStatusLabels, applicationStatusColors } from '@/types/Enums/JAStatusT
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Building2, MapPin } from 'lucide-react';
+import { ArrowRight, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface RecentApplicationsProps {

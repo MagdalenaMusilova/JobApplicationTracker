@@ -70,8 +70,11 @@ public class JobApplicationController : ControllerBase
         if (!TryGetUserId(out var userId))
             return Unauthorized(new ErrorResponseDto("USER_ID_MISSING", "User ID was not found in the authentication token."));
 
-        bool archived = Request.Query.ContainsKey("archived");
-        
+        // Check for "all" parameter to fetch both archived and non-archived
+        bool? archived = Request.Query.ContainsKey("all")
+            ? null
+            : (Request.Query.ContainsKey("archived") ? true : false);
+
         var applications = await _jobApplicationService.GetAllByUserMinimalAsync(userId, archived);
         return Ok(applications);
     }

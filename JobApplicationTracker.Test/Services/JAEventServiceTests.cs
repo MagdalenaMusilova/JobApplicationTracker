@@ -93,6 +93,8 @@ public class JAEventServiceTests
         };
         var eventDto = new JAEventDto { Id = createdEvent.Id };
 
+        _mockEventRepository.Setup(r => r.GetByStatusIdsAsync(It.IsAny<IEnumerable<Guid>>()))
+            .ReturnsAsync(new List<JAEvent>());
         _mockEventRepository.Setup(r => r.AddAsync(It.IsAny<JAEvent>())).ReturnsAsync(createdEvent);
         _mockMapper.Setup(m => m.Map<JAEventDto>(createdEvent)).Returns(eventDto);
 

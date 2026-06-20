@@ -54,32 +54,28 @@ public class UserService : IUserService
             Id = user.Id,
             Email = user.Email!,
             Username = user.UserName!,
-            CreatedAt = user.CreatedAt,
-            Resume = user.UserResume is not null ? _mapper.Map<UserResumeDto>(user.UserResume) : null
+            CreatedAt = user.CreatedAt
         };
     }
 
-    public async Task<bool> UpdateEmailAsync(string userId, string newEmail)
+    public async Task<IdentityResult> UpdateEmailAsync(string userId, string newEmail)
     {
         var user = await _userManager.FindByIdAsync(userId);
-        if (user == null) return false;
+        if (user == null)
+        {
+            return IdentityResult.Failed(new IdentityError { Description = "User not found." });
+        }
+
+        var userByEmail = await _userManager.FindByEmailAsync(newEmail);
+        if (userByEmail != null)
+        {
+            return IdentityResult.Failed(new IdentityError { Description = "Failed to update email address. Please use a different email address." });
+        }
 
         user.Email = newEmail;
-        user.UserName = newEmail; // In this app, Username seems to be Email by default in SignUp
-        
-        var result = await _userManager.UpdateAsync(user);
-        return result.Succeeded;
-    }
+        user.UserName = newEmail;
 
-    public async Task<bool> UpdateUsernameAsync(string userId, string newUsername)
-    {
-        var user = await _userManager.FindByIdAsync(userId);
-        if (user == null) return false;
-
-        user.UserName = newUsername;
-        
-        var result = await _userManager.UpdateAsync(user);
-        return result.Succeeded;
+        return await _userManager.UpdateAsync(user);
     }
 
     public async Task<IdentityResult> ChangePasswordAsync(string userId, string currentPassword, string newPassword)

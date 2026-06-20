@@ -32,15 +32,24 @@ import {
   Trash2,
   Save,
   X,
+  Upload,
+  FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import type { ChangePasswordDto } from '@/types/User/ChangePasswordDto';
+import { AddWorkExperienceModal } from '@/components/profile/add-work-experience-modal';
+import { AddEducationModal } from '@/components/profile/add-education-modal';
+import { AddTrainingModal } from '@/components/profile/add-training-modal';
+import { AddSkillModal } from '@/components/profile/add-skill-modal';
 
 export default function ProfilePage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [isClearingResume, setIsClearingResume] = useState(false);
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [newEmail, setNewEmail] = useState('');
   const [newUsername, setNewUsername] = useState('');
   const [passwordData, setPasswordData] = useState<ChangePasswordDto>({
@@ -49,12 +58,35 @@ export default function ProfilePage() {
     confirmNewPassword: '',
   });
 
+  // Modal states for adding resume items
+  const [isAddingWorkExperience, setIsAddingWorkExperience] = useState(false);
+  const [isAddingEducation, setIsAddingEducation] = useState(false);
+  const [isAddingTraining, setIsAddingTraining] = useState(false);
+  const [isAddingSkill, setIsAddingSkill] = useState(false);
+
   const queryClient = useQueryClient();
 
-  const { data: account, isLoading } = useQuery({
+  const { data: account, isLoading: isLoadingAccount } = useQuery({
     queryKey: ['account'],
     queryFn: () => profileService.getAccount(),
   });
+
+  const { data: resume, isLoading: isLoadingResume } = useQuery({
+    queryKey: ['resume'],
+    queryFn: async () => {
+      try {
+        return await profileService.getResume();
+      } catch (error: any) {
+        // If resume doesn't exist (404), return null instead of throwing
+        if (error?.response?.status === 404) {
+          return null;
+        }
+        throw error;
+      }
+    },
+  });
+
+  const isLoading = isLoadingAccount || isLoadingResume;
 
   const changePasswordMutation = useMutation({
     mutationFn: (data: ChangePasswordDto) => profileService.changePassword(data),
@@ -75,8 +107,9 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ['account'] });
       setIsEditingEmail(false);
     },
-    onError: () => {
-      toast.error('Failed to update email');
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || 'Failed to update email';
+      toast.error(errorMessage);
     },
   });
 
@@ -87,8 +120,35 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ['account'] });
       setIsEditingUsername(false);
     },
-    onError: () => {
-      toast.error('Failed to update username');
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.error || 'Failed to update username';
+      toast.error(errorMessage);
+    },
+  });
+
+  const deleteResumeMutation = useMutation({
+    mutationFn: (resumeId: string) => profileService.deleteResume(resumeId),
+    onSuccess: () => {
+      toast.success('Resume data cleared successfully');
+      queryClient.invalidateQueries({ queryKey: ['resume'] });
+      setIsClearingResume(false);
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.error || 'Failed to clear resume data';
+      toast.error(errorMessage);
+    },
+  });
+
+  const extractPdfMutation = useMutation({
+    mutationFn: (file: File) => profileService.extractFromPdf(file),
+    onSuccess: () => {
+      toast.success('Resume data extracted successfully from PDF');
+      queryClient.invalidateQueries({ queryKey: ['resume'] });
+      setIsUploadingPdf(false);
+      setSelectedFile(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to extract resume data from PDF');
     },
   });
 
@@ -101,17 +161,58 @@ export default function ProfilePage() {
     changePasswordMutation.mutate(passwordData);
   };
 
-  const resume = account?.resume;
+  const handleClearResume = () => {
+    if (resume?.id) {
+      deleteResumeMutation.mutate(resume.id);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        toast.error('Only PDF files are allowed');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const handleUploadPdf = () => {
+    if (selectedFile) {
+      extractPdfMutation.mutate(selectedFile);
+    }
+  };
 
   return (
     <ProtectedLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Profile</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your account and resume information
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Profile</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your account and resume information
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsUploadingPdf(true)}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Upload PDF Resume
+            </Button>
+            {resume && (
+              <Button
+                variant="destructive"
+                onClick={() => setIsClearingResume(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Clear All Resume Data
+              </Button>
+            )}
+          </div>
         </div>
 
         {isLoading ? (
@@ -134,57 +235,6 @@ export default function ProfilePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Username */}
-{/*
-                <div className="flex items-center justify-between py-3 border-b border-border">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Username</p>
-                      {isEditingUsername ? (
-                        <div className="flex items-center gap-2 mt-1">
-                          <Input
-                            value={newUsername}
-                            onChange={(e) => setNewUsername(e.target.value)}
-                            className="h-8 w-48"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => updateUsernameMutation.mutate(newUsername)}
-                            disabled={updateUsernameMutation.isPending}
-                          >
-                            <Save className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setIsEditingUsername(false)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <p className="font-medium text-foreground">{account.username}</p>
-                      )}
-                    </div>
-                  </div>
-                  {!isEditingUsername && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setNewUsername(account.username);
-                        setIsEditingUsername(true);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-*/}
-
                 {/* Email */}
                 <div className="flex items-center justify-between py-3 border-b border-border">
                   <div className="flex items-center gap-3">
@@ -283,7 +333,7 @@ export default function ProfilePage() {
                     </CardTitle>
                     <CardDescription>Your professional work history</CardDescription>
                   </div>
-                  <Button size="sm">
+                  <Button size="sm" onClick={() => { console.log('Work Experience Add clicked, resume:', resume); setIsAddingWorkExperience(true); }}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add
                   </Button>
@@ -358,7 +408,7 @@ export default function ProfilePage() {
                     </CardTitle>
                     <CardDescription>Your educational background</CardDescription>
                   </div>
-                  <Button size="sm">
+                  <Button size="sm" onClick={() => setIsAddingEducation(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add
                   </Button>
@@ -428,7 +478,7 @@ export default function ProfilePage() {
                     </CardTitle>
                     <CardDescription>Professional certifications and courses</CardDescription>
                   </div>
-                  <Button size="sm">
+                  <Button size="sm" onClick={() => setIsAddingTraining(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add
                   </Button>
@@ -505,7 +555,7 @@ export default function ProfilePage() {
                     </CardTitle>
                     <CardDescription>Your technical and professional skills</CardDescription>
                   </div>
-                  <Button size="sm">
+                  <Button size="sm" onClick={() => setIsAddingSkill(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add
                   </Button>
@@ -611,6 +661,119 @@ export default function ProfilePage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Clear Resume Confirmation Dialog */}
+      <Dialog open={isClearingResume} onOpenChange={setIsClearingResume}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Clear All Resume Data</DialogTitle>
+            <DialogDescription>
+              This will permanently delete all your resume information including work experience,
+              education, trainings, and skills. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsClearingResume(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleClearResume}
+              disabled={deleteResumeMutation.isPending}
+            >
+              {deleteResumeMutation.isPending ? 'Clearing...' : 'Clear All Data'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload PDF Resume Dialog */}
+      <Dialog open={isUploadingPdf} onOpenChange={(open) => {
+        setIsUploadingPdf(open);
+        if (!open) setSelectedFile(null);
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload PDF Resume</DialogTitle>
+            <DialogDescription>
+              Upload your resume in PDF format to automatically extract and populate your profile information.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="border-2 border-dashed border-border rounded-lg p-6">
+              <div className="flex flex-col items-center justify-center space-y-3">
+                <div className="p-3 rounded-full bg-muted">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div className="text-center">
+                  <Label htmlFor="pdf-upload" className="cursor-pointer">
+                    <span className="text-sm font-medium text-primary hover:underline">
+                      Click to upload
+                    </span>
+                    <span className="text-sm text-muted-foreground"> or drag and drop</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    PDF files only
+                  </p>
+                </div>
+                <Input
+                  id="pdf-upload"
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                {selectedFile && (
+                  <div className="flex items-center gap-2 p-3 bg-muted rounded-md w-full">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm flex-1 truncate">{selectedFile.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedFile(null)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUploadingPdf(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUploadPdf}
+              disabled={!selectedFile || extractPdfMutation.isPending}
+            >
+              {extractPdfMutation.isPending ? 'Extracting...' : 'Upload & Extract'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Resume Item Modals */}
+      <AddWorkExperienceModal
+        open={isAddingWorkExperience}
+        onOpenChange={setIsAddingWorkExperience}
+        resumeId={resume?.id || ''}
+      />
+      <AddEducationModal
+        open={isAddingEducation}
+        onOpenChange={setIsAddingEducation}
+        resumeId={resume?.id || ''}
+      />
+      <AddTrainingModal
+        open={isAddingTraining}
+        onOpenChange={setIsAddingTraining}
+        resumeId={resume?.id || ''}
+      />
+      <AddSkillModal
+        open={isAddingSkill}
+        onOpenChange={setIsAddingSkill}
+        resumeId={resume?.id || ''}
+      />
     </ProtectedLayout>
   );
 }

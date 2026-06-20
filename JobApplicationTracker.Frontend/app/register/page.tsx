@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
@@ -23,10 +23,11 @@ export default function RegisterPage() {
   const router = useRouter();
 
   // Redirect if already authenticated
-  if (isAuthenticated) {
-    router.push('/dashboard');
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -37,11 +38,18 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const { email, password, confirmPassword } = formData;
 
     if (!email || !password || !confirmPassword) {
       toast.error('Please fill in all fields');
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
       return;
     }
 
@@ -70,12 +78,9 @@ export default function RegisterPage() {
       await register(formData);
       toast.success('Account created successfully!');
       router.push('/dashboard');
-    } catch (error) {
-      const message =
-          error?.response?.data ||
-          error?.message ||
-          'Registration failed. Please try again.';
-      toast.error(message);
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.error || 'Registration failed. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

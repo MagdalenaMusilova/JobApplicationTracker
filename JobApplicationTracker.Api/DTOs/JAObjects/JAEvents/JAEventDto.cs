@@ -6,6 +6,7 @@ public class JAEventDto
 {
     public Guid Id { get; set; }
     public Guid JAStatusEntryId { get; set; }
+    public Guid JobApplicationId { get; set; }
     public string EventName { get; set; } = string.Empty;
     public JAEventType EventType { get; set; }
     public DateTime EventDate { get; set; }

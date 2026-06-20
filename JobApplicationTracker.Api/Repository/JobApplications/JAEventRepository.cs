@@ -43,6 +43,7 @@ public class JAEventRepository : IJAEventRepository
         var result = await _context.JAEventEntries
             .AsNoTracking()
             .Where(e => shortcutEventIds.Contains(e.Id))
+            .Include(e => e.JAStatusEntry)
             .ToListAsync();
 
         return result;

@@ -28,53 +28,55 @@ export default function DashboardPage() {
 
   return (
     <ProtectedLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Track your job search progress at a glance
+            Track your job search progress
           </p>
         </div>
 
-        {/* Stats Cards */}
+        {/* Quick Stats Bar */}
         {statsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-32 rounded-lg" />
+              <Skeleton key={i} className="h-24 rounded-lg" />
             ))}
           </div>
         ) : stats ? (
           <StatsCards stats={stats} />
         ) : null}
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Status Distribution */}
+          <div>
+            {statsLoading ? (
+              <Skeleton className="h-[400px] rounded-lg" />
+            ) : stats ? (
+              <StatusChart stats={stats} />
+            ) : null}
+          </div>
+
           {/* Upcoming Events */}
-          <div className="lg:col-span-1">
+          <div>
             {eventsLoading ? (
               <Skeleton className="h-[400px] rounded-lg" />
             ) : (
               <UpcomingEvents events={upcomingEvents || []} />
             )}
           </div>
-
-          {/* Recent Applications */}
-          <div className="lg:col-span-2">
-            {recentLoading ? (
-              <Skeleton className="h-[400px] rounded-lg" />
-            ) : (
-              <RecentApplications applications={recentApps || []} />
-            )}
-          </div>
         </div>
 
-        {/* Status Distribution Chart */}
-        {statsLoading ? (
-          <Skeleton className="h-[300px] rounded-lg" />
-        ) : stats ? (
-          <StatusChart stats={stats} />
-        ) : null}
+        {/* Recent Applications */}
+        <div>
+          {recentLoading ? (
+            <Skeleton className="h-[300px] rounded-lg" />
+          ) : (
+            <RecentApplications applications={recentApps || []} />
+          )}
+        </div>
       </div>
     </ProtectedLayout>
   );

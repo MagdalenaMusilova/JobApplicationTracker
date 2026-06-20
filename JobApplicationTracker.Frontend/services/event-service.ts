@@ -31,4 +31,11 @@ export const eventService = {
   async delete(id: string): Promise<void> {
     await httpClient.delete(API_ENDPOINTS.EVENTS.BY_ID(id));
   },
+
+  async getUpcoming(): Promise<any[]> {
+    const response = await httpClient.get<any[]>(
+      API_ENDPOINTS.EVENTS.BASE
+    );
+    return response.data ?? [];
+  },
 };

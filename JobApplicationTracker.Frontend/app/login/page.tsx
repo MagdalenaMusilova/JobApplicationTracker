@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
@@ -20,10 +20,11 @@ export default function LoginPage() {
   const router = useRouter();
 
   // Redirect if already authenticated
-  if (isAuthenticated) {
-    router.push('/dashboard');
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +39,9 @@ export default function LoginPage() {
       await login({ email, password });
       toast.success('Welcome back!');
       router.push('/dashboard');
-    } catch (error) {
-      toast.error('Invalid credentials. Please try again.');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.error || 'Invalid credentials. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

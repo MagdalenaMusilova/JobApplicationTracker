@@ -24,6 +24,20 @@ public class ResumeController : ControllerBase
         return !string.IsNullOrWhiteSpace(userId);
     }
 
+    [HttpGet]
+    public async Task<ActionResult<UserResumeDto>> Get()
+    {
+        if (!TryGetUserId(out var userId))
+            return Unauthorized(new ErrorResponseDto("USER_ID_MISSING", "User ID was not found in the authentication token."));
+
+        var resume = await _resumeService.GetByUserAsync(userId);
+
+        if (resume is null)
+            return NotFound(new ErrorResponseDto("RESUME_NOT_FOUND", "Resume was not found."));
+
+        return Ok(resume);
+    }
+
     [HttpPost]
     public async Task<ActionResult<UserResumeDto>> Create([FromBody] UserResumeDto resume)
     {
@@ -44,6 +58,9 @@ public class ResumeController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> ExtractFromPdf([FromForm] PdfUploadRequestDto request)
     {
+        if (!TryGetUserId(out var userId))
+            return Unauthorized(new ErrorResponseDto("USER_ID_MISSING", "User ID was not found in the authentication token."));
+
         var file = request.File;
 
         if (file == null || file.Length == 0)
@@ -52,8 +69,19 @@ public class ResumeController : ControllerBase
         if (Path.GetExtension(file.FileName).ToLowerInvariant() != ".pdf")
             return BadRequest(new ErrorResponseDto("INVALID_FILE_TYPE", "Only PDF files are allowed."));
 
-        var result = await _resumeService.ExtractFromPdfAsync(file);
-        return Ok(result);
+        var extracted = await _resumeService.ExtractFromPdfAsync(file);
+        extracted.UserId = userId;
+
+        // Delete existing resume if it exists
+        var existingResume = await _resumeService.GetByUserAsync(userId);
+        if (existingResume is not null)
+        {
+            await _resumeService.DeleteAsync(existingResume.Id);
+        }
+
+        // Create new resume with extracted data
+        var created = await _resumeService.CreateAsync(extracted);
+        return Ok(created);
     }
 
     [HttpGet("{id:guid}")]

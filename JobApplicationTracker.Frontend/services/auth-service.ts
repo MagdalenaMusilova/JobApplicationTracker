@@ -31,6 +31,7 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await httpClient.post(API_ENDPOINTS.AUTH.LOGOUT);
+    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+    await httpClient.post(API_ENDPOINTS.AUTH.LOGOUT, { refreshToken: refreshToken || '' });
   },
 };

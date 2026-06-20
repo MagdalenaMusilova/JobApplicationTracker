@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { applicationService } from '@/services/application-service';
 import { CreateJAStatusEntryDto } from '@/types/JAObjects/JAStatuses/CreateJAStatusEntryDto';
@@ -39,9 +39,44 @@ export function UpdateStatusModal({
   applicationId,
   currentStatus,
 }: UpdateStatusModalProps) {
-  const [newStatus, setNewStatus] = useState<JAStatusType>(currentStatus);
-  const [notes, setNotes] = useState('');
   const queryClient = useQueryClient();
+
+  const isStatusAllowed = (status: JAStatusType): boolean => {
+    // Task and Interview can go back and forth
+    if (
+      (currentStatus === JAStatusType.Task && status === JAStatusType.Interview) ||
+      (currentStatus === JAStatusType.Interview && status === JAStatusType.Task)
+    ) {
+      return true;
+    }
+
+    // Offer can repeat
+    if (currentStatus === JAStatusType.Offer && status === JAStatusType.Offer) {
+      return true;
+    }
+
+    // Otherwise, only allow strictly higher statuses
+    return status > currentStatus;
+  };
+
+  const lowestAllowedStatus = useMemo(() => {
+    const allowedStatuses = Object.keys(jaStatusLabels)
+      .map(Number)
+      .filter((status) => isStatusAllowed(status as JAStatusType))
+      .sort((a, b) => a - b);
+
+    return (allowedStatuses[0] as JAStatusType) || currentStatus;
+  }, [currentStatus]);
+
+  const [newStatus, setNewStatus] = useState<JAStatusType>(lowestAllowedStatus);
+  const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (open) {
+      setNewStatus(lowestAllowedStatus);
+      setNotes('');
+    }
+  }, [open, lowestAllowedStatus]);
 
   const updateMutation = useMutation({
     mutationFn: (data: CreateJAStatusEntryDto) =>
@@ -54,16 +89,22 @@ export function UpdateStatusModal({
       onOpenChange(false);
       setNotes('');
     },
-    onError: () => {
-      toast.error('Failed to update status');
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.error || 'Failed to update status';
+      toast.error(errorMessage);
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (newStatus === currentStatus) {
       toast.error('Please select a different status');
+      return;
+    }
+
+    if (!isStatusAllowed(newStatus)) {
+      toast.error('Invalid status transition');
       return;
     }
 
@@ -96,11 +137,13 @@ export function UpdateStatusModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(jaStatusLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
+                  {Object.entries(jaStatusLabels)
+                    .filter(([value]) => isStatusAllowed(Number(value) as JAStatusType))
+                    .map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

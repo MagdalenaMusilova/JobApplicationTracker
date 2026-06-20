@@ -35,8 +35,9 @@ export function ApplicationEvents({ applicationId, events }: ApplicationEventsPr
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['application', applicationId] });
     },
-    onError: () => {
-      toast.error('Failed to update event');
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.error || 'Failed to update event';
+      toast.error(errorMessage);
     },
   });
 

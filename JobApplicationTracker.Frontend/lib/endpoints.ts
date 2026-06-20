@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
     NOT_FINISHED: '/applications/notFinished',
     MINIMAL: '/applications/minimal',
     MINIMAL_ARCHIVED: '/applications/minimal?archived',
+    MINIMAL_ALL: '/applications/minimal?all',
     BY_ID: (id: string) => `/applications/${id}`,
     DENY: (id: string) => `/applications/${id}/deny`,
     PUSH_STATUS: '/applications/entry',
@@ -46,5 +47,10 @@ export const API_ENDPOINTS = {
   DASHBOARD: {
     STATS: '/dashboard/stats',
     RECENT: '/dashboard/recent',
+  },
+
+  // Mock Data
+  MOCK_DATA: {
+    FILL: '/mock-data/fill',
   },
 } as const;

@@ -3,6 +3,7 @@ import { API_ENDPOINTS } from '@/lib/endpoints';
 import { UserAccountDto } from '@/types/User/UserAccountDto';
 import { UserResumeDto } from '@/types/User/UserResumeDto';
 import { ChangePasswordDto } from '@/types/User/ChangePasswordDto';
+import { WorkExperienceDto, EducationDto, TrainingDto, JobSkillDto } from '@/types/User/Resume/UserResumeDto';
 
 export const profileService = {
   // Get user account with resume
@@ -82,5 +83,119 @@ export const profileService = {
 
   async deleteCV(): Promise<void> {
     await httpClient.delete(API_ENDPOINTS.PROFILE.UPLOAD_CV);
+  },
+
+  // Delete user resume (clear all resume data)
+  async deleteResume(resumeId: string): Promise<void> {
+    await httpClient.delete(`${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}`);
+  },
+
+  // Extract resume data from PDF
+  async extractFromPdf(file: File): Promise<UserResumeDto> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await httpClient.post<UserResumeDto>(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/extract`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  },
+
+  // Work Experience CRUD
+  async addWorkExperience(resumeId: string, data: WorkExperienceDto): Promise<WorkExperienceDto> {
+    const response = await httpClient.post<WorkExperienceDto>(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}/work-experience`,
+      data
+    );
+    return response.data;
+  },
+
+  async updateWorkExperience(resumeId: string, experienceId: string, data: WorkExperienceDto): Promise<WorkExperienceDto> {
+    const response = await httpClient.put<WorkExperienceDto>(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}/work-experience/${experienceId}`,
+      data
+    );
+    return response.data;
+  },
+
+  async deleteWorkExperience(resumeId: string, experienceId: string): Promise<void> {
+    await httpClient.delete(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}/work-experience/${experienceId}`
+    );
+  },
+
+  // Education CRUD
+  async addEducation(resumeId: string, data: EducationDto): Promise<EducationDto> {
+    const response = await httpClient.post<EducationDto>(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}/education`,
+      data
+    );
+    return response.data;
+  },
+
+  async updateEducation(resumeId: string, educationId: string, data: EducationDto): Promise<EducationDto> {
+    const response = await httpClient.put<EducationDto>(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}/education/${educationId}`,
+      data
+    );
+    return response.data;
+  },
+
+  async deleteEducation(resumeId: string, educationId: string): Promise<void> {
+    await httpClient.delete(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}/education/${educationId}`
+    );
+  },
+
+  // Training CRUD
+  async addTraining(resumeId: string, data: TrainingDto): Promise<TrainingDto> {
+    const response = await httpClient.post<TrainingDto>(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}/training`,
+      data
+    );
+    return response.data;
+  },
+
+  async updateTraining(resumeId: string, trainingId: string, data: TrainingDto): Promise<TrainingDto> {
+    const response = await httpClient.put<TrainingDto>(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}/training/${trainingId}`,
+      data
+    );
+    return response.data;
+  },
+
+  async deleteTraining(resumeId: string, trainingId: string): Promise<void> {
+    await httpClient.delete(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}/training/${trainingId}`
+    );
+  },
+
+  // Skill CRUD
+  async addSkill(resumeId: string, data: JobSkillDto): Promise<JobSkillDto> {
+    const response = await httpClient.post<JobSkillDto>(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}/skill`,
+      data
+    );
+    return response.data;
+  },
+
+  async updateSkill(resumeId: string, skillId: string, data: JobSkillDto): Promise<JobSkillDto> {
+    const response = await httpClient.put<JobSkillDto>(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}/skill/${skillId}`,
+      data
+    );
+    return response.data;
+  },
+
+  async deleteSkill(resumeId: string, skillId: string): Promise<void> {
+    await httpClient.delete(
+      `${API_ENDPOINTS.PROFILE.BASE}/resume/${resumeId}/skill/${skillId}`
+    );
   },
 };

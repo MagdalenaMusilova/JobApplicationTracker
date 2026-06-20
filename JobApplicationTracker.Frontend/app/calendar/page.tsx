@@ -5,38 +5,32 @@ import { useQuery } from '@tanstack/react-query';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
+import { EventCard } from '@/components/calendar/event-card';
+import {
+  ChevronLeft,
+  ChevronRight,
   Calendar as CalendarIcon,
-  Video,
   Phone,
   Users,
   FileText,
-  Clock,
-  MapPin
 } from 'lucide-react';
 import { eventService } from '@/services/event-service';
-import { JAEventType, eventTypeLabels, eventTypeColors } from '@/types/Enums/JAEventType';
+import { JAEventType } from '@/types/Enums/JAEventType';
 import type { JAEventDto } from '@/types/JAObjects/JAEvents/JAEventDto';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday } from 'date-fns';
-import Link from 'next/link';
 
 const eventTypeIcons: Record<JAEventType, React.ElementType> = {
   [JAEventType.Interview]: Users,
-  [JAEventType.PhoneScreen]: Phone,
-  [JAEventType.TechnicalAssessment]: FileText,
-  [JAEventType.FollowUp]: Clock,
+  [JAEventType.Call]: Phone,
+  [JAEventType.Task]: FileText,
   [JAEventType.Other]: CalendarIcon,
 };
 
 const eventTypeBgColors: Record<JAEventType, string> = {
   [JAEventType.Interview]: 'bg-indigo-500',
-  [JAEventType.PhoneScreen]: 'bg-cyan-500',
-  [JAEventType.TechnicalAssessment]: 'bg-purple-500',
-  [JAEventType.FollowUp]: 'bg-amber-500',
+  [JAEventType.Call]: 'bg-cyan-500',
+  [JAEventType.Task]: 'bg-purple-500',
   [JAEventType.Other]: 'bg-gray-500',
 };
 
@@ -197,7 +191,12 @@ export default function CalendarPage() {
               ) : (
                 <div className="space-y-4">
                   {selectedDayEvents.map(event => (
-                    <EventCard key={event.id} event={event} />
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      icon={eventTypeIcons[event.eventType]}
+                      bgColor={eventTypeBgColors[event.eventType]}
+                    />
                   ))}
                 </div>
               )}
@@ -229,7 +228,12 @@ export default function CalendarPage() {
                     </h3>
                     <div className="space-y-3 pl-6 border-l-2 border-border">
                       {dayEvents.map(event => (
-                        <EventCard key={event.id} event={event} />
+                        <EventCard
+                          key={event.id}
+                          event={event}
+                          icon={eventTypeIcons[event.eventType]}
+                          bgColor={eventTypeBgColors[event.eventType]}
+                        />
                       ))}
                     </div>
                   </div>
@@ -240,36 +244,5 @@ export default function CalendarPage() {
         </Card>
       </div>
     </ProtectedLayout>
-  );
-}
-
-function EventCard({ event }: { event: JAEventDto }) {
-  const Icon = eventTypeIcons[event.eventType];
-  const bgColor = eventTypeBgColors[event.eventType];
-  const label = eventTypeLabels[event.eventType];
-
-  return (
-    <div className="block p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
-      <div className="flex items-start gap-3">
-        <div className={`p-2 rounded-lg ${bgColor}`}>
-          <Icon className="h-4 w-4 text-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-medium truncate">{event.eventName || 'Unnamed Event'}</h4>
-            <Badge variant="secondary" className="text-xs">
-              {label}
-            </Badge>
-          </div>
-          {event.note && <p className="text-sm text-muted-foreground truncate">{event.note}</p>}
-          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {format(new Date(event.eventDate), 'h:mm a')}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }

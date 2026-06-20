@@ -95,6 +95,23 @@ Thumbs.db
 *.sln
 
 ############################################
+# Testing
+############################################
+
+# Jest / Frontend tests
+coverage/
+*.coverage
+.nyc_output/
+
+# Playwright / E2E tests
+playwright-report/
+test-results/
+playwright/.cache/
+
+# .NET test results
+TestResults/
+
+############################################
 # other
 ############################################
 
